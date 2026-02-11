@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 // ROUTES
 // ============================================================================
 
-// Health check / Welcome route
+//  Welcome route
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -83,7 +83,7 @@ app.use((err, req, res, next) => {
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
-  console.log(`API Endpoints:`);
-  console.log(`  - Users: http://localhost:${port}/api/users`);
-  console.log(`  - Payments: http://localhost:${port}/api/payments`);
+  // console.log(`API Endpoints:`);
+  // console.log(`  - Users: http://localhost:${port}/api/users`);
+  // console.log(`  - Payments: http://localhost:${port}/api/payments`);
 });
