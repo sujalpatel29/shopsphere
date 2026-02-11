@@ -1,10 +1,10 @@
 import express from "express";
 import dotenv from "dotenv";
-// import pool from "./configs/db.js";
-import  portionRouter from "./routes/portion.route.js"
 
 // Import Routes
 import paymentRoutes from "./routes/payments.route.js";
+import userRoute from "./routes/User.route.js";
+import portionRouter from "./routes/portion.route.js";
 
 // Load environment variables
 dotenv.config();
@@ -22,9 +22,6 @@ app.use(express.json());
 
 // Parse URL-encoded request bodies
 app.use(express.urlencoded({ extended: true }));
-
-
-app.use("/portion", portionRouter);
 
 // ============================================================================
 // ROUTES
@@ -48,8 +45,9 @@ app.get("/", (req, res) => {
 });
 
 // API Routes
-app.use("/api/users", userRoutes);
+app.use("/api/users", userRoute);
 app.use("/api/payments", paymentRoutes);
+app.use("/portion", portionRouter);
 
 // Add more routes here as you create them:
 // app.use("/api/products", productRoutes);

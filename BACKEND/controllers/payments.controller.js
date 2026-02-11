@@ -3,11 +3,22 @@ import { ok, created, badRequest, notFound, serverError } from "../utils/apiResp
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
-/** Razorpay instance - initialized from env credentials */
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+let razorpay = null;
+
+function getRazorpay() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    throw new Error("Razorpay keys not configured");
+  }
+
+  if (!razorpay) {
+    razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
+  }
+
+  return razorpay;
+}
 
 /**
  * @module PaymentController
@@ -59,7 +70,11 @@ const PaymentController = {
       }
 
       // --- Razorpay ---
-      const razorpayOrder = await razorpay.orders.create({
+      if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+        return badRequest(res, "Razorpay keys are missing in .env");
+      }
+
+      const razorpayOrder = await getRazorpay().orders.create({
         amount: Math.round(amount * 100), // Razorpay expects paise (1 INR = 100 paise)
         currency,
         receipt: `order_${order_id}_${Date.now()}`,
@@ -224,6 +239,10 @@ const PaymentController = {
 
       // Razorpay refund
       if (payment.payment_method === "razorpay") {
+        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+          return badRequest(res, "Razorpay keys are missing in .env");
+        }
+
         let gatewayData = {};
         try {
           gatewayData = JSON.parse(payment.gateway_response || "{}");
@@ -235,7 +254,7 @@ const PaymentController = {
           return badRequest(res, "Razorpay payment ID not found. Cannot process refund.");
         }
 
-        const refund = await razorpay.payments.refund(gatewayData.razorpay_payment_id, {
+        const refund = await getRazorpay().payments.refund(gatewayData.razorpay_payment_id, {
           amount: Math.round(refundAmount * 100),
           notes: { reason: reason || "Customer requested refund" },
         });
