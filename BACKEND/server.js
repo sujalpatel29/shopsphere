@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 
 // Import Routes
+// import paymentRoutes from "./routes/payments.route.js";
 import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
 
@@ -15,7 +16,6 @@ const port = process.env.SERVER_PORT || 3000;
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
-
 // Parse JSON request bodies
 app.use(express.json());
 
@@ -34,6 +34,7 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       users: "/api/users",
+      // payments: "/api/payments",
       payments: "/api/payments",
       // products: "/api/products",
       // categories: "/api/categories",
