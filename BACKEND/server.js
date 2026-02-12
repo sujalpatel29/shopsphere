@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 
 // Import Routes
-// import paymentRoutes from "./routes/payments.route.js";
 import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
 import modifierRoute from "./routes/modifier.route.js";
@@ -36,8 +35,8 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       users: "/api/users",
-      // payments: "/api/payments",
       payments: "/api/payments",
+      modifiers: "/api/modifiers",
       // products: "/api/products",
       // categories: "/api/categories",
       // cart: "/api/cart",
@@ -88,11 +87,4 @@ app.listen(port, () => {
   console.log(`API Endpoints:`);
   console.log(`  - Users: http://localhost:${port}/api/users`);
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
-});
-
-
-app.use("/api/user", userRoute);
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
 });
