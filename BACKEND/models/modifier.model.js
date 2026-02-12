@@ -147,7 +147,7 @@ async function deleteModifier(modifier_id, deleted_by) {
     `UPDATE modifier_master
         SET is_deleted = 1,
         updated_by = ?  
-        WHERE modifier_id = ?`,
+        WHERE modifier_id = ? AND is_deleted = 0`,
     [deleted_by, modifier_id],
   );
   return true;
@@ -267,7 +267,7 @@ async function deleteModifierPortion(modifier_portion_id, deleted_by) {
     `UPDATE modifier_portion 
         SET is_deleted = 1,
         updated_by = ?
-        WHERE modifier_portion_id = ?`,
+        WHERE modifier_portion_id = ? AND is_deleted = 0`,
     [deleted_by, modifier_portion_id],
   );
   return true;
