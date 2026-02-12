@@ -1,15 +1,4 @@
-/**
- * Modifier Controller
- *
- * This file contains all controller functions for modifier-related API endpoints.
- * Controllers handle business logic, call model functions, and send API responses.
- *
- * Request validation is handled by middleware before reaching these controllers.
- *
- * @module controllers/modifier
- * @requires models/modifier
- * @requires utils/apiResponse
- */
+// Modifier Controllers - Business logic for modifier API endpoints
 
 import {
   getAllModifiers,
@@ -36,17 +25,6 @@ import {
 // MODIFIER MASTER CONTROLLERS
 // ============================================================================
 
-/**
- * Get all active modifiers
- *
- * @route GET /api/modifiers
- * @access Public
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @returns {Object} 200 - Array of modifiers
- * @returns {Object} 404 - No modifiers found
- * @returns {Object} 500 - Server error
- */
 export const getAllModifiersController = async (req, res) => {
   try {
     // Call the model function
@@ -65,18 +43,6 @@ export const getAllModifiersController = async (req, res) => {
   }
 };
 
-/**
- * Get a single modifier by ID
- *
- * @route GET /api/modifiers/:id
- * @access Public
- * @param {Object} req - Express request object
- * @param {string} req.params.id - Modifier ID
- * @param {Object} res - Express response object
- * @returns {Object} 200 - Modifier object
- * @returns {Object} 404 - Modifier not found
- * @returns {Object} 500 - Server error
- */
 export const getModifierByIdController = async (req, res) => {
   try {
     // Get ID from URL params
@@ -97,20 +63,6 @@ export const getModifierByIdController = async (req, res) => {
   }
 };
 
-/**
- * Create a new modifier
- *
- * @route POST /api/modifiers
- * @access Public
- * @param {Object} req - Express request object
- * @param {string} req.body.modifier_name - Name of the modifier
- * @param {string} req.body.modifier_value - Value of the modifier
- * @param {number} [req.body.additional_price] - Additional price
- * @param {Object} res - Express response object
- * @returns {Object} 201 - Created modifier with ID
- * @returns {Object} 409 - Duplicate modifier
- * @returns {Object} 500 - Server error
- */
 export const createModifierController = async (req, res) => {
   try {
     //Get data form body
@@ -141,22 +93,6 @@ export const createModifierController = async (req, res) => {
   }
 };
 
-/**
- * Update an existing modifier
- *
- * @route PUT /api/modifiers/:id
- * @access Public
- * @param {Object} req - Express request object
- * @param {string} req.params.id - Modifier ID
- * @param {string} [req.body.modifier_name] - Updated name
- * @param {string} [req.body.modifier_value] - Updated value
- * @param {number} [req.body.additional_price] - Updated price
- * @param {boolean} [req.body.is_active] - Active status
- * @param {Object} res - Express response object
- * @returns {Object} 200 - Success message
- * @returns {Object} 404 - Modifier not found
- * @returns {Object} 500 - Server error
- */
 export const updateModifierController = async (req, res) => {
   try {
     //Get id from param
@@ -192,18 +128,6 @@ export const updateModifierController = async (req, res) => {
   }
 };
 
-/**
- * Soft delete a modifier
- *
- * @route DELETE /api/modifiers/:id
- * @access Public
- * @param {Object} req - Express request object
- * @param {string} req.params.id - Modifier ID
- * @param {Object} res - Express response object
- * @returns {Object} 200 - Success message
- * @returns {Object} 404 - Modifier not found
- * @returns {Object} 500 - Server error
- */
 export const deleteModifierController = async (req, res) => {
   try {
     //get id from param
@@ -233,18 +157,6 @@ export const deleteModifierController = async (req, res) => {
 // MODIFIER PORTION CONTROLLERS
 // ============================================================================
 
-/**
- * Get all portions for a specific modifier
- *
- * @route GET /api/modifiers/:modifierId/portions
- * @access Public
- * @param {Object} req - Express request object
- * @param {string} req.params.modifier_id - Modifier ID
- * @param {Object} res - Express response object
- * @returns {Object} 200 - Array of modifier portions
- * @returns {Object} 404 - No portions found
- * @returns {Object} 500 - Server error
- */
 export const getAllModifierPortionsController = async (req, res) => {
   try {
     // Get modifier ID from URL params
@@ -266,21 +178,6 @@ export const getAllModifierPortionsController = async (req, res) => {
   }
 };
 
-/**
- * Create a new modifier-portion link
- *
- * @route POST /api/modifier-portions
- * @access Public
- * @param {Object} req - Express request object
- * @param {number} req.body.modifier_id - Modifier ID
- * @param {number} req.body.product_portion_id - Product portion ID
- * @param {number} [req.body.additional_price] - Additional price
- * @param {number} [req.body.stock] - Stock quantity
- * @param {Object} res - Express response object
- * @returns {Object} 201 - Created modifier portion with ID
- * @returns {Object} 409 - Duplicate link
- * @returns {Object} 500 - Server error
- */
 export const createModifierPortionController = async (req, res) => {
   try {
     //get data from body
@@ -318,20 +215,6 @@ export const createModifierPortionController = async (req, res) => {
   }
 };
 
-/**
- * Update an existing modifier portion
- *
- * @route PUT /api/modifier-portions/:id
- * @access Public
- * @param {Object} req - Express request object
- * @param {string} req.params.id - Modifier portion ID
- * @param {number} [req.body.additional_price] - Updated price
- * @param {number} [req.body.stock] - Updated stock
- * @param {boolean} [req.body.is_active] - Active status
- * @param {Object} res - Express response object
- * @returns {Object} 200 - Success message
- * @returns {Object} 500 - Server error
- */
 export const updateModifierPortionController = async (req, res) => {
   try {
     // Get ID from URL params
@@ -359,17 +242,6 @@ export const updateModifierPortionController = async (req, res) => {
   }
 };
 
-/**
- * Soft delete a modifier portion
- *
- * @route DELETE /api/modifier-portions/:id
- * @access Public
- * @param {Object} req - Express request object
- * @param {string} req.params.id - Modifier portion ID
- * @param {Object} res - Express response object
- * @returns {Object} 200 - Success message
- * @returns {Object} 500 - Server error
- */
 export const deleteModifierPortionController = async (req, res) => {
   try {
     // Get ID from URL params
