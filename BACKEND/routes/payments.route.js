@@ -20,7 +20,7 @@ router.post("/verify", auth, PaymentController.verifyPayment);
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
-  PaymentController.handleWebhook
+  PaymentController.handleWebhook,
 );
 
 // GET /api/payments/order/:orderId - Get all payments for an order
