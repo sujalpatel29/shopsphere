@@ -2,9 +2,12 @@ import express from "express";
 import dotenv from "dotenv";
 
 // Import Routes
-import paymentRoutes from "./routes/payments.route.js";
+// import paymentRoutes from "./routes/payments.route.js";
+// import cartRouter from "./routes/cart.route.js";
 import userRoute from "./routes/User.route.js";
+import { route as offerRoute } from "./routes/offer.route.js";
 import modifierRoute from "./routes/modifier.route.js";
+// import cartRouter from "./routes/cart.route.js";
 
 
 // Load environment variables
@@ -46,14 +49,14 @@ app.get("/", (req, res) => {
 });
 
 // API Routes
+// app.use("/api/cart", cartRouter);
 app.use("/api/users", userRoute);
-app.use("/api/payments", paymentRoutes);
+app.use("/api/offer", offerRoute);
 app.use("/api/modifiers", modifierRoute);
-
+//app.use("/api/payments", paymentRoutes);
 // Add more routes here as you create them:
 // app.use("/api/products", productRoutes);
 // app.use("/api/categories", categoryRoutes);
-// app.use("/api/cart", cartRoutes);
 // app.use("/api/orders", orderRoutes);
 
 // ============================================================================
@@ -86,5 +89,7 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   console.log(`API Endpoints:`);
   console.log(`  - Users: http://localhost:${port}/api/users`);
-  console.log(`  - Payments: http://localhost:${port}/api/payments`);
 });
+// app.get("/", (req, res) => {
+//   res.send("Om prajapati");
+// });
