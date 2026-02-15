@@ -6,10 +6,14 @@ import {
   createModifier,
   updateModifier,
   deleteModifier,
+  toggleModifierActive,
+  patchModifier,
   getModifierPortions,
   createModifierPortion,
   updateModifierPortion,
   deleteModifierPortion,
+  toggleModifierPortionActive,
+  patchModifierPortion,
 } from "../models/modifier.model.js";
 
 import {
@@ -69,7 +73,7 @@ export const createModifierController = async (req, res) => {
     const { modifier_name, modifier_value, additional_price } = req.body;
 
     // Set default createdBy (in real app, this comes from auth token)
-    const created_by = 1;
+    const created_by = req.user.id;
 
     // Call model function
     const modifier_id = await createModifier({
@@ -103,7 +107,7 @@ export const updateModifierController = async (req, res) => {
       req.body;
 
     //set default update_by
-    const updated_by = 1;
+    const updated_by = req.user.id;
 
     //check modifier is exist or not
     const exixtingModifier = await getModifierById(id);
@@ -134,7 +138,7 @@ export const deleteModifierController = async (req, res) => {
     const { id } = req.params;
 
     //set default deleted_by
-    const deleted_by = 1;
+    const deleted_by = req.user.id;
 
     //check modifier is exist or not
     const existingModifier = await getModifierById(id);
@@ -149,6 +153,53 @@ export const deleteModifierController = async (req, res) => {
     return ok(res, "Modifier deleted successfully");
   } catch (err) {
     console.error("Delete Modifier Controller error ", err);
+    return serverError(res, "Internal server error");
+  }
+};
+
+//Toggle modifier active status
+export const toggleModifierController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get user ID from token
+    const updated_by = req.user.id;
+
+    // Check if modifier exists
+    const existingModifier = await getModifierById(id);
+    if (!existingModifier) {
+      return notFound(res, "Modifier not found");
+    }
+    // Toggle the status
+    await toggleModifierActive(id, updated_by);
+
+    return ok(res, "Modifier status toggled successfully");
+  } catch (err) {
+    console.error("Toggle Modifier Controller error", err);
+    return serverError(res, "Internal server error");
+  }
+};
+
+//Partial update modifier
+export const patchModifierController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    // Get user ID from token
+    updates.updated_by = req.user.id;
+
+    // Check if modifier exists
+    const existingModifier = await getModifierById(id);
+    if (!existingModifier) {
+      return notFound(res, "Modifier not found");
+    }
+
+    // Update only provided fields
+    await patchModifier(id, updates);
+    return ok(res, "Modifier updated successfully");
+  } catch (err) {
+    console.error("Patch Modifier Controller error", err);
     return serverError(res, "Internal server error");
   }
 };
@@ -185,7 +236,7 @@ export const createModifierPortionController = async (req, res) => {
       req.body;
 
     // set default created_by
-    const created_by = 1;
+    const created_by = req.user.id;
 
     //call model function
     const modifier_portion_id = await createModifierPortion({
@@ -224,7 +275,7 @@ export const updateModifierPortionController = async (req, res) => {
     const { additional_price, stock, is_active } = req.body;
 
     // Set default updatedBy
-    const updated_by = 1;
+    const updated_by = req.user.id;
 
     // Call model function (no need to check if exists, model will handle it)
     await updateModifierPortion(id, {
@@ -248,7 +299,7 @@ export const deleteModifierPortionController = async (req, res) => {
     const { id } = req.params;
 
     // Set default deletedBy
-    const deleted_by = 1;
+    const deleted_by = req.user.id;
 
     // Call model function (no need to check if exists, model will handle it)
     await deleteModifierPortion(id, deleted_by);
@@ -257,6 +308,43 @@ export const deleteModifierPortionController = async (req, res) => {
     return ok(res, "Modifier portion deleted successfully");
   } catch (err) {
     console.error("Delete Modifier Portion Controller error ", err);
+    return serverError(res, "Internal server error");
+  }
+};
+
+// Toggle modifier portion active status
+export const toggleModifierPortionController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get user ID from token
+    const updated_by = req.user.id;
+
+    // Toggle the status
+    await toggleModifierPortionActive(id, updated_by);
+
+    return ok(res, "Modifier portion status toggled successfully");
+  } catch (err) {
+    console.error("Toggle Modifier Portion Controller error", err);
+    return serverError(res, "Internal server error");
+  }
+};
+
+// Partial update modifier portion
+export const patchModifierPortionController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    // Get user ID from token
+    updates.updated_by = req.user.id;
+
+    // Update only provided fields
+    await patchModifierPortion(id, updates);
+
+    return ok(res, "Modifier portion updated successfully");
+  } catch (err) {
+    console.error("Patch Modifier Portion Controller error", err);
     return serverError(res, "Internal server error");
   }
 };

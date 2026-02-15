@@ -45,6 +45,17 @@ export const deleteModifierSchema = z.object({
     .positive("Deleted by must be a positive integer"),
 });
 
+// Schema for partial update (all fields optional)
+export const patchModifierSchema = z.object({
+  modifier_name: z.string().min(1, "Modifier name cannot be empty").optional(),
+  modifier_value: z
+    .string()
+    .min(1, "Modifier value cannot be empty")
+    .optional(),
+  additional_price: z.number().min(0, "Price cannot be negative").optional(),
+  is_active: z.boolean().optional(),
+});
+
 // ============================================================================
 // MODIFIER PORTION SCHEMAS
 // ============================================================================
@@ -92,4 +103,11 @@ export const deleteModifierPortionSchema = z.object({
     .number()
     .int()
     .positive("Deleted by must be a positive integer"),
+});
+
+// Schema for partial update of modifier portion (all fields optional)
+export const patchModifierPortionSchema = z.object({
+  additional_price: z.number().min(0, "Price cannot be negative").optional(),
+  stock: z.number().int().min(0, "Stock cannot be negative").optional(),
+  is_active: z.boolean().optional(),
 });

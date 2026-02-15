@@ -8,9 +8,11 @@ import {
   createModifierSchema,
   updateModifierSchema,
   deleteModifierSchema,
+  patchModifierSchema,
   createModifierPortionSchema,
   updateModifierPortionSchema,
   deleteModifierPortionSchema,
+  patchModifierPortionSchema,
 } from "../validations/modifier.validation.js";
 
 // Import controllers
@@ -20,11 +22,18 @@ import {
   createModifierController,
   updateModifierController,
   deleteModifierController,
+  toggleModifierController,
+  patchModifierController,
   getAllModifierPortionsController,
   createModifierPortionController,
   updateModifierPortionController,
   deleteModifierPortionController,
+  toggleModifierPortionController,
+  patchModifierPortionController,
 } from "../controllers/modifier.controller.js";
+
+// Import middlewares
+import { auth, adminOnly } from "../middlewares/auth.middleware.js";
 
 const modifierRouter = express.Router();
 
@@ -41,6 +50,8 @@ modifierRouter.get("/:id", getModifierByIdController);
 // POST /api/modifiers - Create new modifier
 modifierRouter.post(
   "/",
+  auth,
+  adminOnly,
   validate(createModifierSchema),
   createModifierController,
 );
@@ -48,6 +59,8 @@ modifierRouter.post(
 // PUT /api/modifiers/:id - Update modifier
 modifierRouter.put(
   "/:id",
+  auth,
+  adminOnly,
   validate(updateModifierSchema),
   updateModifierController,
 );
@@ -55,8 +68,22 @@ modifierRouter.put(
 // DELETE /api/modifiers/:id - Delete modifier
 modifierRouter.delete(
   "/:id",
+  auth,
+  adminOnly,
   validate(deleteModifierSchema),
   deleteModifierController,
+);
+
+// PATCH /api/modifiers/:id/toggle - Toggle active status (Admin only)
+modifierRouter.patch("/:id/toggle", auth, adminOnly, toggleModifierController);
+
+// PATCH /api/modifiers/:id - Partial update modifier (Admin only)
+modifierRouter.patch(
+  "/:id",
+  auth,
+  adminOnly,
+  validate(patchModifierSchema),
+  patchModifierController,
 );
 
 // ============================================================================
@@ -69,6 +96,8 @@ modifierRouter.get("/:modifier_id/portions", getAllModifierPortionsController);
 // POST /api/modifiers/portions - Link modifier to portion
 modifierRouter.post(
   "/portions",
+  auth,
+  adminOnly,
   validate(createModifierPortionSchema),
   createModifierPortionController,
 );
@@ -76,6 +105,8 @@ modifierRouter.post(
 // PUT /api/modifiers/portions/:id - Update modifier portion
 modifierRouter.put(
   "/portions/:id",
+  auth,
+  adminOnly,
   validate(updateModifierPortionSchema),
   updateModifierPortionController,
 );
@@ -83,8 +114,27 @@ modifierRouter.put(
 // DELETE /api/modifiers/portions/:id - Delete modifier portion
 modifierRouter.delete(
   "/portions/:id",
+  auth,
+  adminOnly,
   validate(deleteModifierPortionSchema),
   deleteModifierPortionController,
+);
+
+// PATCH /api/modifiers/portions/:id/toggle - Toggle portion active status (Admin only)
+modifierRouter.patch(
+  "/portions/:id/toggle",
+  auth,
+  adminOnly,
+  toggleModifierPortionController,
+);
+
+// PATCH /api/modifiers/portions/:id - Partial update portion (Admin only)
+modifierRouter.patch(
+  "/portions/:id",
+  auth,
+  adminOnly,
+  validate(patchModifierPortionSchema),
+  patchModifierPortionController,
 );
 
 export default modifierRouter;

@@ -98,6 +98,59 @@ async function deleteModifier(modifier_id, deleted_by) {
   return true;
 }
 
+// Toggle modifier active status
+async function toggleModifierActive(modifier_id, updated_by) {
+  await pool.query(
+    `UPDATE modifier_master
+        SET is_active = NOT is_active,
+            updated_by = ?                    
+        WHERE modifier_id = ? AND is_deleted = 0`,
+    [updated_by, modifier_id],
+  );
+  return true;
+}
+
+// Partial update modifier (update only provided fields)
+async function patchModifier(modifier_id, updates) {
+  const fields = [];
+  const values = [];
+
+  // Build dynamic query based on provided fields
+  if (updates.modifier_name !== undefined) {
+    fields.push("modifier_name = ?");
+    values.push(updates.modifier_name);
+  }
+  if (updates.modifier_value !== undefined) {
+    fields.push("modifier_value = ?");
+    values.push(updates.modifier_value);
+  }
+  if (updates.additional_price !== undefined) {
+    fields.push("additional_price = ?");
+    values.push(updates.additional_price);
+  }
+  if (updates.is_active !== undefined) {
+    fields.push("is_active = ?");
+    values.push(updates.is_active);
+  }
+
+  // Add updated_by
+  if (updates.updated_by !== undefined) {
+    fields.push("updated_by = ?");
+    values.push(updates.updated_by);
+  }
+
+  // Add modifier_id to values
+  values.push(modifier_id);
+
+  await pool.query(
+    `UPDATE modifier_master 
+     SET ${fields.join(", ")} 
+     WHERE modifier_id = ? AND is_deleted = 0`,
+    values,
+  );
+  return true;
+}
+
 // ============================================================================
 // MODIFIER PORTION FUNCTIONS
 // ============================================================================
@@ -177,14 +230,67 @@ async function deleteModifierPortion(modifier_portion_id, deleted_by) {
   return true;
 }
 
+// Toggle modifier portion active status
+async function toggleModifierPortionActive(modifier_portion_id, updated_by) {
+  await pool.query(
+    `UPDATE modifier_portion
+    SET is_active = NOT is_active, updated_by = ?
+    WHERE modifier_portion_id = ? AND is_deleted = 0`[
+      (updated_by, modifier_portion_id)
+    ],
+  );
+  return true;
+}
+
+// Partial update modifier portion (update only provided fields)
+async function patchModifierPortion(modifier_portion_id, updates) {
+  const fields = [];
+  const values = [];
+
+  // Build dynamic query based on provided fields
+  if (updates.additional_price !== undefined) {
+    fields.push("additional_price = ?");
+    values.push(updates.additional_price);
+  }
+  if (updates.stock !== undefined) {
+    fields.push("stock = ?");
+    values.push(updates.stock);
+  }
+  if (updates.is_active !== undefined) {
+    fields.push("is_active = ?");
+    values.push(updates.is_active);
+  }
+
+  // Add updated_by
+  if (updates.updated_by !== undefined) {
+    fields.push("updated_by = ?");
+    values.push(updates.updated_by);
+  }
+
+  // Add modifier_portion_id to values
+  values.push(modifier_portion_id);
+
+  await pool.query(
+    `UPDATE modifier_portion
+     SET ${fields.join(", ")}
+     WHERE modifier_portion_id = ? AND is_deleted = 0`,
+    values,
+  );
+  return true;
+}
+
 export {
   getAllModifiers,
   getModifierById,
   createModifier,
   updateModifier,
   deleteModifier,
+  toggleModifierActive,
+  patchModifier,
   getModifierPortions,
   createModifierPortion,
   updateModifierPortion,
   deleteModifierPortion,
+  toggleModifierPortionActive,
+  patchModifierPortion,
 };
