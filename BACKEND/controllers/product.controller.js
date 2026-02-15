@@ -8,6 +8,20 @@ export const createProduct = async (req, res) => {
   try {
     await conn.beginTransaction();
 
+    // Validate category existence
+    if (req.body.category_id) {
+      const exists = await Product.checkCategoryExists(
+        req.body.category_id,
+        conn
+      );
+
+      if (!exists) {
+        await conn.rollback();
+        return res.status(400).json({
+          message: "Invalid category_id"
+        });
+      }
+    }
     // 1️. Insert product
     const [result] = await Product.create({
       ...req.body,
@@ -52,9 +66,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-/* =========================
-   Soft Delete Product
-========================= */
+  //  Soft Delete Product
 export const deleteProduct = async (req, res) => {
   const USER_ID = 1; // TEMP (replace with JWT later)
 
@@ -81,21 +93,27 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-/* =========================
-  Get All Products
-========================= */
+  // Get All Products
 export const getAllProducts = async (req, res) => {
   try {
-    const [products] = await Product.findAll();
+    const filters = {
+      category_id: req.query.category_id ? Number(req.query.category_id) : undefined,
+      min_price: req.query.min_price ? Number(req.query.min_price) : undefined,
+      max_price: req.query.max_price ? Number(req.query.max_price) : undefined,
+      search: req.query.search,
+      is_active: req.query.is_active !== undefined ? Number(req.query.is_active) : undefined
+    };
+
+    const [products] = await Product.findAll(filters);
+
     res.json(products);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-/* =========================
-  Get Product By ID
-========================= */
+  // Get Product By ID
 export const getProductById = async (req, res) => {
   try {
     const [rows] = await Product.findById(req.params.id);
@@ -110,9 +128,7 @@ export const getProductById = async (req, res) => {
   }
 };
 
-/* =========================
-  Update Product
-========================= */
+  // Update Product
 export const updateProduct = async (req, res) => {
   const USER_ID = 1;
 
@@ -129,16 +145,13 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-
-/* =========================
-  Update Product Status
-========================= */
-
+  // Update Product Status
+  
 export const updateProductStatus = async (req, res) => {
   try {
     await Product.updateStatus(req.params.id, req.body.is_active);
     res.json({ message: 'Product status updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
+   }
 };

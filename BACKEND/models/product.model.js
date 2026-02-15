@@ -2,9 +2,7 @@ import db from "../configs/db.js";
 
 const Product = {
 
-  /* =========================
-     Create Product
-  ========================== */
+    //  Create Product
   create: (data, conn = db) => {
     const sql = `
       INSERT INTO product_master
@@ -26,9 +24,7 @@ const Product = {
     ]);
   },
 
-  /* =========================
-     Fetch Category + Parents
-  ========================== */
+    //  Fetch Category + Parents
   getCategoryWithParents: (categoryId, conn = db) => {
     const sql = `
       WITH RECURSIVE category_tree AS (
@@ -49,25 +45,35 @@ const Product = {
     return conn.execute(sql, [categoryId]);
   },
 
-  /* =========================
-     Insert Product Categories
-  ========================== */
+  //  Check Category Exists
+checkCategoryExists: async (categoryId, conn = db) => {
+  const sql = `
+    SELECT category_id
+    FROM category_master
+    WHERE category_id = ?
+    LIMIT 1
+  `;
+
+  const [rows] = await conn.execute(sql, [categoryId]);
+  return rows.length > 0;
+},
+
+    //  Insert Product Categories
+
   insertProductCategories: (productId, categoryIds, conn = db) => {
     if (!categoryIds.length) return;
 
     const values = categoryIds.map(cid => [productId, cid]);
 
     const sql = `
-      INSERT INTO product_categories (product_id, category_id)
-      VALUES ?
+      INSERT IGNORE INTO product_categories (product_id, category_id) VALUES ?
     `;
 
     return conn.query(sql, [values]);
   },
 
-  /* =========================
-   Soft Delete Product
-  ========================= */
+  //  Soft Delete Product
+  
   softDelete: (productId, updatedBy, conn = db) => {
     const sql = `
       UPDATE product_master
@@ -80,13 +86,55 @@ const Product = {
     return conn.execute(sql, [updatedBy, productId]);
   },
 
-  findAll: () => {
-    return db.execute(`
-      SELECT *
-      FROM product_master
-      WHERE is_deleted = 0 AND is_active = 1
-      ORDER BY created_at DESC
-    `);
+  // find all product with filtering
+  findAll: (filters = {}, conn = db) => {
+    const conditions = ["p.is_deleted = 0"];
+    const values = [];
+
+    let sql = `
+      SELECT DISTINCT p.*
+      FROM product_master p
+    `;
+
+    // category filtering
+    if (filters.category_id) {
+      sql += `
+        INNER JOIN product_categories pc
+        ON p.product_id = pc.product_id
+      `;
+      conditions.push("pc.category_id = ?");
+      values.push(filters.category_id);
+    }
+
+    // Price filtering
+    if (filters.min_price) {
+      conditions.push("p.price >= ?");
+      values.push(filters.min_price);
+    }
+
+    if (filters.max_price) {
+      conditions.push("p.price <= ?");
+      values.push(filters.max_price);
+    }
+
+    // Search by name
+    if (filters.search) {
+      conditions.push("p.name LIKE ?");
+      values.push(`%${filters.search}%`);
+    }
+
+    // Status filter
+    if (filters.is_active !== undefined) {
+      conditions.push("p.is_active = ?");
+      values.push(filters.is_active);
+    }
+
+    sql += `
+      WHERE ${conditions.join(" AND ")}
+      ORDER BY p.created_at DESC
+    `;
+
+    return conn.execute(sql, values);
   },
 
   findById: (id) => {
@@ -97,40 +145,40 @@ const Product = {
     `, [id]);
   },
 
-  update: (id, data) => {
-  const fields = [];
-  const values = [];
+  update: (id, data, conn = db) => {
+    const fields = [];
+    const values = [];
 
-  for (const key in data) {
-    if (data[key] !== undefined) {
-      fields.push(`${key} = ?`);
-      values.push(data[key]);
+    for (const key in data) {
+      if (data[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        values.push(data[key]);
+      }
     }
-  }
 
-  if (!fields.length) return;
+    if (!fields.length) return;
 
-  const sql = `
-    UPDATE product_master
-    SET ${fields.join(", ")}
-    WHERE product_id = ? AND is_deleted = 0
-  `;
-
-  values.push(id);
-
-  return db.execute(sql, values);
-},
-
-  updateStatus: (id, is_active) => {
-    return db.execute(`
+    const sql = `
       UPDATE product_master
-      SET is_active = ?
+      SET ${fields.join(", ")}
       WHERE product_id = ? AND is_deleted = 0
-    `, [is_active, id]);
+    `;
+
+    values.push(id);
+
+    return conn.execute(sql, values);
+  },
+
+  updateStatus: (id, is_active, updatedBy, conn = db) => {
+    const sql = `
+      UPDATE product_masterx
+      SET is_active = ?,
+          updated_by = ?
+      WHERE product_id = ? AND is_deleted = 0
+    `;
+
+    return conn.execute(sql, [is_active, updatedBy, id]);
   },
 
 };
-
-
-
 export default Product;
