@@ -3,33 +3,26 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const dbPort = Number.parseInt(process.env.DB_PORT, 10) || 3306;
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.SERVER_PORT,
+  port: dbPort,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 });
 
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.log("connection failed done", err.message);
-  } else {
-    console.log("DB connection Done");
-    connection.release();
-  }
-});
-
 const testConnection = async () => {
   try {
     const connection = await pool.getConnection();
-    console.log("DB connection Done");
+    console.log(`DB connection done on ${process.env.DB_HOST}:${dbPort}`);
     connection.release();
   } catch (err) {
-    console.log("Connection failed:", err.message);
+    console.log(`DB connection failed on ${process.env.DB_HOST}:${dbPort}:`, err.message);
   }
 };
 
