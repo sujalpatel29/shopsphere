@@ -6,10 +6,38 @@ import {
   notFound,
   serverError,
 } from "../utils/apiResponse.js";
-import Stripe from "stripe";
+import { createRequire } from "module";
 
-/** Stripe instance - initialized from env credentials */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const require = createRequire(import.meta.url);
+let Stripe = null;
+
+try {
+  Stripe = require("stripe");
+} catch (error) {
+  Stripe = null;
+}
+
+const getStripeClient = () => {
+  if (!Stripe) {
+    return {
+      client: null,
+      error:
+        "Stripe dependency is missing. Install it with: npm install stripe",
+    };
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return {
+      client: null,
+      error: "STRIPE_SECRET_KEY is not configured in environment variables",
+    };
+  }
+
+  return {
+    client: new Stripe(process.env.STRIPE_SECRET_KEY),
+    error: null,
+  };
+};
 
 /**
  * @module PaymentController
@@ -67,6 +95,11 @@ const PaymentController = {
       }
 
       // --- Stripe ---
+      const { client: stripe, error: stripeError } = getStripeClient();
+      if (!stripe) {
+        return badRequest(res, stripeError);
+      }
+
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Stripe expects smallest currency unit (paise for INR)
         currency: currency.toLowerCase(), // Stripe requires lowercase currency codes
@@ -128,6 +161,11 @@ const PaymentController = {
 
       if (!payment) {
         return notFound(res, "Payment record not found");
+      }
+
+      const { client: stripe, error: stripeError } = getStripeClient();
+      if (!stripe) {
+        return badRequest(res, stripeError);
       }
 
       // Retrieve the PaymentIntent from Stripe to check its actual status
@@ -259,6 +297,11 @@ const PaymentController = {
 
       // Stripe refund
       if (payment.payment_method === "stripe") {
+        const { client: stripe, error: stripeError } = getStripeClient();
+        if (!stripe) {
+          return badRequest(res, stripeError);
+        }
+
         let gatewayData = {};
         try {
           gatewayData = JSON.parse(payment.gateway_response || "{}");
@@ -346,6 +389,11 @@ const PaymentController = {
    * Verifies the webhook signature and processes the event.
    */
   async handleWebhook(req, res) {
+    const { client: stripe, error: stripeError } = getStripeClient();
+    if (!stripe) {
+      return badRequest(res, stripeError);
+    }
+
     const sig = req.headers["stripe-signature"];
     let event;
 

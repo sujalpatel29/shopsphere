@@ -3,13 +3,10 @@ import dotenv from "dotenv";
 import categoryRoutes from "./routes/category.routes.js";
 // Import Routes
 import paymentRoutes from "./routes/payments.route.js";
-<<<<<<< HEAD
-=======
-// import cartRouter from "./routes/cart.route.js";
->>>>>>> 8247ea5c10fc0d0452ff40a157840d712a85a5be
 import userRoute from "./routes/User.route.js";
-import { route as offerRoute } from "./routes/offer.route.js";
+import portionRouter from "./routes/portion.route.js";
 // import cartRouter from "./routes/cart.route.js";
+import { route as offerRoute } from "./routes/offer.route.js";
 
 // Load environment variables
 dotenv.config();
@@ -37,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 // ROUTES
 // ============================================================================
 
-// Health check / Welcome route
+//  Welcome route
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -57,9 +54,13 @@ app.get("/", (req, res) => {
 
 // API Routes
 app.use("/api/users", userRoute);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/portion", portionRouter);
+
+
+//app.use("/api/payments", paymentRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/offer", offerRoute);
-app.use("/api/payments", paymentRoutes);
 // Add more routes here as you create them:
 // app.use("/api/products", productRoutes);
 // app.use("/api/categories", categoryRoutes);
@@ -96,14 +97,5 @@ app.listen(port, () => {
   console.log(`API Endpoints:`);
   console.log(`  - Users: http://localhost:${port}/api/users`);
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
-<<<<<<< HEAD
-});
-
-
-app.use("/api/user", userRoute);
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-=======
->>>>>>> 8247ea5c10fc0d0452ff40a157840d712a85a5be
+  console.log(`  - Portion: http://localhost:${port}/api/portion`);
 });
