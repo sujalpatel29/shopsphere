@@ -16,7 +16,6 @@ const port = process.env.SERVER_PORT || 3000;
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
-
 // Parse JSON request bodies
 app.use(express.json());
 
@@ -35,6 +34,7 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       users: "/api/users",
+      // payments: "/api/payments",
       payments: "/api/payments",
       // products: "/api/products",
       // categories: "/api/categories",
@@ -49,6 +49,8 @@ app.use("/api/users", userRoute);
 app.use("/api/payments", paymentRoutes);
 app.use("/portion", portionRouter);
 
+
+//app.use("/api/payments", paymentRoutes);
 // Add more routes here as you create them:
 // app.use("/api/products", productRoutes);
 // app.use("/api/categories", categoryRoutes);
@@ -85,5 +87,8 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   // console.log(`API Endpoints:`);
   // console.log(`  - Users: http://localhost:${port}/api/users`);
-  // console.log(`  - Payments: http://localhost:${port}/api/payments`);
 });
+
+// app.get("/", (req, res) => {
+//   res.send("Om");
+// });
