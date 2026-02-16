@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import categoryRoutes from "./routes/category.routes.js";
 // Import Routes
-// import paymentRoutes from "./routes/payments.route.js";
+import paymentRoutes from "./routes/payments.route.js";
 // import cartRouter from "./routes/cart.route.js";
 import userRoute from "./routes/User.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
@@ -18,8 +18,14 @@ const port = process.env.PORT || 3000;
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
-// Parse JSON request bodies
-app.use(express.json());
+// Parse JSON request bodies (skip for Stripe webhook - it needs raw body)
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/payments/webhook") {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
 
 // Parse URL-encoded request bodies
 app.use(express.urlencoded({ extended: true }));
@@ -36,7 +42,6 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       users: "/api/users",
-      // payments: "/api/payments",
       payments: "/api/payments",
       // products: "/api/products",
       category: "/api/category",
@@ -51,7 +56,7 @@ app.get("/", (req, res) => {
 app.use("/api/users", userRoute);
 app.use("/api/category", categoryRoutes);
 app.use("/api/offer", offerRoute);
-//app.use("/api/payments", paymentRoutes);
+app.use("/api/payments", paymentRoutes);
 // Add more routes here as you create them:
 // app.use("/api/products", productRoutes);
 // app.use("/api/categories", categoryRoutes);
@@ -87,7 +92,5 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   console.log(`API Endpoints:`);
   console.log(`  - Users: http://localhost:${port}/api/users`);
+  console.log(`  - Payments: http://localhost:${port}/api/payments`);
 });
-// app.get("/", (req, res) => {
-//   res.send("Om prajapati");
-// });
