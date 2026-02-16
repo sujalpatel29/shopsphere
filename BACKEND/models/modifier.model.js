@@ -235,9 +235,8 @@ async function toggleModifierPortionActive(modifier_portion_id, updated_by) {
   await pool.query(
     `UPDATE modifier_portion
     SET is_active = NOT is_active, updated_by = ?
-    WHERE modifier_portion_id = ? AND is_deleted = 0`[
-      (updated_by, modifier_portion_id)
-    ],
+    WHERE modifier_portion_id = ? AND is_deleted = 0`,
+    [updated_by, modifier_portion_id],
   );
   return true;
 }

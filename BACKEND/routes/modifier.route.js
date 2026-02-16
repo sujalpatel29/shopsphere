@@ -66,13 +66,7 @@ modifierRouter.put(
 );
 
 // DELETE /api/modifiers/:id - Delete modifier
-modifierRouter.delete(
-  "/:id",
-  auth,
-  adminOnly,
-  validate(deleteModifierSchema),
-  deleteModifierController,
-);
+modifierRouter.delete("/:id", auth, adminOnly, deleteModifierController);
 
 // PATCH /api/modifiers/:id/toggle - Toggle active status (Admin only)
 modifierRouter.patch("/:id/toggle", auth, adminOnly, toggleModifierController);
@@ -116,7 +110,6 @@ modifierRouter.delete(
   "/portions/:id",
   auth,
   adminOnly,
-  validate(deleteModifierPortionSchema),
   deleteModifierPortionController,
 );
 
