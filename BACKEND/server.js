@@ -1,23 +1,34 @@
 import express from "express";
 import dotenv from "dotenv";
-
+import categoryRoutes from "./routes/category.routes.js";
 // Import Routes
 import paymentRoutes from "./routes/payments.route.js";
+<<<<<<< HEAD
+=======
+// import cartRouter from "./routes/cart.route.js";
+>>>>>>> 8247ea5c10fc0d0452ff40a157840d712a85a5be
 import userRoute from "./routes/User.route.js";
+import { route as offerRoute } from "./routes/offer.route.js";
+// import cartRouter from "./routes/cart.route.js";
 
 // Load environment variables
 dotenv.config();
 
 // Initialize Express app
 const app = express();
-const port = process.env.SERVER_PORT || 3000;
+const port = process.env.PORT || 3000;
 
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
-
-// Parse JSON request bodies
-app.use(express.json());
+// Parse JSON request bodies (skip for Stripe webhook - it needs raw body)
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/payments/webhook") {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
 
 // Parse URL-encoded request bodies
 app.use(express.urlencoded({ extended: true }));
@@ -36,7 +47,8 @@ app.get("/", (req, res) => {
       users: "/api/users",
       payments: "/api/payments",
       // products: "/api/products",
-      // categories: "/api/categories",
+      category: "/api/category",
+      offer: "/api/offer",
       // cart: "/api/cart",
       // orders: "/api/orders",
     },
@@ -44,13 +56,13 @@ app.get("/", (req, res) => {
 });
 
 // API Routes
-app.use("/api/users", userRoutes);
+app.use("/api/users", userRoute);
+app.use("/api/category", categoryRoutes);
+app.use("/api/offer", offerRoute);
 app.use("/api/payments", paymentRoutes);
-
 // Add more routes here as you create them:
 // app.use("/api/products", productRoutes);
 // app.use("/api/categories", categoryRoutes);
-// app.use("/api/cart", cartRoutes);
 // app.use("/api/orders", orderRoutes);
 
 // ============================================================================
@@ -84,6 +96,7 @@ app.listen(port, () => {
   console.log(`API Endpoints:`);
   console.log(`  - Users: http://localhost:${port}/api/users`);
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
+<<<<<<< HEAD
 });
 
 
@@ -91,4 +104,6 @@ app.use("/api/user", userRoute);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
+=======
+>>>>>>> 8247ea5c10fc0d0452ff40a157840d712a85a5be
 });
