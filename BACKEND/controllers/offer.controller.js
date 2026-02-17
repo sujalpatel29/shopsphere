@@ -6,14 +6,22 @@ import {
   getActiveOffer,
   getAllOffer,
   getOfferById,
-  getOfferByCategoryId,
-  getOfferByProductId,
   updateOfferById,
   getValidateOfferByName,
   getOfferUsageCount,
+  isOfferMappedToScope,
   getOfferUsageByOfferId,
   getOfferUsageByUserId,
   getAllOfferUsageSummary,
+  createOfferProductCategoryMapping,
+  deleteOfferProductCategoryMappingById,
+  getAllOfferProductCategoryMappings,
+  getOfferProductCategoryMappingById,
+  getOfferProductCategoryMappingsByOfferId,
+  isOfferProductCategoryDuplicateOnUpdate,
+  isOfferExistsById,
+  isOfferProductCategoryMappingExists,
+  updateOfferProductCategoryMappingById,
 } from "../models/offer.model.js";
 import {
   badRequest,
@@ -28,6 +36,10 @@ import {
 // OFFER CONTROLLERS
 // ============================================================================
 
+// ============================================================================
+// OFFER MASTER CONTROLLERS
+// ============================================================================
+
 /**
  * Create a new offer.
  * Flow:
@@ -40,23 +52,11 @@ export const createOfferController = async (req, res) => {
     // Validate request payload before creating an offer.
     const offerData = req.body;
     const userId = req.user.id;
-    offerData.product_id =
-      offerData.product_id && offerData.product_id > 0
-        ? Number(offerData.product_id)
-        : null;
-
-    offerData.category_id =
-      offerData.category_id && offerData.category_id > 0
-        ? Number(offerData.category_id)
-        : null;
 
     const exists = await checkOfferExist(offerData);
 
     if (exists) {
-      return conflict(
-        res,
-        "Offer already exists for this product/category in the same time slot",
-      );
+      return conflict(res, "Offer already exists in the same time slot");
     }
     if (!offerData || Object.keys(offerData).length === 0) {
       return badRequest(res, "Request body is required");
@@ -68,11 +68,224 @@ export const createOfferController = async (req, res) => {
       offer_id: result.insertId,
     });
   } catch (error) {
-    console.error(error);
+    return serverError(res, error.message || "Internal server error");
 
     return serverError(res, error.message || "Internal server error");
   }
 };
+
+// ============================================================================
+// OFFER PRODUCT CATEGORY MAPPING CONTROLLERS
+// ============================================================================
+
+/**
+ * Create offer-product/category mapping.
+ * Rules:
+ * - offer must exist and not be deleted
+ * - exactly one of product_id/category_id is expected via validator
+ * - duplicate active mapping for same offer-scope is blocked
+ */
+export const createOfferProductCategoryMappingController = async (req, res) => {
+  try {
+    const mappingData = req.body;
+    const userId = req.user.id;
+
+    const offerExists = await isOfferExistsById(mappingData.offer_id);
+    if (!offerExists) {
+      return notFound(res, "Offer not found");
+    }
+
+    const mappingExists =
+      await isOfferProductCategoryMappingExists(mappingData);
+    if (mappingExists) {
+      return conflict(res, "Offer mapping already exists");
+    }
+
+    const result = await createOfferProductCategoryMapping(mappingData, userId);
+    const createdMapping = await getOfferProductCategoryMappingById(
+      result.insertId,
+    );
+
+    return created(
+      res,
+      "Offer mapping created successfully",
+      createdMapping[0],
+    );
+  } catch (error) {
+    console.error(error);
+    return serverError(res, error.message || "Internal server error");
+  }
+};
+
+/**
+ * Fetch all product/category mappings.
+ */
+export const getAllOfferProductCategoryMappingsController = async (
+  req,
+  res,
+) => {
+  try {
+    const result = await getAllOfferProductCategoryMappings();
+
+    if (!result || result.length === 0) {
+      return notFound(res, "No mappings found");
+    }
+
+    return ok(res, "Offer mappings fetched successfully", result);
+  } catch (error) {
+    console.error(error);
+    return serverError(res, error.message || "Internal server error");
+  }
+};
+
+/**
+ * Fetch all product/category mappings for a given offer id.
+ */
+export const getOfferProductCategoryMappingsByOfferIdController = async (
+  req,
+  res,
+) => {
+  try {
+    const offerId = req.params.id;
+
+    const offerExists = await isOfferExistsById(offerId);
+    if (!offerExists) {
+      return notFound(res, "Offer not found");
+    }
+
+    const result = await getOfferProductCategoryMappingsByOfferId(offerId);
+    if (!result || result.length === 0) {
+      return notFound(res, "No mapping found for this offer");
+    }
+
+    return ok(res, "Offer mappings fetched successfully", result);
+  } catch (error) {
+    console.error(error);
+    return serverError(res, error.message || "Internal server error");
+  }
+};
+
+/**
+ * Update offer-product/category mapping by mapping id.
+ * Supports:
+ * - toggling is_active
+ * - switching mapping scope product<->category
+ * Duplicate scope for same offer is blocked.
+ */
+export const updateOfferProductCategoryMappingByIdController = async (
+  req,
+  res,
+) => {
+  try {
+    const mappingId = req.params.id;
+    const userId = req.user.id;
+    const payload = req.body;
+
+    const existing = await getOfferProductCategoryMappingById(mappingId);
+    if (!existing || existing.length === 0) {
+      return notFound(res, "Mapping not found");
+    }
+
+    const current = existing[0];
+
+    // Validate that both product_id and category_id are not provided together.
+    const hasProductId = Object.prototype.hasOwnProperty.call(
+      payload,
+      "product_id",
+    );
+    const hasCategoryId = Object.prototype.hasOwnProperty.call(
+      payload,
+      "category_id",
+    );
+
+    if (hasProductId && hasCategoryId) {
+      return badRequest(
+        res,
+        "Cannot update both product_id and category_id in the same request. Provide only one scope.",
+      );
+    }
+
+    // If one scope is provided, force the other to NULL to keep exactly one scope.
+    const updateData = { ...payload };
+    if (hasProductId) {
+      updateData.category_id = null;
+    }
+    if (hasCategoryId) {
+      updateData.product_id = null;
+    }
+
+    const finalProductId = Object.prototype.hasOwnProperty.call(
+      updateData,
+      "product_id",
+    )
+      ? updateData.product_id
+      : current.product_id;
+    const finalCategoryId = Object.prototype.hasOwnProperty.call(
+      updateData,
+      "category_id",
+    )
+      ? updateData.category_id
+      : current.category_id;
+
+    const hasDuplicate = await isOfferProductCategoryDuplicateOnUpdate(
+      current.offer_id,
+      finalProductId,
+      finalCategoryId,
+      mappingId,
+    );
+    if (hasDuplicate) {
+      return conflict(res, "Offer mapping already exists");
+    }
+
+    const result = await updateOfferProductCategoryMappingById(
+      mappingId,
+      updateData,
+      userId,
+    );
+
+    if (!result || result.affectedRows === 0) {
+      return notFound(res, "Mapping not found or already deleted");
+    }
+
+    const updatedMapping = await getOfferProductCategoryMappingById(mappingId);
+
+    return ok(res, "Offer mapping updated successfully", updatedMapping[0]);
+  } catch (error) {
+    console.error(error);
+    return serverError(res, error.message || "Internal server error");
+  }
+};
+
+/**
+ * Soft delete mapping by mapping id.
+ */
+export const deleteOfferProductCategoryMappingByIdController = async (
+  req,
+  res,
+) => {
+  try {
+    const mappingId = req.params.id;
+    const userId = req.user.id;
+
+    const result = await deleteOfferProductCategoryMappingById(
+      mappingId,
+      userId,
+    );
+
+    if (!result || result.affectedRows === 0) {
+      return notFound(res, "Mapping not found or already deleted");
+    }
+
+    return ok(res, "Offer mapping deleted successfully");
+  } catch (error) {
+    console.error(error);
+    return serverError(res, error.message || "Internal server error");
+  }
+};
+
+// ============================================================================
+// OFFER MASTER CONTROLLERS (CONTINUED)
+// ============================================================================
 
 /**
  * Fetch all offers (including active/inactive and soft-delete state as returned by model query).
@@ -90,7 +303,7 @@ export const getAllOfferController = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return serverError(res);
+    return serverError(res, error.message || "Internal server error");
   }
 };
 
@@ -125,8 +338,9 @@ export const updateOfferByIdController = async (req, res) => {
     // Read target offer id from route and partial update payload from body.
     const offerId = req.params.id;
     const offerData = req.body;
+    const userId = req.user.id;
 
-    const result = await updateOfferById(offerId, offerData);
+    const result = await updateOfferById(offerId, offerData, userId);
 
     // `affectedRows = 0` means id not found or soft-deleted.
     if (!result || result.affectedRows === 0) {
@@ -147,7 +361,8 @@ export const updateOfferByIdController = async (req, res) => {
 export const deleteOfferByIdController = async (req, res) => {
   try {
     const offerId = req.params.id;
-    const result = await deleteOfferById(offerId);
+    const userId = req.user.id;
+    const result = await deleteOfferById(offerId, userId);
 
     // Soft delete only works when row exists and is not already deleted.
     if (!result || result.affectedRows === 0) {
@@ -169,8 +384,9 @@ export const updateOfferStatusController = async (req, res) => {
   try {
     const offerId = req.params.id;
     const isActive = req.body.is_active;
+    const userId = req.user.id;
 
-    const result = await activeupdateOfferStatusById(isActive, offerId);
+    const result = await activeupdateOfferStatusById(isActive, offerId, userId);
 
     // No target row matched for update.
     if (!result || result.affectedRows === 0) {
@@ -201,49 +417,11 @@ export const getActiveOfferController = async (req, res) => {
       return notFound(res, "No offers found");
     }
 
-    return ok(res, `${result.length} Active Offers fetched successfully`, result);
-  } catch (error) {
-    console.error(error);
-
-    return serverError(res, error.message || "Internal server error");
-  }
-};
-
-/**
- * Fetch all offers for a specific product id.
- * Route param `id` is interpreted as product id.
- */
-export const getOfferByProductController = async (req, res) => {
-  try {
-    const productId = req.params.id;
-    const result = await getOfferByProductId(productId);
-
-    if (!result || result.length === 0) {
-      return notFound(res, "No offers found with this productId");
-    }
-
-    return ok(res,  `Offers with ${productId} productId fetched successfully`, result);
-  } catch (error) {
-    console.error(error);
-
-    return serverError(res, error.message || "Internal server error");
-  }
-};
-
-/**
- * Fetch all offers for a specific category id.
- * Route param `id` is interpreted as category id.
- */
-export const getOfferByCategoryController = async (req, res) => {
-  try {
-    const categoryId = req.params.id;
-    const result = await getOfferByCategoryId(categoryId);
-
-    if (!result || result.length === 0) {
-      return notFound(res, "No offers found with this categoryId");
-    }
-
-    return ok(res, `Offers with ${categoryId} categoryId fetched successfully`, result);
+    return ok(
+      res,
+      `${result.length} Active Offers fetched successfully`,
+      result,
+    );
   } catch (error) {
     console.error(error);
 
@@ -267,12 +445,8 @@ export const validateOfferController = async (req, res) => {
     // TODO: read user id from authenticated request context.
     const userId = req.user.id;
 
-    // Step 1: Fetch a currently valid offer for provided scope.
-    const result = await getValidateOfferByName(
-      offer_name,
-      product_id,
-      category_id,
-    );
+    // Step 1: Fetch a currently valid offer.
+    const result = await getValidateOfferByName(offer_name);
 
     if (!result || result.length === 0) {
       return badRequest(res, "Offer not valid or expired");
@@ -280,7 +454,20 @@ export const validateOfferController = async (req, res) => {
 
     const offer = result[0];
 
-    // Step 2: Enforce minimum purchase amount if configured.
+    // Step 2: Ensure offer is mapped to requested product/category scope.
+    const hasScopeMapping = await isOfferMappedToScope(
+      offer.offer_id,
+      product_id ?? null,
+      category_id ?? null,
+    );
+    if (!hasScopeMapping) {
+      return badRequest(
+        res,
+        "Offer is not applicable for provided product/category",
+      );
+    }
+
+    // Step 3: Enforce minimum purchase amount if configured.
     if (offer.min_purchase_amount && total < offer.min_purchase_amount) {
       return badRequest(
         res,
@@ -288,7 +475,7 @@ export const validateOfferController = async (req, res) => {
       );
     }
 
-    // Step 3: Enforce per-user usage limit if configured.
+    // Step 4: Enforce per-user usage limit if configured.
     if (offer.usage_limit_per_user) {
       const usageCount = await getOfferUsageCount(offer.offer_id, userId);
 
@@ -297,7 +484,7 @@ export const validateOfferController = async (req, res) => {
       }
     }
 
-    // Step 4: Calculate discount and final amount.
+    // Step 5: Calculate discount and final amount.
     let discountAmount = 0;
     const type = offer.discount_type.toLowerCase();
 
@@ -311,7 +498,7 @@ export const validateOfferController = async (req, res) => {
         discountAmount = offer.maximum_discount_amount;
       }
     } else if (type === "fixed_amount") {
-      discountAmount = offer.discount_value;
+      discountAmount = Math.min(offer.discount_value, total);
     }
 
     // Consumer/order module should persist usage in `offer_usage` after successful order placement.
@@ -326,6 +513,10 @@ export const validateOfferController = async (req, res) => {
     return serverError(res, error.message || "Internal server error");
   }
 };
+
+// ============================================================================
+// OFFER USAGE CONTROLLERS
+// ============================================================================
 
 /**
  * Fetch usage history rows for a given offer id.
@@ -389,6 +580,6 @@ export const getAllOfferUsageSummaryController = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return serverError(res, error.message);
+    return serverError(res, error.message || "Internal server error");
   }
 };
