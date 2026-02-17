@@ -5,6 +5,7 @@ import categoryRoutes from "./routes/category.routes.js";
 import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
 import portionRouter from "./routes/portion.route.js";
+import reviewRouter from "./routes/review.routes.js";
 // import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
 // import cartRouter from "./routes/cart.route.js";
@@ -47,6 +48,7 @@ app.get("/", (req, res) => {
       // products: "/api/products",
       category: "/api/category",
       offer: "/api/offer",
+      review: "/api/review",
       // cart: "/api/cart",
       // orders: "/api/orders",
     },
@@ -57,6 +59,7 @@ app.get("/", (req, res) => {
 app.use("/api/users", userRoute);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
+app.use("/api/review", reviewRouter);
 
 
 //app.use("/api/payments", paymentRoutes);
@@ -99,4 +102,5 @@ app.listen(port, () => {
   console.log(`  - Users: http://localhost:${port}/api/users`);
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
   console.log(`  - Portion: http://localhost:${port}/api/portion`);
+  console.log(`  - Review: http://localhost:${port}/api/review`);
 });
