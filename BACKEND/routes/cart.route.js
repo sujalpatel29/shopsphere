@@ -12,9 +12,9 @@ import {
 
 } from "../controllers/cart.controller.js";
 
-import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { auth } from "../middlewares/auth.middleware.js";
 
-import { validateCart, validateCartItemOwnership } from "../middlewares/cartMiddleware.js";
+import { validateCart, validateCartItemOwnership } from "../middlewares/cart.middleware.js";
 
 
 const router = express.Router();
@@ -35,7 +35,7 @@ const router = express.Router();
 
  */
 
-router.get("/", authMiddleware, validateCart, getCart);
+router.get("/", auth, validateCart, getCart);
 
 
 /** 
@@ -50,7 +50,7 @@ router.get("/", authMiddleware, validateCart, getCart);
 
  */
 
-router.post("/items", authMiddleware, validateCart, addItemToCart);
+router.post("/items", auth, validateCart, addItemToCart);
 
 
 /** 
@@ -65,7 +65,7 @@ router.post("/items", authMiddleware, validateCart, addItemToCart);
 
  */
 
-router.patch("/items/:cartItemId", authMiddleware, validateCart, validateCartItemOwnership, updateCartItem);
+router.patch("/items/:cartItemId", auth, validateCart, validateCartItemOwnership, updateCartItem);
 
 
 /** 
@@ -78,7 +78,7 @@ router.patch("/items/:cartItemId", authMiddleware, validateCart, validateCartIte
 
  */
 
-router.delete("/items/:cartItemId", authMiddleware, validateCart, validateCartItemOwnership, removeCartItem);
+router.delete("/items/:cartItemId", auth, validateCart, validateCartItemOwnership, removeCartItem);
 
 
 export default router;

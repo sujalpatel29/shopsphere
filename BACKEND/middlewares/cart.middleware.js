@@ -6,7 +6,7 @@ import { getOrCreateCartByUserId, getCartItemsWithProduct } from "../models/cart
  */
 export async function validateCart(req, res, next) {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     if (!userId) {
       return res.status(401).json({
@@ -35,7 +35,7 @@ export async function validateCart(req, res, next) {
 export async function validateCartItemOwnership(req, res, next) {
   try {
     const { cartItemId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const cart = req.cart;
 
     if (!cart) {
