@@ -10,11 +10,26 @@ const router = express.Router();
  * Base path: /api/payments
  */
 
+<<<<<<< HEAD
 // POST /api/payments/initiate - Start a new payment (COD or Razorpay)
 router.post("/initiate", auth, PaymentController.initiatePayment);
 
 // POST /api/payments/verify - Verify Razorpay payment after frontend checkout
 router.post("/verify", auth, PaymentController.verifyPayment);
+=======
+// POST /api/payments/initiate - Start a new payment (COD or Stripe)
+router.post("/initiate", auth, PaymentController.initiatePayment);
+
+// POST /api/payments/verify - Verify Stripe payment after frontend checkout
+router.post("/verify", auth, PaymentController.verifyPayment);
+
+// POST /api/payments/webhook - Stripe webhook for async events (no auth - Stripe calls this)
+router.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  PaymentController.handleWebhook,
+);
+>>>>>>> 3b634935f210aec81976b3b44ff6951be7797166
 
 // GET /api/payments/order/:orderId - Get all payments for an order
 router.get("/order/:orderId", auth, PaymentController.getPaymentsByOrder);

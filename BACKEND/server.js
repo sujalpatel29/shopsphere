@@ -1,10 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
-
+import categoryRoutes from "./routes/category.routes.js";
 // Import Routes
-// import paymentRoutes from "./routes/payments.route.js";
-// import cartRouter from "./routes/cart.route.js";
+import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
+import portionRouter from "./routes/portion.route.js";
+// import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
 import modifierRoute from "./routes/modifier.route.js";
 // import cartRouter from "./routes/cart.route.js";
@@ -15,13 +16,19 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
-const port = process.env.SERVER_PORT || 3000;
+const port = process.env.PORT || 3000;
 
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
-// Parse JSON request bodies
-app.use(express.json());
+// Parse JSON request bodies (skip for Stripe webhook - it needs raw body)
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/payments/webhook") {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
 
 // Parse URL-encoded request bodies
 app.use(express.urlencoded({ extended: true }));
@@ -30,7 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 // ROUTES
 // ============================================================================
 
-// Health check / Welcome route
+//  Welcome route
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -41,7 +48,8 @@ app.get("/", (req, res) => {
       payments: "/api/payments",
       modifiers: "/api/modifiers",
       // products: "/api/products",
-      // categories: "/api/categories",
+      category: "/api/category",
+      offer: "/api/offer",
       // cart: "/api/cart",
       // orders: "/api/orders",
     },
@@ -49,11 +57,16 @@ app.get("/", (req, res) => {
 });
 
 // API Routes
-// app.use("/api/cart", cartRouter);
 app.use("/api/users", userRoute);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/portion", portionRouter);
+
+
 app.use("/api/offer", offerRoute);
 app.use("/api/modifiers", modifierRoute);
 //app.use("/api/payments", paymentRoutes);
+app.use("/api/category", categoryRoutes);
+app.use("/api/offer", offerRoute);
 // Add more routes here as you create them:
 // app.use("/api/products", productRoutes);
 // app.use("/api/categories", categoryRoutes);
@@ -89,7 +102,6 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   console.log(`API Endpoints:`);
   console.log(`  - Users: http://localhost:${port}/api/users`);
+  console.log(`  - Payments: http://localhost:${port}/api/payments`);
+  console.log(`  - Portion: http://localhost:${port}/api/portion`);
 });
-// app.get("/", (req, res) => {
-//   res.send("Om prajapati");
-// });
