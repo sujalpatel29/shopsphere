@@ -47,10 +47,10 @@ app.get("/", (req, res) => {
       users: "/api/users",
       payments: "/api/payments",
       modifiers: "/api/modifiers",
+      cart: "/api/cart",
       // products: "/api/products",
       category: "/api/category",
       offer: "/api/offer",
-      // cart: "/api/cart",
       // orders: "/api/orders",
     },
   });
@@ -58,6 +58,7 @@ app.get("/", (req, res) => {
 
 // API Routes
 app.use("/api/users", userRoute);
+app.use("/api/cart", cartRouter);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
 
@@ -102,6 +103,7 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   console.log(`API Endpoints:`);
   console.log(`  - Users: http://localhost:${port}/api/users`);
+  console.log(`  - Cart: http://localhost:${port}/api/cart`);
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
   console.log(`  - Portion: http://localhost:${port}/api/portion`);
 });
