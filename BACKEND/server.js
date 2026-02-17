@@ -5,7 +5,7 @@ import categoryRoutes from "./routes/category.routes.js";
 import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
 import portionRouter from "./routes/portion.route.js";
-// import cartRouter from "./routes/cart.route.js";
+import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
 import modifierRoute from "./routes/modifier.route.js";
 // import cartRouter from "./routes/cart.route.js";
@@ -63,7 +63,7 @@ app.use("/api/users", userRoute);
 app.use("/api/cart", cartRouter);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
-
+app.use("/api/cart",cartRouter);
 
 app.use("/api/offer", offerRoute);
 app.use("/api/modifiers", modifierRoute);
@@ -108,5 +108,6 @@ app.listen(port, () => {
   console.log(`  - Cart: http://localhost:${port}/api/cart`);
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
   console.log(`  - Portion: http://localhost:${port}/api/portion`);
+  console.log(`  - Offer: http://localhost:${port}/api/offer`);
   console.log(`  - Portion: http://localhost:${port}/api/products`);
 });
