@@ -5,6 +5,8 @@ import categoryRoutes from "./routes/category.routes.js";
 import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
 import portionRouter from "./routes/portion.route.js";
+import reviewRouter from "./routes/review.routes.js";
+// import cartRouter from "./routes/cart.route.js";
 import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
 import modifierRoute from "./routes/modifier.route.js";
@@ -53,6 +55,8 @@ app.get("/", (req, res) => {
       // products: "/api/products",
       category: "/api/category",
       offer: "/api/offer",
+      review: "/api/review",
+      // cart: "/api/cart",
       // orders: "/api/orders",
     },
   });
@@ -63,6 +67,7 @@ app.use("/api/users", userRoute);
 app.use("/api/cart", cartRouter);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
+app.use("/api/review", reviewRouter);
 app.use("/api/cart",cartRouter);
 
 app.use("/api/offer", offerRoute);
@@ -108,6 +113,7 @@ app.listen(port, () => {
   console.log(`  - Cart: http://localhost:${port}/api/cart`);
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
   console.log(`  - Portion: http://localhost:${port}/api/portion`);
+  console.log(`  - Review: http://localhost:${port}/api/review`);
   console.log(`  - Offer: http://localhost:${port}/api/offer`);
   console.log(`  - Portion: http://localhost:${port}/api/products`);
 });
