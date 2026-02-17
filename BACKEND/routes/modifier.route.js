@@ -7,12 +7,10 @@ import { validate } from "../middlewares/Validations.middleware.js";
 import {
   createModifierSchema,
   updateModifierSchema,
-  deleteModifierSchema,
-  patchModifierSchema,
+  // patchModifierSchema,
   createModifierPortionSchema,
   updateModifierPortionSchema,
-  deleteModifierPortionSchema,
-  patchModifierPortionSchema,
+  // patchModifierPortionSchema,
 } from "../validations/modifier.validation.js";
 
 // Import controllers
@@ -23,13 +21,12 @@ import {
   updateModifierController,
   deleteModifierController,
   toggleModifierController,
-  patchModifierController,
   getAllModifierPortionsController,
+  getModifiersByProductPortionController,
   createModifierPortionController,
   updateModifierPortionController,
   deleteModifierPortionController,
   toggleModifierPortionController,
-  patchModifierPortionController,
 } from "../controllers/modifier.controller.js";
 
 // Import middlewares
@@ -71,14 +68,14 @@ modifierRouter.delete("/:id", auth, adminOnly, deleteModifierController);
 // PATCH /api/modifiers/:id/toggle - Toggle active status (Admin only)
 modifierRouter.patch("/:id/toggle", auth, adminOnly, toggleModifierController);
 
-// PATCH /api/modifiers/:id - Partial update modifier (Admin only)
-modifierRouter.patch(
-  "/:id",
-  auth,
-  adminOnly,
-  validate(patchModifierSchema),
-  patchModifierController,
-);
+// // PATCH /api/modifiers/:id - Partial update modifier (Admin only)
+// modifierRouter.patch(
+//   "/:id",
+//   auth,
+//   adminOnly,
+//   validate(patchModifierSchema),
+//   patchModifierController,
+// );
 
 // ============================================================================
 // MODIFIER PORTION ROUTES
@@ -94,6 +91,12 @@ modifierRouter.post(
   adminOnly,
   validate(createModifierPortionSchema),
   createModifierPortionController,
+);
+
+// GET /api/modifiers/by-portion/:product_portion_id - Get all modifiers for a portion (Public)
+modifierRouter.get(
+  "/by-portion/:product_portion_id",
+  getModifiersByProductPortionController,
 );
 
 // PUT /api/modifiers/portions/:id - Update modifier portion
@@ -121,13 +124,13 @@ modifierRouter.patch(
   toggleModifierPortionController,
 );
 
-// PATCH /api/modifiers/portions/:id - Partial update portion (Admin only)
-modifierRouter.patch(
-  "/portions/:id",
-  auth,
-  adminOnly,
-  validate(patchModifierPortionSchema),
-  patchModifierPortionController,
-);
+// // PATCH /api/modifiers/portions/:id - Partial update portion (Admin only)
+// modifierRouter.patch(
+//   "/portions/:id",
+//   auth,
+//   adminOnly,
+//   validate(patchModifierPortionSchema),
+//   patchModifierPortionController,
+// );
 
 export default modifierRouter;

@@ -24,16 +24,16 @@ export const updateModifierSchema = z.object({
 // Schema for deleting a modifier (no body needed, ID comes from URL)
 export const deleteModifierSchema = z.object({});
 
-// Schema for partial update (all fields optional)
-export const patchModifierSchema = z.object({
-  modifier_name: z.string().min(1, "Modifier name cannot be empty").optional(),
-  modifier_value: z
-    .string()
-    .min(1, "Modifier value cannot be empty")
-    .optional(),
-  additional_price: z.number().min(0, "Price cannot be negative").optional(),
-  is_active: z.boolean().optional(),
-});
+// // Schema for partial update (all fields optional)
+// export const patchModifierSchema = z.object({
+//   modifier_name: z.string().min(1, "Modifier name cannot be empty").optional(),
+//   modifier_value: z
+//     .string()
+//     .min(1, "Modifier value cannot be empty")
+//     .optional(),
+//   additional_price: z.number().min(0, "Price cannot be negative").optional(),
+//   is_active: z.boolean().optional(),
+// });
 
 // ============================================================================
 // MODIFIER PORTION SCHEMAS
@@ -63,9 +63,9 @@ export const updateModifierPortionSchema = z.object({
 // Schema for deleting a modifier portion (no body needed, ID comes from URL)
 export const deleteModifierPortionSchema = z.object({});
 
-// Schema for partial update of modifier portion (all fields optional)
-export const patchModifierPortionSchema = z.object({
-  additional_price: z.number().min(0, "Price cannot be negative").optional(),
-  stock: z.number().int().min(0, "Stock cannot be negative").optional(),
-  is_active: z.boolean().optional(),
-});
+// // Schema for partial update of modifier portion (all fields optional)
+// export const patchModifierPortionSchema = z.object({
+//   additional_price: z.number().min(0, "Price cannot be negative").optional(),
+//   stock: z.number().int().min(0, "Stock cannot be negative").optional(),
+//   is_active: z.boolean().optional(),
+// });
