@@ -94,7 +94,7 @@ export const loginUser = async (req, res) => {
         role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "30s" },
+      { expiresIn: "1h" },
     );
 
     const refreshToken = jwt.sign(
@@ -102,12 +102,6 @@ export const loginUser = async (req, res) => {
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: "7d" },
     );
-
-    // const refreshToken = jwt.sign(
-    //   { id: user.user_id, email: user.email, name: user.name, role: user.role },
-    //   process.env.JWT_REFRESH_SECRET,
-    //   { expiresIn: "7d" },
-    // );
 
     await pool.query(
       `UPDATE user_master SET last_login = CURRENT_TIMESTAMP, refresh_token = ? WHERE user_id = ?`,
@@ -126,19 +120,13 @@ export const logoutUser = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // 1️ Remove refresh token from DB
+    // Remove refresh token from DB
     await logoutUserModel(userId);
 
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-    });
+    return ok(res, "Logged out successfully");
   } catch (error) {
     console.error("Logout Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong",
-    });
+    return serverError(res, "Something went wrong");
   }
 };
 
@@ -147,38 +135,33 @@ export const refreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
 
+    // 1️ Check refresh token exists
     if (!refreshToken) {
-      return res.status(401).json({
-        message: "Refresh token required",
-      });
+      return unauthorized(res, "Refresh token required");
     }
 
-    // 1️ Verify token signature
+    // 2️ Verify token signature
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-    // 2️ Check token exists in DB
+    // 3️ Check token exists in DB
     const rows = await refreshTokenHelper(decoded.id, refreshToken);
 
     if (rows.length === 0) {
-      return res.status(403).json({
-        message: "Invalid refresh token",
-      });
+      return forbidden(res, "Invalid refresh token");
     }
 
-    // 3️ Generate new access token
+    // 4️ Generate new access token
     const newAccessToken = jwt.sign(
       { id: decoded.id },
       process.env.JWT_SECRET,
       { expiresIn: "30s" },
     );
 
-    return res.status(200).json({
+    return ok(res, "Access token refreshed", {
       accessToken: newAccessToken,
     });
   } catch (error) {
-    return res.status(403).json({
-      message: "Invalid or expired refresh token",
-    });
+    return forbidden(res, "Invalid or expired refresh token");
   }
 };
 
@@ -393,42 +376,35 @@ export const blockUser = async (req, res) => {
     const userId = req.params.id;
     const adminId = req.user.id;
 
+    // 1️ Validate userId
     if (!userId) {
-      return res.status(400).json({
-        message: "User ID is required",
-      });
+      return badRequest(res, "User ID is required");
     }
 
-    // Check if user exists
+    // 2️ Check if user exists
     const [rows] = await pool.query(
       "SELECT is_blocked FROM user_master WHERE user_id = ?",
-      [userId],
+      [userId]
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+      return notFound(res, "User not found");
     }
 
     const user = rows[0];
 
+    // 3️ Check if already blocked
     if (Number(user.is_blocked) === 1) {
-      return res.status(400).json({
-        message: "User is already blocked",
-      });
+      return badRequest(res, "User is already blocked");
     }
 
-    // Update block status
+    // 4️ Update block status
     await blockUserById(userId, adminId);
 
-    return res.status(200).json({
-      message: "User blocked successfully",
-    });
+    return ok(res, "User blocked successfully");
+
   } catch (error) {
     console.error("Block User Error:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return serverError(res, "Internal server error");
   }
 };

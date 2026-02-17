@@ -1,0 +1,118 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Merriweather:wght@700&display=swap");
+
+/* Professional E-Commerce Theme */
+:root {
+  --font-size: 16px;
+  --radius: 0.75rem;
+
+  --background: #f4f6fb;
+  --foreground: #101828;
+
+  --card: #ffffff;
+  --card-foreground: #101828;
+  --popover: #ffffff;
+  --popover-foreground: #101828;
+
+  --primary: #0f172a;
+  --primary-foreground: #f8fafc;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --accent: #dbe6ff;
+  --accent-foreground: #1e3a8a;
+
+  --muted: #e9eef7;
+  --muted-foreground: #475467;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+
+  --border: #d0d5dd;
+  --input: #ffffff;
+  --input-background: #f8faff;
+  --switch-background: #d0d5dd;
+  --ring: #1d4ed8;
+
+  --sidebar: #f8faff;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #0f172a;
+  --sidebar-primary-foreground: #f8fafc;
+  --sidebar-accent: #e6ecfa;
+  --sidebar-accent-foreground: #1f2937;
+  --sidebar-border: #d0d5dd;
+  --sidebar-ring: #1d4ed8;
+
+  --font-serif: "Merriweather", Georgia, serif;
+  --font-sans: "Manrope", "Segoe UI", sans-serif;
+}
+
+.dark {
+  --background: #090e1a;
+  --foreground: #e5e7eb;
+  --card: #111827;
+  --card-foreground: #e5e7eb;
+  --popover: #111827;
+  --popover-foreground: #e5e7eb;
+  --primary: #e2e8f0;
+  --primary-foreground: #0b1220;
+  --secondary: #334155;
+  --secondary-foreground: #f8fafc;
+  --accent: #1e293b;
+  --accent-foreground: #bfdbfe;
+  --muted: #1f2937;
+  --muted-foreground: #94a3b8;
+  --destructive: #ef4444;
+  --destructive-foreground: #0f172a;
+  --border: #374151;
+  --input: #111827;
+  --input-background: #0f172a;
+  --switch-background: #374151;
+  --ring: #60a5fa;
+  --sidebar: #0f172a;
+  --sidebar-foreground: #e5e7eb;
+  --sidebar-primary: #e2e8f0;
+  --sidebar-primary-foreground: #0b1220;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #bfdbfe;
+  --sidebar-border: #374151;
+  --sidebar-ring: #60a5fa;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+body {
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at 85% 5%, rgba(29, 78, 216, 0.08), transparent 45%),
+    radial-gradient(circle at 15% 10%, rgba(15, 23, 42, 0.08), transparent 35%),
+    var(--background);
+  color: var(--foreground);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+label,
+button {
+  font-weight: 600;
+}
+
+input {
+  font-family: inherit;
+}
+
+

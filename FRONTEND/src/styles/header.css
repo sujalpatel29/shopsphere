@@ -1,0 +1,66 @@
+.btn-uniform {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  position: relative;
+  cursor: pointer;
+}
+
+.btn-account {
+  height: 40px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.nav-link {
+  cursor: pointer;
+  position: relative;
+  transition: opacity 0.2s ease;
+}
+
+.nav-link:hover {
+  opacity: 0.85;
+}
+
+.search-bar {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 9999px 0 0 9999px;
+  outline: none;
+}
+
+.search-btn {
+  border-radius: 0 9999px 9999px 0;
+  position: relative;
+}
+
+.cart-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.cart-count {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #b42318;
+  color: white;
+  font-size: 8px;
+  font-weight: 600;
+  border-radius: 50%;
+  line-height: 1;
+  z-index: 10;
+}
