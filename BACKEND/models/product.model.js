@@ -1,8 +1,7 @@
 import db from "../configs/db.js";
 
 const Product = {
-
-    //  Create Product
+  //  Create Product
   create: (data, conn = db) => {
     const sql = `
       INSERT INTO product_master
@@ -20,11 +19,11 @@ const Product = {
       data.discounted_price,
       data.stock ?? 0,
       data.category_id ?? null,
-      data.created_by
+      data.created_by,
     ]);
   },
 
-    //  Fetch Category + Parents
+  //  Fetch Category + Parents
   getCategoryWithParents: (categoryId, conn = db) => {
     const sql = `
       WITH RECURSIVE category_tree AS (
@@ -46,34 +45,34 @@ const Product = {
   },
 
   //  Check Category Exists
-checkCategoryExists: async (categoryId, conn = db) => {
-  const sql = `
+  checkCategoryExists: async (categoryId, conn = db) => {
+    const sql = `
     SELECT category_id
     FROM category_master
     WHERE category_id = ?
     LIMIT 1
   `;
 
-  const [rows] = await conn.execute(sql, [categoryId]);
-  return rows.length > 0;
-},
+    const [rows] = await conn.execute(sql, [categoryId]);
+    return rows.length > 0;
+  },
 
-    //  Insert Product Categories
+  //  Insert Product Categories
 
-  insertProductCategories: (productId, categoryIds, conn = db) => {
+  insertProductCategories: (productId, categoryIds, user_id, conn = db) => {
     if (!categoryIds.length) return;
 
-    const values = categoryIds.map(cid => [productId, cid]);
+    const values = categoryIds.map((cid) => [productId, cid, user_id]);
 
     const sql = `
-      INSERT IGNORE INTO product_categories (product_id, category_id) VALUES ?
+      INSERT IGNORE INTO product_categories (product_id, category_id, created_by) VALUES ?
     `;
 
     return conn.query(sql, [values]);
   },
 
   //  Soft Delete Product
-  
+
   softDelete: (productId, updatedBy, conn = db) => {
     const sql = `
       UPDATE product_master
@@ -87,18 +86,17 @@ checkCategoryExists: async (categoryId, conn = db) => {
   },
 
   // find all product with filtering
-  findAll: (filters = {}, conn = db) => {
+  findAll: async (filters = {}, pagination = {}, conn = db) => {
     const conditions = ["p.is_deleted = 0"];
     const values = [];
 
-    let sql = `
-      SELECT DISTINCT p.*
-      FROM product_master p
+    let baseSql = `
+      FROM product_master p 
     `;
 
     // category filtering
     if (filters.category_id) {
-      sql += `
+      baseSql += `
         INNER JOIN product_categories pc
         ON p.product_id = pc.product_id
       `;
@@ -129,20 +127,46 @@ checkCategoryExists: async (categoryId, conn = db) => {
       values.push(filters.is_active);
     }
 
-    sql += `
-      WHERE ${conditions.join(" AND ")}
-      ORDER BY p.created_at DESC
+    const whereClause = `WHERE ${conditions.join(" AND ")}`; //ORDER BY p.created_at DESC
+
+    const countSql = `
+      SELECT COUNT(DISTINCT p.product_id) as total
+      ${baseSql}
+      ${whereClause}
     `;
 
-    return conn.execute(sql, values);
+    const [countRows] = await conn.execute(countSql, values);
+    const total = countRows[0].total;
+
+    // Pagination values
+    const limit = Number(pagination.limit);
+    const offset = Number(pagination.offset);
+
+    const dataSql = `
+      SELECT DISTINCT p.*
+      ${baseSql}
+      ${whereClause}
+      ORDER BY p.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const [dataRows] = await conn.execute(
+      dataSql,
+      values
+    );
+
+    return { total, data: dataRows };
   },
 
   findById: (id) => {
-    return db.execute(`
+    return db.execute(
+      `
       SELECT *
       FROM product_master
       WHERE product_id = ? AND is_deleted = 0
-    `, [id]);
+    `,
+      [id],
+    );
   },
 
   update: (id, data, conn = db) => {
@@ -171,7 +195,7 @@ checkCategoryExists: async (categoryId, conn = db) => {
 
   updateStatus: (id, is_active, updatedBy, conn = db) => {
     const sql = `
-      UPDATE product_masterx
+      UPDATE product_master
       SET is_active = ?,
           updated_by = ?
       WHERE product_id = ? AND is_deleted = 0
@@ -179,6 +203,5 @@ checkCategoryExists: async (categoryId, conn = db) => {
 
     return conn.execute(sql, [is_active, updatedBy, id]);
   },
-
 };
 export default Product;

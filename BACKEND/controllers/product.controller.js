@@ -1,9 +1,18 @@
 import db from "../configs/db.js";
 import Product from "../models/product.model.js";
+import {
+  ok,
+  created,
+  badRequest,
+  notFound,
+  serverError,
+  paginated,
+  validationError
+} from "../utils/apiResponse.js";
+
 
 export const createProduct = async (req, res) => {
   const conn = await db.getConnection();
-      const USER_ID = 1; // admin / system user (temporary) 
 
   try {
     await conn.beginTransaction();
@@ -12,88 +21,75 @@ export const createProduct = async (req, res) => {
     if (req.body.category_id) {
       const exists = await Product.checkCategoryExists(
         req.body.category_id,
-        conn
+        conn,
       );
 
       if (!exists) {
         await conn.rollback();
         return res.status(400).json({
-          message: "Invalid category_id"
+          message: "Invalid category_id",
         });
       }
     }
-    // 1️. Insert product
-    const [result] = await Product.create({
-      ...req.body,
-    //    created_by: req.user.user_id
-        created_by: USER_ID
-
-    }, conn);
+    // Insert product
+    const [result] = await Product.create(
+      {
+        ...req.body,
+        created_by: req.user.id,
+      },
+      conn,
+    );
 
     const productId = result.insertId;
 
-    // 2️. Handle category hierarchy
+    // Handle category hierarchy
     if (req.body.category_id) {
       const [rows] = await Product.getCategoryWithParents(
         req.body.category_id,
-        conn
+        conn,
       );
 
-      const categoryIds = rows.map(r => r.category_id);
+      const categoryIds = rows.map((r) => r.category_id);
 
       await Product.insertProductCategories(
         productId,
         categoryIds,
-        conn
+        req.user.id,
+        conn,
       );
     }
 
     await conn.commit();
 
-    res.status(201).json({
-      message: "Product created successfully",
+    return created(res, "Product created successfully", {
       product_id: productId
     });
-
   } catch (err) {
     await conn.rollback();
-    res.status(500).json({
-      message: "Error creating product",
-      error: err.message
-    });
+    return serverError(res, err.message);
   } finally {
     conn.release();
   }
 };
 
-  //  Soft Delete Product
+//  Soft Delete Product
 export const deleteProduct = async (req, res) => {
-  const USER_ID = 1; // TEMP (replace with JWT later)
-
   try {
     const { id } = req.params;
 
-    const [result] = await Product.softDelete(id, USER_ID);
+    const [result] = await Product.softDelete(id, req.user.id);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({
-        message: "Product not found or already deleted"
-      });
+      return notFound(res, "Product not found or already deleted");
     }
 
-    res.json({
-      message: "Product deleted successfully"
-    });
-
+    return ok(res, "Product deleted successfully");
   } catch (err) {
-    res.status (500).json({
-      message: "Error deleting product",
-      error: err.message
-    });
+    return serverError(res, err.message);
   }
 };
 
-  // Get All Products
+// Get All Products
 export const getAllProducts = async (req, res) => {
   try {
     const filters = {
@@ -104,54 +100,82 @@ export const getAllProducts = async (req, res) => {
       is_active: req.query.is_active !== undefined ? Number(req.query.is_active) : undefined
     };
 
-    const [products] = await Product.findAll(filters);
+    // Pagination parsing
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 10);
 
-    res.json(products);
+    const offset = (page - 1) * limit;
+
+
+    const { total, data } = await Product.findAll(
+      filters,
+      { limit, offset }
+    );
+
+    return paginated(
+      res,
+      "Products fetched successfully",
+      data,
+      {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    );
+
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, err.message);
   }
 };
 
-  // Get Product By ID
+// Get Product By ID
 export const getProductById = async (req, res) => {
   try {
     const [rows] = await Product.findById(req.params.id);
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: 'Product not found' });
+      return notFound(res, "Product not found");
     }
 
-    res.json(rows[0]);
+    return ok(res, "Product fetched successfully", rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, err.message);
   }
 };
 
-  // Update Product
+// Update Product
 export const updateProduct = async (req, res) => {
-  const USER_ID = 1;
-
   try {
-    await Product.update(req.params.id, {
+    const [result] = await Product.update(
+      req.params.id, {
       ...req.body,
-      updated_by: USER_ID
+      updated_by: req.user.id,
     });
 
-    res.json({ message: "Product updated successfully" });
+    if (result.affectedRows === 0) {
+      return notFound(res, "Product not found or already deleted");
+    }
 
+    return ok(res, "Product updated successfully");
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, err.message);
   }
 };
 
-  // Update Product Status
-  
+// Update Product Status
+
 export const updateProductStatus = async (req, res) => {
   try {
-    await Product.updateStatus(req.params.id, req.body.is_active);
-    res.json({ message: 'Product status updated' });
+    const [result] = await Product.updateStatus(req.params.id, req.body.is_active, req.user.id);
+    if (result.affectedRows === 0) {
+      return notFound(res, "Product not found or already deleted");
+    }
+
+    return ok(res, "Product updated successfully");
   } catch (err) {
-    res.status(500).json({ error: err.message });
-   }
+    return serverError(res, err.message);
+
+  }
 };

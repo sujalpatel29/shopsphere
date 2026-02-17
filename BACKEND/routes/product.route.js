@@ -12,34 +12,34 @@ import {
   createProductSchema,
   updateProductSchema
 } from "../validations/product.validation.js";
+import { auth, adminOnly } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-/* =========================
-  Admin protected routes
-========================= */
+// Admin protected routes
+
 // Post products
 router.post(
   '/',
+  auth,
+  adminOnly,
   validate(createProductSchema),
   createProduct
 );
-// Delete produts
-router.delete("/:id", deleteProduct);
+// Delete produt
+router.delete("/:id", auth, adminOnly, deleteProduct);
 // Update Product
-// router.put('/products/:id', auth, productController.updateProduct); //auth error to be solve
 router.put(
   '/:id',
+  auth,
+  adminOnly,
   validate(updateProductSchema),
   updateProduct
-); //auth error to be solve
+); 
 // Update Product status
-// router.patch('/products/:id/status', auth, productController.updateProductStatus);
-router.patch('/:id/status', updateProductStatus);
+router.patch('/:id/status', auth, adminOnly, updateProductStatus);
 
-/* =========================
-  Public routes
-========================= */
+// Public routes
 router.get('/', getAllProducts);
 router.get('/:id', getProductById);
 
