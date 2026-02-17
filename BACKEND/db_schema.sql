@@ -757,3 +757,19 @@ CREATE TABLE `offer_product_category` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-02-05 10:42:41
+
+
+-- Add offer_id column to cart_items table
+ALTER TABLE `cart_items`
+ADD COLUMN `offer_id` int DEFAULT NULL AFTER `modifier_id`,
+ADD KEY `fk_cart_items_offer` (`offer_id`),
+ADD CONSTRAINT `fk_cart_items_offer` FOREIGN KEY (`offer_id`) REFERENCES `offer_master` (`offer_id`) ON DELETE SET NULL;
+
+
+ALTER TABLE `cart_master`
+ADD COLUMN `offer_id` int DEFAULT NULL AFTER `user_id`,
+ADD COLUMN `discount_amount` decimal(10,2) DEFAULT '0.00' AFTER `offer_id`,
+ADD KEY `fk_cart_master_offer` (`offer_id`),
+ADD CONSTRAINT `fk_cart_master_offer` FOREIGN KEY (`offer_id`) 
+    REFERENCES `offer_master` (`offer_id`) ON DELETE SET NULL;
+    
