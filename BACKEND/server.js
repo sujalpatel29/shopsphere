@@ -7,6 +7,11 @@ import userRoute from "./routes/User.route.js";
 import portionRouter from "./routes/portion.route.js";
 import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
+import modifierRoute from "./routes/modifier.route.js";
+// import cartRouter from "./routes/cart.route.js";
+
+import productRoutes from "./routes/product.route.js";
+
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +48,7 @@ app.get("/", (req, res) => {
     endpoints: {
       users: "/api/users",
       payments: "/api/payments",
+      modifiers: "/api/modifiers",
       cart: "/api/cart",
       // products: "/api/products",
       category: "/api/category",
@@ -59,11 +65,13 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
 app.use("/api/cart",cartRouter);
 
+app.use("/api/offer", offerRoute);
+app.use("/api/modifiers", modifierRoute);
 //app.use("/api/payments", paymentRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/offer", offerRoute);
 // Add more routes here as you create them:
-// app.use("/api/products", productRoutes);
+app.use("/api/products", productRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/orders", orderRoutes);
 
@@ -101,4 +109,5 @@ app.listen(port, () => {
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
   console.log(`  - Portion: http://localhost:${port}/api/portion`);
   console.log(`  - Offer: http://localhost:${port}/api/offer`);
+  console.log(`  - Portion: http://localhost:${port}/api/products`);
 });
