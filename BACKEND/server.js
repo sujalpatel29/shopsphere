@@ -10,6 +10,8 @@ import { route as offerRoute } from "./routes/offer.route.js";
 import modifierRoute from "./routes/modifier.route.js";
 // import cartRouter from "./routes/cart.route.js";
 
+import productRoutes from "./routes/product.route.js";
+
 
 // Load environment variables
 dotenv.config();
@@ -69,7 +71,7 @@ app.use("/api/modifiers", modifierRoute);
 app.use("/api/category", categoryRoutes);
 app.use("/api/offer", offerRoute);
 // Add more routes here as you create them:
-// app.use("/api/products", productRoutes);
+app.use("/api/products", productRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/orders", orderRoutes);
 
@@ -106,4 +108,5 @@ app.listen(port, () => {
   console.log(`  - Cart: http://localhost:${port}/api/cart`);
   console.log(`  - Payments: http://localhost:${port}/api/payments`);
   console.log(`  - Portion: http://localhost:${port}/api/portion`);
+  console.log(`  - Portion: http://localhost:${port}/api/products`);
 });
