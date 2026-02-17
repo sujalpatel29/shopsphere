@@ -148,17 +148,85 @@ export const getProductById = async (req, res) => {
 // Update Product
 export const updateProduct = async (req, res) => {
   try {
-    const [result] = await Product.update(
-      req.params.id, {
-      ...req.body,
-      updated_by: req.user.id,
-    });
+    // Fetch existing product to detect category change
+    const [existingRows] = await Product.findById(req.params.id);
 
-    if (result.affectedRows === 0) {
-      return notFound(res, "Product not found or already deleted");
+    if (existingRows.length === 0) {
+      return notFound(res, "Product not found");
     }
 
-    return ok(res, "Product updated successfully");
+    const existingProduct = existingRows[0];
+
+    // If category_id not provided or unchanged, do a simple update
+    if (!Object.prototype.hasOwnProperty.call(req.body, "category_id") ||
+      Number(req.body.category_id) === Number(existingProduct.category_id)
+    ) {
+      const [result] = await Product.update(
+        req.params.id,
+        {
+          ...req.body,
+          updated_by: req.user.id,
+        },
+      );
+
+      if (!result || result.affectedRows === 0) {
+        return notFound(res, "Product not found or already deleted");
+      }
+
+      return ok(res, "Product updated successfully");
+    }
+
+    // Category changed: validate and perform transactional update
+    const conn = await db.getConnection();
+
+    try {
+      await conn.beginTransaction();
+
+      // Validate new category exists
+      const newCategoryId = req.body.category_id;
+      const categoryExists = await Product.checkCategoryExists(newCategoryId, conn);
+
+      if (!categoryExists) {
+        await conn.rollback();
+        return notFound(res, "Category not found");
+      }
+
+      // Update product row (preserve updated_by)
+      const [updateResult] = await Product.update(
+        req.params.id,
+        {
+          ...req.body,
+          updated_by: req.user.id,
+        },
+        conn,
+      );
+
+      if (!updateResult || updateResult.affectedRows === 0) {
+        await conn.rollback();
+        return notFound(res, "Product not found or already deleted");
+      }
+
+      // Remove old product_categories rows
+      await conn.execute(
+        `DELETE FROM product_categories WHERE product_id = ?`,
+        [req.params.id],
+      );
+
+      // Build ancestor chain and insert new product_categories
+      const [rows] = await Product.getCategoryWithParents(newCategoryId, conn);
+      const categoryIds = rows.map((r) => r.category_id);
+
+      await Product.insertProductCategories(req.params.id, categoryIds, req.user.id, conn);
+
+      await conn.commit();
+
+      return ok(res, "Product updated successfully");
+    } catch (err) {
+      await conn.rollback();
+      return serverError(res, err.message);
+    } finally {
+      conn.release();
+    }
   } catch (err) {
     return serverError(res, err.message);
   }
