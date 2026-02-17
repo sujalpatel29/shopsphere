@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 // Import Routes
 // import paymentRoutes from "./routes/payments.route.js";
 import cartRouter from "./routes/cart.route.js";
-import userRoute from "./routes/User.route.js";
+import userRoute from "./routes/user.route.js";
 
 // Load environment variables
 dotenv.config();
