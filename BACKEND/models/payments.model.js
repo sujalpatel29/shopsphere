@@ -1,33 +1,33 @@
 // import pool from "../configs/db.js";
 
-// /**
-//  * @module PaymentModel
-//  * @description Database operations for the payment_master table.
-//  * Handles payment creation, retrieval, status updates, and refunds.
-//  */
-// const PaymentModel = {
-//   /**
-//    * Create a new payment record.
-//    * @param {Object} paymentData
-//    * @param {number} paymentData.order_id - Associated order ID
-//    * @param {string} paymentData.payment_method - 'cash_on_delivery' | 'razorpay'
-//    * @param {number} paymentData.amount - Payment amount
-//    * @param {string} [paymentData.currency='INR'] - ISO currency code
-//    * @param {string} [paymentData.transaction_id=null] - Gateway transaction ID
-//    * @param {string} [paymentData.status='pending'] - Initial payment status
-//    * @param {Object} [paymentData.payment_details=null] - Additional gateway data
-//    * @returns {Promise<Object>} MySQL insert result { insertId, affectedRows }
-//    */
-//   async create(paymentData) {
-//     const {
-//       order_id,
-//       payment_method,
-//       amount,
-//       currency = "INR",
-//       // transaction_id = null
-//       status = "pending",
-//       payment_details = null,
-//     } = paymentData;
+/**
+ * @module PaymentModel
+ * @description Database operations for the payment_master table.
+ * Handles payment creation, retrieval, status updates, and refunds.
+ */
+const PaymentModel = {
+  /**
+   * Create a new payment record.
+   * @param {Object} paymentData
+   * @param {number} paymentData.order_id - Associated order ID
+   * @param {string} paymentData.payment_method - 'cash_on_delivery' | 'stripe'
+   * @param {number} paymentData.amount - Payment amount
+   * @param {string} [paymentData.currency='INR'] - ISO currency code
+   * @param {string} [paymentData.transaction_id=null] - Gateway transaction ID
+   * @param {string} [paymentData.status='pending'] - Initial payment status
+   * @param {Object} [paymentData.payment_details=null] - Additional gateway data
+   * @returns {Promise<Object>} MySQL insert result { insertId, affectedRows }
+   */
+  async create(paymentData) {
+    const {
+      order_id,
+      payment_method,
+      amount,
+      currency = "INR",
+      transaction_id = null,
+      status = "pending",
+      payment_details = null,
+    } = paymentData;
 
 //     const query = `
 //       INSERT INTO payment_master
@@ -59,17 +59,17 @@
 //     return rows[0] || null;
 //   },
 
-//   /**
-//    * Find a payment by its gateway transaction ID.
-//    * Used during Razorpay payment verification.
-//    * @param {string} transactionId - Razorpay order/transaction ID
-//    * @returns {Promise<Object|null>} Payment record or null
-//    */
-//   async findByTransactionId(transactionId) {
-//     const query = `SELECT * FROM payment_master WHERE transaction_id = ?`;
-//     const [rows] = await pool.execute(query, [transactionId]);
-//     return rows[0] || null;
-//   },
+  /**
+   * Find a payment by its gateway transaction ID.
+   * Used during Stripe payment verification.
+   * @param {string} transactionId - Stripe PaymentIntent ID
+   * @returns {Promise<Object|null>} Payment record or null
+   */
+  async findByTransactionId(transactionId) {
+    const query = `SELECT * FROM payment_master WHERE transaction_id = ?`;
+    const [rows] = await pool.execute(query, [transactionId]);
+    return rows[0] || null;
+  },
 
 //   /**
 //    * Find all payments for a given order.
@@ -132,18 +132,18 @@
 //     return result;
 //   },
 
-//   /**
-//    * Store the raw gateway response for debugging and auditing.
-//    * @param {number} paymentId - Payment to update
-//    * @param {Object} gatewayResponse - Response object from Razorpay
-//    * @returns {Promise<Object>} MySQL update result
-//    */
-//   async updateGatewayResponse(paymentId, gatewayResponse) {
-//     const query = `
-//       UPDATE payment_master
-//       SET gateway_response = ?, updated_at = NOW()
-//       WHERE payment_id = ?
-//     `;
+  /**
+   * Store the raw gateway response for debugging and auditing.
+   * @param {number} paymentId - Payment to update
+   * @param {Object} gatewayResponse - Response object from Stripe
+   * @returns {Promise<Object>} MySQL update result
+   */
+  async updateGatewayResponse(paymentId, gatewayResponse) {
+    const query = `
+      UPDATE payment_master
+      SET gateway_response = ?, updated_at = NOW()
+      WHERE payment_id = ?
+    `;
 
 //     const [result] = await pool.execute(query, [
 //       JSON.stringify(gatewayResponse),
