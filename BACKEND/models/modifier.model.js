@@ -43,6 +43,24 @@ async function getModifierById(id) {
   return rows[0] || null;
 }
 
+// Get a single modifier by ID (for admin operations - includes inactive)
+async function getModifierByIdForAdmin(id) {
+  const [rows] = await pool.query(
+    `SELECT modifier_id,
+                modifier_name,
+                modifier_value,
+                additional_price,
+                is_active,
+                created_at,
+                updated_at
+           FROM modifier_master
+          WHERE modifier_id = ?
+            AND is_deleted = 0`,
+    [id],
+  );
+  return rows[0] || null;
+}
+
 // Check if modifier with same name and value already exists
 async function checkModifierExists(modifier_name, modifier_value) {
   const [rows] = await pool.query(
@@ -103,18 +121,20 @@ async function updateModifier(
 
 // Soft delete a modifier
 async function deleteModifier(modifier_id, deleted_by) {
+  // First, soft delete all related modifier portions
   await pool.query(
     `UPDATE modifier_portion 
      SET is_deleted = 1, 
-        deleted_by = ?   
-        WHERE modifier_id = ?`,
+         updated_by = ?   
+     WHERE modifier_id = ?`,
     [deleted_by, modifier_id],
   );
 
+  // Then, soft delete the modifier master
   await pool.query(
     `UPDATE modifier_master
         SET is_deleted = 1,   
-        updated_by = ?  
+            updated_by = ?  
         WHERE modifier_id = ? AND is_deleted = 0`,
     [deleted_by, modifier_id],
   );
@@ -199,6 +219,25 @@ async function getModifierPortions(modifier_id) {
 
 // Get single modifier portion by ID
 async function getModifierPortionById(modifier_portion_id) {
+  const [rows] = await pool.query(
+    `SELECT modifier_portion_id,
+            modifier_id,
+            product_portion_id,
+            additional_price,
+            stock,
+            is_active,
+            created_at,
+            updated_at
+       FROM modifier_portion
+      WHERE modifier_portion_id = ?
+        AND is_deleted = 0`,
+    [modifier_portion_id],
+  );
+  return rows[0] || null;
+}
+
+// Get single modifier portion by ID (for admin operations - includes inactive)
+async function getModifierPortionByIdForAdmin(modifier_portion_id) {
   const [rows] = await pool.query(
     `SELECT modifier_portion_id,
             modifier_id,
@@ -372,6 +411,7 @@ async function toggleModifierPortionActive(modifier_portion_id, updated_by) {
 export {
   getAllModifiers,
   getModifierById,
+  getModifierByIdForAdmin,
   checkModifierExists,
   createModifier,
   updateModifier,
@@ -380,6 +420,7 @@ export {
   // patchModifier,
   getModifierPortions,
   getModifierPortionById,
+  getModifierPortionByIdForAdmin,
   getModifiersByProductPortion,
   checkProductPortionExists,
   checkModifierPortionExists,

@@ -3,6 +3,7 @@
 import {
   getAllModifiers,
   getModifierById,
+  getModifierByIdForAdmin,
   checkModifierExists,
   createModifier,
   updateModifier,
@@ -11,6 +12,7 @@ import {
   // patchModifier,
   getModifierPortions,
   getModifierPortionById,
+  getModifierPortionByIdForAdmin,
   getModifiersByProductPortion,
   checkProductPortionExists,
   createModifierPortion,
@@ -179,8 +181,8 @@ export const toggleModifierController = async (req, res) => {
     // Get user ID from token
     const updated_by = req.user.id;
 
-    // Check if modifier exists
-    const existingModifier = await getModifierById(id);
+    // Check if modifier exists (admin view - includes inactive)
+    const existingModifier = await getModifierByIdForAdmin(id);
     if (!existingModifier) {
       return notFound(res, "Modifier not found");
     }
@@ -188,11 +190,11 @@ export const toggleModifierController = async (req, res) => {
     // Toggle the status
     await toggleModifierActive(id, updated_by);
 
-    // Get the updated modifier to see new is_active value
-    const updatedModifier = await getModifierById(id);
+    // Derive new state instead of re-fetching
+    const newIsActive = !existingModifier.is_active;
 
     return ok(res, "Modifier status toggled successfully", {
-      is_active: updatedModifier.is_active,
+      is_active: newIsActive,
     });
   } catch (err) {
     console.error("Toggle Modifier Controller error", err);
@@ -376,14 +378,20 @@ export const toggleModifierPortionController = async (req, res) => {
     // Get user ID from token
     const updated_by = req.user.id;
 
-    // Toggle the status
+    // Get existing portion first (admin view - includes inactive)
+    const existingPortion = await getModifierPortionByIdForAdmin(id);
+    if (!existingPortion) {
+      return notFound(res, "Modifier portion not found");
+    }
+
+    // Toggle
     await toggleModifierPortionActive(id, updated_by);
 
-    // Get the updated modifier portion to see new is_active value
-    const updatedModifierPortion = await getModifierPortionById(id);
+    // Derive new state
+    const newIsActive = !existingPortion.is_active;
 
     return ok(res, "Modifier portion status toggled successfully", {
-      is_active: updatedModifierPortion.is_active,
+      is_active: newIsActive,
     });
   } catch (err) {
     console.error("Toggle Modifier Portion Controller error", err);

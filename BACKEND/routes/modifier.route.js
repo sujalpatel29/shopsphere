@@ -82,7 +82,12 @@ modifierRouter.patch("/:id/toggle", auth, adminOnly, toggleModifierController);
 // ============================================================================
 
 // GET /api/modifiers/:modifier_id/portions - Get portions for a modifier
-modifierRouter.get("/:modifier_id/portions", getAllModifierPortionsController);
+modifierRouter.get(
+  "/:modifier_id/portions",
+  auth,
+  adminOnly,
+  getAllModifierPortionsController,
+);
 
 // POST /api/modifiers/portions - Link modifier to portion
 modifierRouter.post(
