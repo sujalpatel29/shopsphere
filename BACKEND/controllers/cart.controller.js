@@ -208,7 +208,7 @@ async function addItemToCart(req, res) {
   try {
 
     // User ID comes from JWT token (authMiddleware)
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Cart is attached by validateCart middleware
     const { productId, quantity, portionId, modifierId } = req.body;
@@ -373,7 +373,7 @@ async function updateCartItem(req, res) {
   try {
 
     // User ID comes from JWT token (authMiddleware)
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Cart and cartItem are attached by middleware
     const cartItem = req.cartItem;
@@ -450,7 +450,7 @@ async function removeCartItem(req, res) {
   try {
 
     // User ID comes from JWT token (authMiddleware)
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Cart item ownership is validated by middleware
     const cartItemId = req.cartItem.cart_item_id;
