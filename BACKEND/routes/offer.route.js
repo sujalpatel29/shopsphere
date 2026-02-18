@@ -33,6 +33,7 @@ import {
   auth, // verifies authenticated user
   adminOnly, // allows only admin users
 } from "../middlewares/auth.middleware.js";
+import { validateCart } from "../middlewares/cart.middleware.js";
 
 // ============================================================================
 // OFFER ROUTES
@@ -52,9 +53,9 @@ route.get("/", auth, adminOnly, getAllOfferController);
 
 /**
  * GET api/offer/active
- * Fetch all active offers
+ * Fetch all active offers (accessible to all authenticated users including customers)
  */
-route.get("/active", auth, adminOnly, getActiveOfferController);
+route.get("/active", auth, getActiveOfferController);
 
 /**
  * POST api/offer/create
@@ -70,12 +71,12 @@ route.post(
 
 /**
  * POST api/offer/validate
- * Validate if offer can be applied
+ * Validate if offer can be applied (accessible to customers for their carts)
  */
 route.post(
   "/validate",
   auth,
-  adminOnly,
+  validateCart,
   validateOfferPayload,
   validateOfferController,
 );

@@ -279,7 +279,8 @@ const validateOfferSchema = z
 
     total: z.coerce
       .number({ invalid_type_error: "total must be a number" })
-      .min(1, "total must be greater than 0"),
+      .min(1, "total must be greater than 0")
+      .optional(),
 
     product_id: z.coerce
       .number({ invalid_type_error: "product_id must be a number" })

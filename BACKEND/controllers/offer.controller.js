@@ -23,6 +23,7 @@ import {
   isOfferProductCategoryMappingExists,
   updateOfferProductCategoryMappingById,
 } from "../models/offer.model.js";
+import { getCartItemsWithProduct } from "../models/cart.model.js";
 import {
   badRequest,
   conflict,
@@ -68,8 +69,7 @@ export const createOfferController = async (req, res) => {
       offer_id: result.insertId,
     });
   } catch (error) {
-    return serverError(res, error.message || "Internal server error");
-
+    console.error(error);
     return serverError(res, error.message || "Internal server error");
   }
 };
@@ -439,11 +439,29 @@ export const getActiveOfferController = async (req, res) => {
  */
 export const validateOfferController = async (req, res) => {
   try {
-    // Body is pre-validated by `validateOfferPayload` middleware.
-    const { offer_name, total, product_id, category_id } = req.body;
-
-    // TODO: read user id from authenticated request context.
+    // User ID comes from authenticated request context
     const userId = req.user.id;
+
+    // Body is pre-validated by `validateOfferPayload` middleware.
+    const { offer_name, product_id, category_id } = req.body;
+
+    // Step 0: Get cart total from database (more secure than trusting client)
+    let cartTotal = 0;
+    if (req.cart) {
+      // If cart middleware attached the cart, use it
+      const cartItems = await getCartItemsWithProduct(req.cart.cart_id);
+      cartTotal = cartItems.reduce(
+        (sum, item) => sum + Number(item.effective_price) * item.quantity,
+        0,
+      );
+    } else {
+      // Fallback: accept total from request body if no cart context
+      const { total } = req.body;
+      if (!total || total <= 0) {
+        return badRequest(res, "Invalid total amount provided");
+      }
+      cartTotal = total;
+    }
 
     // Step 1: Fetch a currently valid offer.
     const result = await getValidateOfferByName(offer_name);
@@ -468,7 +486,7 @@ export const validateOfferController = async (req, res) => {
     }
 
     // Step 3: Enforce minimum purchase amount if configured.
-    if (offer.min_purchase_amount && total < offer.min_purchase_amount) {
+    if (offer.min_purchase_amount && cartTotal < offer.min_purchase_amount) {
       return badRequest(
         res,
         `Minimum purchase amount is ${offer.min_purchase_amount}`,
@@ -489,7 +507,7 @@ export const validateOfferController = async (req, res) => {
     const type = offer.discount_type.toLowerCase();
 
     if (type === "percentage") {
-      discountAmount = (total * offer.discount_value) / 100;
+      discountAmount = (cartTotal * offer.discount_value) / 100;
 
       if (
         offer.maximum_discount_amount &&
@@ -498,14 +516,14 @@ export const validateOfferController = async (req, res) => {
         discountAmount = offer.maximum_discount_amount;
       }
     } else if (type === "fixed_amount") {
-      discountAmount = Math.min(offer.discount_value, total);
+      discountAmount = Math.min(offer.discount_value, cartTotal);
     }
 
     // Consumer/order module should persist usage in `offer_usage` after successful order placement.
     return ok(res, "Offer is valid", {
       offer_id: offer.offer_id,
       discount_amount: discountAmount,
-      final_amount: total - discountAmount,
+      final_amount: cartTotal - discountAmount,
     });
   } catch (error) {
     console.error(error);
