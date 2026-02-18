@@ -3,3 +3,4 @@ node_modules/
 .github/workflows/
 # Auto-generated commented schema (for learning/documentation only)
 BACKEND/seeders/db_schema_commented.sql
+.vscode
