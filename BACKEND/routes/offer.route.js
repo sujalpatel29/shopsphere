@@ -26,7 +26,7 @@ import {
   validateUserIdParam,
   validateOfferPayload,
   validateUpdateOfferProductCategory,
-  validatestatusOfferIDParam,
+  validateStatusOfferIDParam,
   validateUpdateOffer,
 } from "../middlewares/offer.validator.js";
 import {
@@ -113,7 +113,7 @@ route.patch(
   auth,
   adminOnly,
   validateOfferIdParam,
-  validatestatusOfferIDParam,
+  validateStatusOfferIDParam,
   updateOfferStatusController,
 );
 

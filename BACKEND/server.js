@@ -5,7 +5,7 @@ import categoryRoutes from "./routes/category.routes.js";
 import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
 import portionRouter from "./routes/portion.route.js";
-// import cartRouter from "./routes/cart.route.js";
+import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
 
 // Load environment variables
