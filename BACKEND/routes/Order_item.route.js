@@ -1,10 +1,10 @@
 import express from "express"
-const router_Item = express.Router();
+const orderItemRouter = express.Router();
 import {  getAllOrderItem,getOneItem} from "../controllers/Order_item.controller.js";
 import {auth} from "../middlewares/auth.middleware.js"
 
 
-router_Item.get('/orders/:orderId/items',auth,getAllOrderItem)
-router_Item.get('/orders/:orderId/items/:itemId',auth,getOneItem)
+orderItemRouter.get('/:orderId/items',auth,getAllOrderItem)
+orderItemRouter.get('/:orderId/items/:itemId',auth,getOneItem)
 
-export default router_Item;
+export default orderItemRouter;

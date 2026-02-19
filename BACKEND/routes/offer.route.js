@@ -1,12 +1,15 @@
 import express from "express";
 import {
   createOfferController,
+  createOfferProductCategoryMappingController,
+  deleteOfferProductCategoryMappingByIdController,
+  getAllOfferProductCategoryMappingsController,
+  getOfferProductCategoryMappingsByOfferIdController,
+  updateOfferProductCategoryMappingByIdController,
   deleteOfferByIdController,
   getActiveOfferController,
   getAllOfferController,
   getOfferByIdController,
-  getOfferByCategoryController,
-  getOfferByProductController,
   updateOfferByIdController,
   updateOfferStatusController,
   validateOfferController,
@@ -16,15 +19,21 @@ import {
 } from "../controllers/offer.controller.js";
 import {
   validateCreateOffer,
+  validateCreateOfferProductCategory,
+  validateOfferProductCategoryIdParam,
+  validateOfferProductCategoryOfferIdParam,
   validateOfferIdParam,
+  validateUserIdParam,
   validateOfferPayload,
-  validatestatusOfferIDParam,
+  validateUpdateOfferProductCategory,
+  validateStatusOfferIDParam,
   validateUpdateOffer,
 } from "../middlewares/offer.validator.js";
 import {
   auth, // verifies authenticated user
   adminOnly, // allows only admin users
 } from "../middlewares/auth.middleware.js";
+import { validateCart } from "../middlewares/cart.middleware.js";
 
 // ============================================================================
 // OFFER ROUTES
@@ -44,9 +53,9 @@ route.get("/", auth, adminOnly, getAllOfferController);
 
 /**
  * GET api/offer/active
- * Fetch all active offers
+ * Fetch all active offers (accessible to all authenticated users including customers)
  */
-route.get("/active", auth, adminOnly, getActiveOfferController);
+route.get("/active", auth, getActiveOfferController);
 
 /**
  * POST api/offer/create
@@ -62,19 +71,19 @@ route.post(
 
 /**
  * POST api/offer/validate
- * Validate if offer can be applied
+ * Validate if offer can be applied (accessible to customers for their carts)
  */
 route.post(
   "/validate",
   auth,
-  adminOnly,
+  validateCart,
   validateOfferPayload,
   validateOfferController,
 );
 
 /**
- * GET api/offer/usage/summary
- * Fetch summary of all offers usage (admin analytics)
+ * PATCH api/offer/update/:id
+ * Update offer by id
  */
 route.patch(
   "/update/:id",
@@ -84,7 +93,6 @@ route.patch(
   validateUpdateOffer,
   updateOfferByIdController,
 );
-
 /**
  * delete api/offer/delete/:id
  * delete offer by id
@@ -106,32 +114,72 @@ route.patch(
   auth,
   adminOnly,
   validateOfferIdParam,
-  validatestatusOfferIDParam,
+  validateStatusOfferIDParam,
   updateOfferStatusController,
 );
 
+// ============================================================================
+// OFFER PRODUCT CATEGORY MAPPING ROUTES
+// ============================================================================
+
 /**
- * GET api/offer/product/:id
- * Fetch offers by product id
+ * POST api/offer/mapping/create
+ * Create offer to product/category mapping
  */
-route.get(
-  "/product/:id",
+route.post(
+  "/mapping/create",
   auth,
   adminOnly,
-  validateOfferIdParam,
-  getOfferByProductController,
+  validateCreateOfferProductCategory,
+  createOfferProductCategoryMappingController,
 );
 
 /**
- * GET api/offer/category/:id
- * Fetch offers by category id
+ * GET api/offer/mapping
+ * Fetch all mappings
  */
 route.get(
-  "/category/:id",
+  "/mapping",
   auth,
   adminOnly,
-  validateOfferIdParam,
-  getOfferByCategoryController,
+  getAllOfferProductCategoryMappingsController,
+);
+
+/**
+ * GET api/offer/mapping/offer/:id
+ * Fetch all mappings for a given offer id
+ */
+route.get(
+  "/mapping/offer/:id",
+  auth,
+  adminOnly,
+  validateOfferProductCategoryOfferIdParam,
+  getOfferProductCategoryMappingsByOfferIdController,
+);
+
+/**
+ * PATCH api/offer/mapping/update/:id
+ * Update mapping (is_active and/or product/category scope)
+ */
+route.patch(
+  "/mapping/update/:id",
+  auth,
+  adminOnly,
+  validateOfferProductCategoryIdParam,
+  validateUpdateOfferProductCategory,
+  updateOfferProductCategoryMappingByIdController,
+);
+
+/**
+ * DELETE api/offer/mapping/delete/:id
+ * Soft delete mapping by id
+ */
+route.delete(
+  "/mapping/delete/:id",
+  auth,
+  adminOnly,
+  validateOfferProductCategoryIdParam,
+  deleteOfferProductCategoryMappingByIdController,
 );
 
 // ============================================================================
@@ -164,7 +212,7 @@ route.get(
   "/usagebyuser/:id",
   auth,
   adminOnly,
-  validateOfferIdParam,
+  validateUserIdParam,
   getOfferUsageByUserIdController,
 );
 
