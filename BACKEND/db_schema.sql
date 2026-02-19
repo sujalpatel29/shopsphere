@@ -1,8 +1,5 @@
--- MySQL dump 10.13  Distrib 9.6.0, for Win64 (x86_64)
---
--- Host: localhost    Database: ecommerce_accrete
--- ------------------------------------------------------
--- Server version	8.0.45
+-- Merged schema: union of db_schema.sql and ecommerce-accrete.sql
+-- Generated: 2026-02-19
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -20,8 +17,6 @@
 --
 
 DROP TABLE IF EXISTS `cart_items`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `cart_items` (
   `cart_item_id` int NOT NULL AUTO_INCREMENT,
   `cart_id` int NOT NULL,
@@ -35,6 +30,7 @@ CREATE TABLE `cart_items` (
   `updated_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `offer_id` int DEFAULT NULL,
   PRIMARY KEY (`cart_item_id`),
   KEY `fk_cart_items_cart` (`cart_id`),
   KEY `fk_cart_items_product` (`product_id`),
@@ -42,31 +38,21 @@ CREATE TABLE `cart_items` (
   KEY `fk_cart_items_modifier` (`modifier_id`),
   KEY `fk_cart_items_created_by` (`created_by`),
   KEY `fk_cart_items_updated_by` (`updated_by`),
+  KEY `fk_offer` (`offer_id`),
   CONSTRAINT `fk_cart_items_cart` FOREIGN KEY (`cart_id`) REFERENCES `cart_master` (`cart_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_cart_items_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
+  CONSTRAINT `fk_cart_items_modifier` FOREIGN KEY (`modifier_id`) REFERENCES `modifier_master` (`modifier_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_cart_items_product` FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_cart_items_product_portion` FOREIGN KEY (`product_portion_id`) REFERENCES `product_portion` (`product_portion_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_cart_items_modifier` FOREIGN KEY (`modifier_id`) REFERENCES `modifier_master` (`modifier_id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_cart_items_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
-  CONSTRAINT `fk_cart_items_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
+  CONSTRAINT `fk_cart_items_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`),
+  CONSTRAINT `fk_offer` FOREIGN KEY (`offer_id`) REFERENCES `offer_master` (`offer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `cart_items`
---
-
-LOCK TABLES `cart_items` WRITE;
-/*!40000 ALTER TABLE `cart_items` DISABLE KEYS */;
-/*!40000 ALTER TABLE `cart_items` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `cart_master`
+-- Table structure for table `cart_master` (merged: includes discount_amount)
 --
 
 DROP TABLE IF EXISTS `cart_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `cart_master` (
   `cart_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
@@ -75,32 +61,24 @@ CREATE TABLE `cart_master` (
   `updated_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `offer_id` int DEFAULT NULL,
+  `discount_amount` decimal(10,2) DEFAULT '0.00',
   PRIMARY KEY (`cart_id`),
   KEY `fk_carts_user` (`user_id`),
   KEY `fk_carts_created_by` (`created_by`),
   KEY `fk_carts_updated_by` (`updated_by`),
-  CONSTRAINT `fk_carts_user` FOREIGN KEY (`user_id`) REFERENCES `user_master` (`user_id`) ON DELETE CASCADE,
+  KEY `fk_cart_offer` (`offer_id`),
+  CONSTRAINT `fk_cart_offer` FOREIGN KEY (`offer_id`) REFERENCES `offer_master` (`offer_id`),
   CONSTRAINT `fk_carts_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
-  CONSTRAINT `fk_carts_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
+  CONSTRAINT `fk_carts_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`),
+  CONSTRAINT `fk_carts_user` FOREIGN KEY (`user_id`) REFERENCES `user_master` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `cart_master`
---
-
-LOCK TABLES `cart_master` WRITE;
-/*!40000 ALTER TABLE `cart_master` DISABLE KEYS */;
-/*!40000 ALTER TABLE `cart_master` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `category_master`
 --
 
 DROP TABLE IF EXISTS `category_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `category_master` (
   `category_id` int NOT NULL AUTO_INCREMENT,
   `category_name` varchar(100) NOT NULL,
@@ -118,24 +96,12 @@ CREATE TABLE `category_master` (
   CONSTRAINT `fk_categories_parent` FOREIGN KEY (`parent_id`) REFERENCES `category_master` (`category_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_categories_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `category_master`
---
-
-LOCK TABLES `category_master` WRITE;
-/*!40000 ALTER TABLE `category_master` DISABLE KEYS */;
-/*!40000 ALTER TABLE `category_master` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `modifier_master`
 --
 
 DROP TABLE IF EXISTS `modifier_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `modifier_master` (
   `modifier_id` int NOT NULL AUTO_INCREMENT,
   `modifier_name` varchar(100) NOT NULL,
@@ -153,24 +119,12 @@ CREATE TABLE `modifier_master` (
   CONSTRAINT `fk_modifiers_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_modifiers_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `modifier_master`
---
-
-LOCK TABLES `modifier_master` WRITE;
-/*!40000 ALTER TABLE `modifier_master` DISABLE KEYS */;
-/*!40000 ALTER TABLE `modifier_master` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `modifier_portion`
 --
 
 DROP TABLE IF EXISTS `modifier_portion`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `modifier_portion` (
   `modifier_portion_id` int NOT NULL AUTO_INCREMENT,
   `modifier_id` int NOT NULL,
@@ -193,25 +147,12 @@ CREATE TABLE `modifier_portion` (
   CONSTRAINT `fk_modifier_portion_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_modifier_portion_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `modifier_portion`
---
-
-LOCK TABLES `modifier_portion` WRITE;
-/*!40000 ALTER TABLE `modifier_portion` DISABLE KEYS */;
-/*!40000 ALTER TABLE `modifier_portion` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `offer_master`
+-- Table structure for table `offer_master` (merged: keep category_id & product_id)
 --
 
 DROP TABLE IF EXISTS `offer_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-
 CREATE TABLE `offer_master` (
   `offer_id` int NOT NULL AUTO_INCREMENT,
   `offer_name` varchar(100) NOT NULL,
@@ -222,6 +163,8 @@ CREATE TABLE `offer_master` (
   `maximum_discount_amount` decimal(10,2) NOT NULL,
   `min_purchase_amount` decimal(10,2) DEFAULT '0.00',
   `usage_limit_per_user` int DEFAULT '1',
+  `category_id` int DEFAULT NULL,
+  `product_id` int DEFAULT NULL,
   `start_date` timestamp NOT NULL,
   `end_date` timestamp NOT NULL,
   `start_time` time DEFAULT NULL,
@@ -235,27 +178,26 @@ CREATE TABLE `offer_master` (
   PRIMARY KEY (`offer_id`),
   KEY `fk_offers_created_by` (`created_by`),
   KEY `fk_offers_updated_by` (`updated_by`),
-  CONSTRAINT `fk_offers_created_by`
-    FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
-  CONSTRAINT `fk_offers_updated_by`
-    FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
+  KEY `fk_offers_category` (`category_id`),
+  KEY `fk_offers_product` (`product_id`),
+  CONSTRAINT `fk_offers_category` FOREIGN KEY (`category_id`) REFERENCES `category_master` (`category_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_offers_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
+  CONSTRAINT `fk_offers_product` FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_offers_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-/*!40101 SET character_set_client = @saved_cs_client */;
 --
--- Table structure for table `offer_usage`
+-- Table structure for table `offer_usage` (merged: includes usage_count)
 --
 
 DROP TABLE IF EXISTS `offer_usage`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-
 CREATE TABLE `offer_usage` (
   `offer_usage_id` int NOT NULL AUTO_INCREMENT,
   `offer_id` int NOT NULL,
   `user_id` int NOT NULL,
   `order_id` int NOT NULL,
   `discount_amount` decimal(10,2) NOT NULL,
+  `usage_count` int DEFAULT '1',
   `is_deleted` tinyint(1) DEFAULT '0',
   `created_by` int DEFAULT NULL,
   `updated_by` int DEFAULT NULL,
@@ -267,27 +209,18 @@ CREATE TABLE `offer_usage` (
   KEY `fk_offer_usage_order` (`order_id`),
   KEY `fk_offer_usage_created_by` (`created_by`),
   KEY `fk_offer_usage_updated_by` (`updated_by`),
-  CONSTRAINT `fk_offer_usage_offer`
-    FOREIGN KEY (`offer_id`) REFERENCES `offer_master` (`offer_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_offer_usage_order`
-    FOREIGN KEY (`order_id`) REFERENCES `order_master` (`order_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_offer_usage_user`
-    FOREIGN KEY (`user_id`) REFERENCES `user_master` (`user_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_offer_usage_created_by`
-    FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
-  CONSTRAINT `fk_offer_usage_updated_by`
-    FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
+  CONSTRAINT `fk_offer_usage_offer` FOREIGN KEY (`offer_id`) REFERENCES `offer_master` (`offer_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_offer_usage_order` FOREIGN KEY (`order_id`) REFERENCES `order_master` (`order_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_offer_usage_user` FOREIGN KEY (`user_id`) REFERENCES `user_master` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_offer_usage_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
+  CONSTRAINT `fk_offer_usage_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `order_items`
 --
 
 DROP TABLE IF EXISTS `order_items`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `order_items` (
   `order_item_id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
@@ -321,24 +254,12 @@ CREATE TABLE `order_items` (
   CONSTRAINT `fk_order_items_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_order_items_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `order_items`
---
-
-LOCK TABLES `order_items` WRITE;
-/*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-/*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `order_master`
+-- Table structure for table `order_master` (merged: includes 'returned')
 --
 
 DROP TABLE IF EXISTS `order_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `order_master` (
   `order_id` int NOT NULL AUTO_INCREMENT,
   `order_number` varchar(50) NOT NULL,
@@ -349,7 +270,7 @@ CREATE TABLE `order_master` (
   `shipping_amount` decimal(10,2) DEFAULT '0.00',
   `discount_amount` decimal(10,2) DEFAULT '0.00',
   `total_amount` decimal(10,2) NOT NULL,
-  `order_status` enum('pending','processing','shipped','delivered','completed','cancelled','refunded') DEFAULT 'pending',
+  `order_status` enum('pending','processing','shipped','delivered','completed','cancelled','refunded','returned') DEFAULT 'pending',
   `payment_status` enum('pending','processing','completed','failed','refunded') DEFAULT 'pending',
   `is_deleted` tinyint(1) DEFAULT '0',
   `created_by` int DEFAULT NULL,
@@ -367,24 +288,12 @@ CREATE TABLE `order_master` (
   CONSTRAINT `fk_orders_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `user_master` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `order_master`
---
-
-LOCK TABLES `order_master` WRITE;
-/*!40000 ALTER TABLE `order_master` DISABLE KEYS */;
-/*!40000 ALTER TABLE `order_master` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `payment_master`
 --
 
 DROP TABLE IF EXISTS `payment_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `payment_master` (
   `payment_id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
@@ -413,24 +322,12 @@ CREATE TABLE `payment_master` (
   CONSTRAINT `fk_payments_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_payments_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `payment_master`
---
-
-LOCK TABLES `payment_master` WRITE;
-/*!40000 ALTER TABLE `payment_master` DISABLE KEYS */;
-/*!40000 ALTER TABLE `payment_master` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `portion_master`
 --
 
 DROP TABLE IF EXISTS `portion_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `portion_master` (
   `portion_id` int NOT NULL AUTO_INCREMENT,
   `portion_value` varchar(50) NOT NULL,
@@ -447,24 +344,12 @@ CREATE TABLE `portion_master` (
   CONSTRAINT `fk_portions_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_portions_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `portion_master`
---
-
-LOCK TABLES `portion_master` WRITE;
-/*!40000 ALTER TABLE `portion_master` DISABLE KEYS */;
-/*!40000 ALTER TABLE `portion_master` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `product_portion`
 --
 
 DROP TABLE IF EXISTS `product_portion`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `product_portion` (
   `product_portion_id` int NOT NULL AUTO_INCREMENT,
   `product_id` int NOT NULL,
@@ -488,24 +373,12 @@ CREATE TABLE `product_portion` (
   CONSTRAINT `fk_product_portion_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_product_portion_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `product_portion`
---
-
-LOCK TABLES `product_portion` WRITE;
-/*!40000 ALTER TABLE `product_portion` DISABLE KEYS */;
-/*!40000 ALTER TABLE `product_portion` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `product_categories`
 --
 
 DROP TABLE IF EXISTS `product_categories`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `product_categories` (
   `product_id` int NOT NULL,
   `category_id` int NOT NULL,
@@ -523,24 +396,12 @@ CREATE TABLE `product_categories` (
   CONSTRAINT `fk_product_categories_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_product_categories_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `product_categories`
---
-
-LOCK TABLES `product_categories` WRITE;
-/*!40000 ALTER TABLE `product_categories` DISABLE KEYS */;
-/*!40000 ALTER TABLE `product_categories` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `product_master`
 --
 
 DROP TABLE IF EXISTS `product_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `product_master` (
   `product_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
@@ -565,24 +426,12 @@ CREATE TABLE `product_master` (
   CONSTRAINT `fk_products_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_products_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `product_master`
---
-
-LOCK TABLES `product_master` WRITE;
-/*!40000 ALTER TABLE `product_master` DISABLE KEYS */;
-/*!40000 ALTER TABLE `product_master` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `product_reviews`
 --
 
 DROP TABLE IF EXISTS `product_reviews`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `product_reviews` (
   `review_id` int NOT NULL AUTO_INCREMENT,
   `product_id` int NOT NULL,
@@ -605,30 +454,18 @@ CREATE TABLE `product_reviews` (
   KEY `fk_reviews_order` (`order_id`),
   KEY `fk_reviews_created_by` (`created_by`),
   KEY `fk_reviews_updated_by` (`updated_by`),
-  CONSTRAINT `fk_reviews_order` FOREIGN KEY (`order_id`) REFERENCES `order_master` (`order_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_reviews_product` FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_reviews_user` FOREIGN KEY (`user_id`) REFERENCES `user_master` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_reviews_order` FOREIGN KEY (`order_id`) REFERENCES `order_master` (`order_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_reviews_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_reviews_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `product_reviews`
---
-
-LOCK TABLES `product_reviews` WRITE;
-/*!40000 ALTER TABLE `product_reviews` DISABLE KEYS */;
-/*!40000 ALTER TABLE `product_reviews` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `user_addresses`
 --
 
 DROP TABLE IF EXISTS `user_addresses`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_addresses` (
   `address_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
@@ -655,24 +492,12 @@ CREATE TABLE `user_addresses` (
   CONSTRAINT `fk_user_addresses_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_user_addresses_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `user_addresses`
---
-
-LOCK TABLES `user_addresses` WRITE;
-/*!40000 ALTER TABLE `user_addresses` DISABLE KEYS */;
-/*!40000 ALTER TABLE `user_addresses` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `user_master`
 --
 
 DROP TABLE IF EXISTS `user_master`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_master` (
   `user_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
@@ -687,28 +512,13 @@ CREATE TABLE `user_master` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `idx_users_email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Dumping data for table `user_master`
---
-
-LOCK TABLES `user_master` WRITE;
-/*!40000 ALTER TABLE `user_master` DISABLE KEYS */;
-INSERT INTO `user_master` VALUES (1,'jignesh','abc@gmail.com','password','customer',0,'2026-02-05 04:47:49',NULL,NULL,'2026-02-05 01:09:54','2026-02-05 01:09:54'),(9,'jignesh','abc1@gmail.com','password','customer',0,'2026-02-05 04:47:49',NULL,NULL,'2026-02-05 01:27:17','2026-02-05 01:27:17');
-/*!40000 ALTER TABLE `user_master` ENABLE KEYS */;
-UNLOCK TABLES;
-
-
---
--- Table structure for table `offer_product_category`
+-- Table structure for table `offer_product_category` (from db_schema)
 --
 
 DROP TABLE IF EXISTS `offer_product_category`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-
 CREATE TABLE `offer_product_category` (
   `offer_product_category_id` int NOT NULL AUTO_INCREMENT,
   `offer_id` int NOT NULL,
@@ -726,28 +536,25 @@ CREATE TABLE `offer_product_category` (
   KEY `fk_opc_category` (`category_id`),
   KEY `fk_opc_created_by` (`created_by`),
   KEY `fk_opc_updated_by` (`updated_by`),
-  CONSTRAINT `fk_opc_offer`
-    FOREIGN KEY (`offer_id`) REFERENCES `offer_master` (`offer_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_opc_product`
-    FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_opc_category`
-    FOREIGN KEY (`category_id`) REFERENCES `category_master` (`category_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_opc_created_by`
-    FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
-  CONSTRAINT `fk_opc_updated_by`
-    FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
+  CONSTRAINT `fk_opc_offer` FOREIGN KEY (`offer_id`) REFERENCES `offer_master` (`offer_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_opc_product` FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_opc_category` FOREIGN KEY (`category_id`) REFERENCES `category_master` (`category_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_opc_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
+  CONSTRAINT `fk_opc_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-/*!40101 SET character_set_client = @saved_cs_client */;
+/* Optional: apply ALTERs present in db_schema to ensure compatibility */
+-- Note: `IF NOT EXISTS` in ALTER is supported in modern MySQL versions; adjust if needed on older servers.
+ALTER TABLE `cart_items`
+  ADD COLUMN IF NOT EXISTS `offer_id` int DEFAULT NULL,
+  ADD KEY IF NOT EXISTS `fk_cart_items_offer` (`offer_id`);
 
---
--- Dumping routines for database 'ecommerce_accrete'
---
---
--- WARNING: can't read the INFORMATION_SCHEMA.libraries table. It's most probably an old server 8.0.45.
---
+ALTER TABLE `cart_master`
+  ADD COLUMN IF NOT EXISTS `offer_id` int DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS `discount_amount` decimal(10,2) DEFAULT '0.00',
+  ADD KEY IF NOT EXISTS `fk_cart_master_offer` (`offer_id`);
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
@@ -756,20 +563,4 @@ CREATE TABLE `offer_product_category` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-05 10:42:41
-
-
--- Add offer_id column to cart_items table
-ALTER TABLE `cart_items`
-ADD COLUMN `offer_id` int DEFAULT NULL AFTER `modifier_id`,
-ADD KEY `fk_cart_items_offer` (`offer_id`),
-ADD CONSTRAINT `fk_cart_items_offer` FOREIGN KEY (`offer_id`) REFERENCES `offer_master` (`offer_id`) ON DELETE SET NULL;
-
-
-ALTER TABLE `cart_master`
-ADD COLUMN `offer_id` int DEFAULT NULL AFTER `user_id`,
-ADD COLUMN `discount_amount` decimal(10,2) DEFAULT '0.00' AFTER `offer_id`,
-ADD KEY `fk_cart_master_offer` (`offer_id`),
-ADD CONSTRAINT `fk_cart_master_offer` FOREIGN KEY (`offer_id`) 
-    REFERENCES `offer_master` (`offer_id`) ON DELETE SET NULL;
-    
+-- End of merged schema
