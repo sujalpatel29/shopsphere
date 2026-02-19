@@ -661,3 +661,234 @@ export const deleteOfferProductCategoryMappingById = async (
 
   return result;
 };
+
+// ============================================================================
+// CART OFFER INTEGRATION
+// ============================================================================
+
+/**
+ * Apply offer to cart (cart-level offer)
+ * @param {number} cartId - Cart ID
+ * @param {number} offerId - Offer ID
+ * @returns {Promise<object>} Update result
+ */
+export const applyOfferToCart = async (cartId, offerId) => {
+  const [result] = await pool.query(
+    `UPDATE cart_master
+     SET offer_id = ?
+     WHERE cart_id = ?`,
+    [offerId, cartId],
+  );
+  return result;
+};
+
+/**
+ * Remove offer from cart
+ * @param {number} cartId - Cart ID
+ * @returns {Promise<object>} Update result
+ */
+export const removeOfferFromCart = async (cartId) => {
+  const [result] = await pool.query(
+    `UPDATE cart_master
+     SET offer_id = NULL, discount_amount = 0
+     WHERE cart_id = ?`,
+    [cartId],
+  );
+  return result;
+};
+
+/**
+ * Apply offer to cart item (product-level offer)
+ * @param {number} cartItemId - Cart Item ID
+ * @param {number} offerId - Offer ID
+ * @returns {Promise<object>} Update result
+ */
+export const applyOfferToCartItem = async (cartItemId, offerId) => {
+  const [result] = await pool.query(
+    `UPDATE cart_items
+     SET offer_id = ?
+     WHERE cart_item_id = ?`,
+    [offerId, cartItemId],
+  );
+  return result;
+};
+
+/**
+ * Remove offer from cart item
+ * @param {number} cartItemId - Cart Item ID
+ * @returns {Promise<object>} Update result
+ */
+export const removeOfferFromCartItem = async (cartItemId) => {
+  const [result] = await pool.query(
+    `UPDATE cart_items
+     SET offer_id = NULL
+     WHERE cart_item_id = ?`,
+    [cartItemId],
+  );
+  return result;
+};
+
+/**
+ * Get cart with applied offer details
+ * @param {number} cartId - Cart ID
+ * @returns {Promise<Array>} Cart with offer details
+ */
+export const getCartWithOffer = async (cartId) => {
+  const [rows] = await pool.query(
+    `SELECT cm.*,
+            om.offer_name,
+            om.offer_type,
+            om.discount_type,
+            om.discount_value,
+            om.maximum_discount_amount,
+            om.min_purchase_amount,
+            om.usage_limit_per_user,
+            om.start_date,
+            om.end_date,
+            om.start_time,
+            om.end_time
+     FROM cart_master cm
+     LEFT JOIN offer_master om ON om.offer_id = cm.offer_id
+     WHERE cm.cart_id = ? AND cm.is_deleted = 0`,
+    [cartId],
+  );
+  return rows;
+};
+
+/**
+ * Get cart items with product and offer details
+ * @param {number} cartId - Cart ID
+ * @returns {Promise<Array>} Cart items with offer details
+ */
+export const getCartItemsWithOffer = async (cartId) => {
+  const [rows] = await pool.query(
+    `SELECT ci.cart_item_id,
+            ci.product_id,
+            ci.quantity,
+            ci.price AS effective_price,
+            ci.product_portion_id,
+            ci.modifier_id,
+            ci.offer_id AS item_offer_id,
+            pm.display_name,
+            pm.short_description,
+            por.portion_value,
+            pp.price AS portion_price,
+            pp.discounted_price AS portion_discounted_price,
+            mt.modifier_name,
+            mt.modifier_value,
+            item_offer.offer_name AS item_offer_name,
+            item_offer.offer_type AS item_offer_type,
+            item_offer.discount_type AS item_discount_type,
+            item_offer.discount_value AS item_discount_value,
+            item_offer.maximum_discount_amount AS item_max_discount
+       FROM cart_items ci
+       JOIN product_master pm ON pm.product_id = ci.product_id
+       LEFT JOIN product_portion pp ON pp.product_portion_id = ci.product_portion_id AND pp.product_id = ci.product_id
+       LEFT JOIN portion_master por ON por.portion_id = pp.portion_id
+       LEFT JOIN modifier_master mt ON mt.modifier_id = ci.modifier_id
+       LEFT JOIN offer_master item_offer ON item_offer.offer_id = ci.offer_id
+      WHERE ci.cart_id = ? AND ci.is_deleted = 0
+      ORDER BY ci.cart_item_id`,
+    [cartId],
+  );
+  return rows;
+};
+
+/**
+ * Get applicable offers for a product
+ * @param {number} productId - Product ID
+ * @returns {Promise<Array>} Applicable offers
+ */
+export const getApplicableOffersForProduct = async (productId) => {
+  const [rows] = await pool.query(
+    `SELECT om.*,
+            opc.offer_product_category_id
+     FROM offer_master om
+     INNER JOIN offer_product_category opc ON opc.offer_id = om.offer_id
+     WHERE om.is_active = 1
+       AND om.is_deleted = 0
+       AND opc.is_active = 1
+       AND opc.is_deleted = 0
+       AND opc.product_id = ?
+       AND CURDATE() BETWEEN om.start_date AND om.end_date
+       AND (
+         om.start_time IS NULL OR om.end_time IS NULL
+         OR (
+           CASE 
+             WHEN om.start_time <= om.end_time THEN
+               CURTIME() BETWEEN om.start_time AND om.end_time
+             WHEN om.start_time > om.end_time THEN
+               CURTIME() >= om.start_time OR CURTIME() <= om.end_time
+             ELSE 0
+           END
+         )
+       )
+     ORDER BY om.discount_value DESC`,
+    [productId],
+  );
+  return rows;
+};
+
+/**
+ * Get applicable offers for a category
+ * @param {number} categoryId - Category ID
+ * @returns {Promise<Array>} Applicable offers
+ */
+export const getApplicableOffersForCategory = async (categoryId) => {
+  const [rows] = await pool.query(
+    `SELECT om.*,
+            opc.offer_product_category_id
+     FROM offer_master om
+     INNER JOIN offer_product_category opc ON opc.offer_id = om.offer_id
+     WHERE om.is_active = 1
+       AND om.is_deleted = 0
+       AND opc.is_active = 1
+       AND opc.is_deleted = 0
+       AND opc.category_id = ?
+       AND CURDATE() BETWEEN om.start_date AND om.end_date
+       AND (
+         om.start_time IS NULL OR om.end_time IS NULL
+         OR (
+           CASE 
+             WHEN om.start_time <= om.end_time THEN
+               CURTIME() BETWEEN om.start_time AND om.end_time
+             WHEN om.start_time > om.end_time THEN
+               CURTIME() >= om.start_time OR CURTIME() <= om.end_time
+             ELSE 0
+           END
+         )
+       )
+     ORDER BY om.discount_value DESC`,
+    [categoryId],
+  );
+  return rows;
+};
+
+/**
+ * Get applicable cart-level offers (flat_discount, first_order, time_based)
+ * @returns {Promise<Array>} Applicable cart offers
+ */
+export const getApplicableCartOffers = async () => {
+  const [rows] = await pool.query(
+    `SELECT *
+     FROM offer_master
+     WHERE is_active = 1
+       AND is_deleted = 0
+       AND offer_type IN ('flat_discount', 'first_order', 'time_based')
+       AND CURDATE() BETWEEN start_date AND end_date
+       AND (
+         start_time IS NULL OR end_time IS NULL
+         OR (
+           CASE 
+             WHEN start_time <= end_time THEN
+               CURTIME() BETWEEN start_time AND end_time
+             WHEN start_time > end_time THEN
+               CURTIME() >= start_time OR CURTIME() <= end_time
+             ELSE 0
+           END
+         )
+       )
+     ORDER BY discount_value DESC`,
+  );
+  return rows;
+};
