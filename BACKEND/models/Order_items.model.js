@@ -31,7 +31,7 @@ export const getDiscountOnItem = async (category_id) => {
 };
 
 // Insert order items and clear cart items
-export const insertQuery = async (values,productIds) => {
+export const insertQuery = async (values,cart_id) => {
   const insert = await pool.query(
     `INSERT INTO order_items
      (order_id, product_id, product_portion_id, modifier_id,
@@ -40,7 +40,7 @@ export const insertQuery = async (values,productIds) => {
      VALUES ?`,
     [values]
   );
-  await pool.query("update cart_items set is_deleted=1 where product_id in (?)",[productIds])
+  await pool.query("update cart_items set is_deleted=1 where cart_id = ? ",[cart_id])
   return insert;
 };
 

@@ -9,7 +9,6 @@ const router = express.Router();
  * @description API routes for payment operations.
  * Base path: /api/payments
  */
-
 // POST /api/payments/initiate - Start a new payment (COD or Razorpay)
 router.post("/initiate", authenticate, PaymentController.initiatePayment);
 

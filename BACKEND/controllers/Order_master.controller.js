@@ -4,24 +4,30 @@ import {
   getUserAddress,
   insertValue,
   getAllOrder,
-  getSingleOrder,
   getPortionPrice,
   getPortionValue,
-  getDisOnProduct, getDisOnCategory, getProducts,getDisCountOnCat,getRootCategoryId,getModifierValue
-
+  getOfferOnCart,
+  getOfferItem,
+  getProducts,
+  getRootCategoryId,
+  getModifierValue,
+  getOfferOnId,
+  getOfferDetails,
+  updateOrderStatus,
+  setOrderDeleted,
+  getAllOrdersAdmin as modelGetAllOrdersAdmin,
+  getAllItemsByCountAdmin as modelGetAllItemsByCountAdmin,
+  getAllItemsAdmin as modelGetAllItemsAdmin,
 } from "../models/Order_master.model.js";
 
 import {
   insertQuery
 } from "../models/Order_items.model.js";
-import pool from "../configs/db.js"
-
-
 import { notFound, ok, serverError, created } from "../utils/apiResponse.js";
 
 // Create a new order from user's cart with tax, discounts, and shipping calculations
 export const Order_master = async (req, res) => {
-  const user_id = 2;
+  const user_id = req.user.id;
 
   try {
     // Fetch user's cart items and product details
@@ -41,11 +47,8 @@ export const Order_master = async (req, res) => {
       price.push(Number(portionPrice[0].price))
     }
     const totalPrice = price.reduce((sum, val) => sum + val, 0);
-    
+
     // Get product categories for tax calculation
-    const [product] = await pool.query(`SELECT product_id, category_id
-      FROM product_master
-      WHERE product_id IN (?)`, [productsIds])
     const rootCategoryEntries = await Promise.all(
       products.map(async (t) => {
         const rootId = await findRootCategory(t.category_id);
@@ -63,48 +66,60 @@ export const Order_master = async (req, res) => {
     });
 
     const totalTax = taxAmountArray.reduce((sum, value) => sum + value, 0);
+    let totalDisCountArray = [];
+    let totalDisCount = 0;
+    let offer_id = null;
 
-    // Fetch discounts on products and categories
-    const disOnProduct = await getDisOnProduct(productsIds)
-    const disOncategory= await getDisOnCategory(productsIds)
+    /* -------- CART OFFER -------- */
+    const offerOnCart = await getOfferOnCart(user_id);
 
-    // Calculate discount for each item (product level or category level)
-    const disOnPro = disOnProduct.map(item => item.product_id)
-    const discount = [];
-    const productCategoryMap = {};
-    disOncategory.forEach(item => {
-      if (!productCategoryMap[item.product_id]) {
-        productCategoryMap[item.product_id] = [];
-      }
-      productCategoryMap[item.product_id].push(item.category_id);
-    });
-    for (let i = 0; i < productsIds.length; i++) {
-      if (disOnPro.includes(productsIds[i])) {
-        const discountObj = disOnProduct.find(d => d.product_id === productsIds[i]);
-        const discountValue = discountObj ? Number(discountObj.discount_value) : 0;
-        discount.push(discountValue)
-        continue;
-      }
-      let maxDiscount = 0;
-      for (let j = 0; j < productCategoryMap[productsIds[i]].length; j++) {
-        const dis = await getDisCountOnCat(productCategoryMap[productsIds[i]][j])
-        if (!dis || dis.length === 0) continue;
-        let ans = Number(dis[0].discount_value);
-        if (ans.discount_type == "percentage")
-          ans = ((Number(ans.discount_value) * price[i]) / 100)
-        if (ans > maxDiscount) {
-          maxDiscount = ans;
+    offer_id = offerOnCart[0]?.offer_id || null;
+    const cart_id = cart[0]?.cart_id;
+
+    if (offer_id == null) {
+
+      /* -------- ITEM OFFER -------- */
+      const offerOnItem = await getOfferItem(cart_id);
+
+      const item = offerOnItem.find(obj => obj.offer_id !== null);
+      const firstOfferId = item ? item.offer_id : null;
+      let used = false;
+
+      const updatedArray = await Promise.all(offerOnItem.map(async obj => {
+        if (obj.offer_id === firstOfferId && !used && firstOfferId !== null) {
+          used = true;
+          return { ...obj, offer_id: await getOfferOnId(firstOfferId) };
         }
-      }
-      discount.push(maxDiscount);
-    }
-    const totalDiscount = discount.reduce((sum, val) => sum + val, 0);
+        return { ...obj, offer_id: null };
+      }));
 
+      totalDisCountArray = updatedArray;
+      offer_id = firstOfferId;
+    }
+    /* ------ APPLY OFFER -------- */
+
+
+
+    const findOffer = await getOfferDetails(offer_id);
+
+    if (findOffer.length > 0) {
+      if (findOffer[0].discount_type === "percentage") {
+        totalDisCount = (totalPrice * Number(findOffer[0].discount_value)) / 100;
+      }
+
+      if (findOffer[0].discount_type === "fixed_amount") {
+        totalDisCount = Number(findOffer[0].discount_value);
+      }
+    }
+
+    const safe = (v) => (isNaN(v) || v === null || v === undefined ? 0 : Number(v));
     // Calculate final amount and apply shipping charges
-    const final_Amount = totalPrice + totalTax - totalDiscount;
+    const final_Amount =
+      safe(totalPrice) +
+      safe(totalTax) -
+      safe(totalDisCount);
     let shipping_amount = 50;
     if (final_Amount > 500) shipping_amount = 0
-
     // Get user's address and set order status
     const address_id = await getUserAddress(user_id);
     const order_status = "pending"
@@ -117,11 +132,11 @@ export const Order_master = async (req, res) => {
       order_num,
       user_id,
       address_id,
-      totalPrice,
-      totalTax,
-      shipping_amount,
-      totalDiscount,
-      final_Amount,
+      safe(totalPrice),
+      safe(totalTax),
+      safe(shipping_amount),
+      safe(totalDisCount),
+      safe(final_Amount),
       order_status,
       payment_status,
       0,
@@ -131,7 +146,7 @@ export const Order_master = async (req, res) => {
     // Insert order master record and create order items
     const insert = await insertValue(values);
     const orderId = insert.insertId;
-    await postOrderItems(user_id, orderId, price, taxAmountArray, discount, cart)
+    await postOrderItems(user_id, orderId, price, taxAmountArray, totalDisCountArray, cart)
     return created(res, "Order created successfully", insert)
   } catch (err) {
     console.log(err)
@@ -142,7 +157,7 @@ export const Order_master = async (req, res) => {
 // Retrieve all orders for a user
 export const AllOrder = async (req, res) => {
   try {
-    const userId = 2;
+    const userId = req.user.id;
     const orders = await getAllOrder(userId);
     if (orders.length == 0) {
       return notFound(res, "Orders not found")
@@ -154,23 +169,16 @@ export const AllOrder = async (req, res) => {
 }
 
 // Retrieve a specific order by order ID
-export const singleOrder = async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const userId = 2;
-    const order = await getSingleOrder(userId, id);
-    if (order.length == 0) return notFound(res, "Order not found")
-    return ok(res, "order found Successfully", order)
-  } catch (err) {
-    console.log(err)
-    return serverError(res)
-  }
-}
+
 
 // Create order item records for each product in the order
-export const postOrderItems = async (userId, orderId, price, taxAmountArray, discount, cart) => {
+export const postOrderItems = async (userId, orderId, price, taxAmountArray, totalDisCountArray, cart) => {
+  const cart_id = cart[0]?.cart_id;
   // Extract product IDs from cart
   const productIds = cart.map((item) => item.product_id);
+  let offer_id = null;
+  offer_id = totalDisCountArray[0]?.offer_id || null;
+
   // Fetch primary category for each product
   const productCategories = await getCompareProductCategory(productIds);
   const categoryIds = productCategories.map((item) => item.category_id);
@@ -194,20 +202,22 @@ export const postOrderItems = async (userId, orderId, price, taxAmountArray, dis
   const productMap = Object.fromEntries(
     products.map(p => [p.product_id, p.name])
   );
-  
+
+  if (!totalDisCountArray || totalDisCountArray.length === 0) {
+    totalDisCountArray = new Array(cart.length).fill(0);
+  }
+  console.log(totalDisCountArray)
   // Build order item records with calculated totals
   for (let i = 0; i < cart.length; i++) {
     // Apply shipping charges based on item price
     let shippingAmount = 100;
     if (price[i] > 100) shippingAmount = 0;
-
-
     // Calculate final total for this order item
-    const finalTotal =
-      Number(price[i]) -
-      Number(discount[i]) +
-      Number(taxAmountArray[i]) +
-      Number(shippingAmount);
+    const p = isNaN(price[i]) ? 0 : Number(price[i]);
+    const t = isNaN(taxAmountArray[i]) ? 0 : Number(taxAmountArray[i]);
+    const d = Number(totalDisCountArray[i]?.offer_id) || 0;
+    const finalTotal = p + t - d;
+
 
     // Prepare order item data
     const value = [
@@ -219,9 +229,9 @@ export const postOrderItems = async (userId, orderId, price, taxAmountArray, dis
       portionMap[portionIds[i]] || null,
       modifierMap[modifierIds[i]] || null,
       quantities[i],
-      Number(price[i]),
-      discount[i],
-      taxAmountArray[i],
+      p,
+      d,
+      t,
       finalTotal,
       userId,
       userId
@@ -229,20 +239,94 @@ export const postOrderItems = async (userId, orderId, price, taxAmountArray, dis
     values.push(value);
   }
   // Insert all order items into database
-  await insertQuery(values,productIds)
+  await insertQuery(values, cart_id)
 }
 
 // Find root category ID for tax calculation
 const findRootCategory = async (categoryId) => {
-  const rows=await getRootCategoryId(categoryId);
+  const rows = await getRootCategoryId(categoryId);
   return rows[0]?.category_id;
 };
 
 // Get tax percentage based on root category
-function getTaxPercent(rootCategoryId) {
+const getTaxPercent = (rootCategoryId) => {
   const TAX_RULES = {
     1: 18,
     27: 5
   };
   return TAX_RULES[rootCategoryId] || 0;
 }
+export const changeOrderStatusByAdmin = async (req, res) => {
+  try {
+    const latestStatus = req.body.latestStatus;
+    const order_id = req.params.id;
+    const rows = await updateOrderStatus(order_id, latestStatus);
+    return ok(res, "order Update Successfully", rows);
+  } catch (err) {
+    console.error(err);
+    return serverError(res);
+  }
+};
+
+export const deleteOrder = async (req, res) => {
+  try {
+    const order_id = req.params.id;
+    const rows = await setOrderDeleted(order_id);
+    return ok(res, "order deleted Successfully", rows);
+  } catch (err) {
+    console.error(err);
+    return serverError(res);
+  }
+};
+
+export const cancelOrder = async (req, res) => {
+  try {
+    const order_id = req.params.id;
+    const rows = await updateOrderStatus(order_id, "cancelled");
+    return ok(res, "cancel Order Succesfully", rows);
+  } catch (err) {
+    console.error(err);
+    return serverError(res);
+  }
+};
+
+export const returnOrderByUser = async (req, res) => {
+  try {
+    const order_id = req.params.id;
+    const rows = await updateOrderStatus(order_id, "returned");
+    return ok(res, "Order return SuccessFully", rows);
+  } catch (err) {
+    console.error(err);
+    return serverError(res);
+  }
+};
+
+export const getAllOrderByAdmin = async (req, res) => {
+  try {
+    const rows = await modelGetAllOrdersAdmin();
+    return ok(res, "all order fetched seccessfully", rows);
+  } catch (err) {
+    console.error(err);
+    return serverError(res);
+  }
+};
+
+export const getAllItemsByCountAdmin = async (req, res) => {
+  try {
+    const rows = await modelGetAllItemsByCountAdmin();
+    return ok(res, "all item by count fetched successfully", rows);
+  } catch (err) {
+    console.error(err);
+    return serverError(res);
+  }
+};
+
+export const getAllItemsAdmin = async (req, res) => {
+  try {
+    const rows = await modelGetAllItemsAdmin();
+    return ok(res, "all items fetched seccessfully", rows);
+  } catch (err) {
+    console.error(err);
+    return serverError(res);
+  }
+};

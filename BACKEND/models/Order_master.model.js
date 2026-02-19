@@ -4,12 +4,12 @@ import mysql from "mysql2/promise";
 
 // Fetch cart items for a user including product and portion details
 export const getCart = async (user_id) => {
-    const [cart] = await pool.query(`select ci.product_id,
+    const [cart] = await pool.query(`select ci.product_id,cm.cart_id,
         ci.quantity,
         ci.product_portion_id, 
         ci.modifier_id
          from cart_items ci join cart_master cm on ci.cart_id  = cm.cart_id  where cm.user_id =?`, [user_id])
-    console.log(cart)
+    
     return cart;
 }
 
@@ -28,15 +28,14 @@ export const getUserAddress = async (user_id) => {
 }
 
 // Fetch product-level discounts from offer master
-export const getDisOnProduct = async (productsIds) => {
-    const [disOnProduct] = await pool.query("select discount_type, discount_value,product_id from offer_master where product_id in (?)", [productsIds])
-    return disOnProduct;
+export const getOfferOnCart = async (userId) => {
+    const [rows] = await pool.query("select offer_id from cart_master where user_id = ?",[userId]);
+    return rows;
 };
-export const getDisOnCategory = async (productsIds) => {
-    const [disOncategory] = await pool.query(`select  product_id,category_id from product_categories where product_id in (?)`, [productsIds])
-    return disOncategory;
+export const getOfferItem = async (cart_id) => {
+    const [rows] = await pool.query("select offer_id from cart_items where cart_id = ? ",[cart_id]);
+    return rows;
 };
-
 // Insert order into order_master and generate order number
 export const insertValue = async (values) => {
 
@@ -57,12 +56,6 @@ export const insertValue = async (values) => {
 // Retrieve all orders for a specific user
 export const getAllOrder = async (userId) => {
     const [rows] = await pool.query("select * from Order_master where user_id=  ? ", [userId]);
-    return rows;
-}
-
-// Retrieve a specific order by user ID and order ID
-export const getSingleOrder = async (userId, id) => {
-    const [rows] = await pool.query("select * from Order_master where user_id =? and order_id=  ? ", [userId, id]);
     return rows;
 }
 
@@ -122,3 +115,52 @@ export const getDisCountOnCat = async (categoryId) => {
     const [rows] = await pool.query(`select discount_value, discount_type, category_id from offer_master where category_id= ? `, [categoryId])
     return rows;
   }
+
+// Get discount value for a specific offer id
+export const getOfferOnId = async (offer_id) => {
+    const [rows] = await pool.query(
+        "SELECT discount_value FROM offer_master WHERE offer_id = ?",
+        [offer_id]
+    );
+
+    return rows[0]?.discount_value || null;
+};
+
+// Get offer details (type and value)
+export const getOfferDetails = async (offer_id) => {
+    const [rows] = await pool.query(
+        "SELECT discount_type, discount_value FROM offer_master WHERE offer_id = ?",
+        [offer_id]
+    );
+    return rows;
+};
+
+// Update an order's status
+export const updateOrderStatus = async (order_id, status) => {
+    const [rows] = await pool.query(`UPDATE order_master SET order_status = ? WHERE order_id = ?`, [status, order_id]);
+    return rows;
+};
+
+// Soft-delete an order
+export const setOrderDeleted = async (order_id) => {
+    const [rows] = await pool.query(`UPDATE order_master SET is_deleted = 1 WHERE order_id = ?`, [order_id]);
+    return rows;
+};
+
+// Admin: fetch all orders
+export const getAllOrdersAdmin = async () => {
+    const [rows] = await pool.query(`SELECT * FROM order_master`);
+    return rows;
+};
+
+// Admin: get count of items grouped by product
+export const getAllItemsByCountAdmin = async () => {
+    const [rows] = await pool.query(`SELECT product_id, COUNT(*) as count FROM order_items GROUP BY product_id`);
+    return rows;
+};
+
+// Admin: fetch all order items
+export const getAllItemsAdmin = async () => {
+    const [rows] = await pool.query(`SELECT * FROM order_items`);
+    return rows;
+};
