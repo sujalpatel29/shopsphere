@@ -13,7 +13,6 @@ import reviewRouter from "./routes/review.routes.js";
 // import cartRouter from "./routes/cart.route.js";
 import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
-import reviewRouter from "./routes/review.routes.js";
 import modifierRoute from "./routes/modifier.route.js";
 // import cartRouter from "./routes/cart.route.js";
 
