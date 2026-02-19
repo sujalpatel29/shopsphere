@@ -126,5 +126,5 @@ app.listen(port, () => {
   console.log(`  - Review: http://localhost:${port}/api/review`);
   console.log(`  - Offer: http://localhost:${port}/api/offer`);
   console.log(`  - Portion: http://localhost:${port}/api/products`);
-  console.log(`  - Portion: http://localhost:${port}/api/products`);
+  console.log(`  - Order: http://localhost:${port}/api/order`);
 });
