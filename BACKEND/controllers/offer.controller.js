@@ -22,7 +22,9 @@ import {
   isOfferExistsById,
   isOfferProductCategoryMappingExists,
   updateOfferProductCategoryMappingById,
+  getOfferTypeByIdWithoutActiveCheck,
 } from "../models/offer.model.js";
+import { getCartItemsWithProduct } from "../models/cart.model.js";
 import {
   badRequest,
   conflict,
@@ -53,13 +55,13 @@ export const createOfferController = async (req, res) => {
     const offerData = req.body;
     const userId = req.user.id;
 
-    const exists = await checkOfferExist(offerData);
-
-    if (exists) {
-      return conflict(res, "Offer already exists in the same time slot");
-    }
     if (!offerData || Object.keys(offerData).length === 0) {
       return badRequest(res, "Request body is required");
+    }
+
+    const exists = await checkOfferExist(offerData);
+    if (exists) {
+      return conflict(res, "Offer already exists in the same time slot");
     }
 
     const result = await createOffer(offerData, userId);
@@ -68,8 +70,7 @@ export const createOfferController = async (req, res) => {
       offer_id: result.insertId,
     });
   } catch (error) {
-    return serverError(res, error.message || "Internal server error");
-
+    console.error(error);
     return serverError(res, error.message || "Internal server error");
   }
 };
@@ -90,9 +91,31 @@ export const createOfferProductCategoryMappingController = async (req, res) => {
     const mappingData = req.body;
     const userId = req.user.id;
 
-    const offerExists = await isOfferExistsById(mappingData.offer_id);
-    if (!offerExists) {
+    const offer = await getOfferTypeByIdWithoutActiveCheck(mappingData.offer_id);
+    if (!offer) {
       return notFound(res, "Offer not found");
+    }
+
+    const hasProductId = mappingData.product_id != null;
+    const hasCategoryId = mappingData.category_id != null;
+    const isFlatDiscount = offer.offer_type === "flat_discount";
+
+    if (isFlatDiscount && (hasProductId || hasCategoryId)) {
+      return badRequest(
+        res,
+        "For flat_discount offers, product_id and category_id must be null",
+      );
+    }
+
+    if (!isFlatDiscount && !hasProductId && !hasCategoryId) {
+      return badRequest(
+        res,
+        "Either product_id or category_id is required for this offer type",
+      );
+    }
+
+    if (!isFlatDiscount && hasProductId && hasCategoryId) {
+      return badRequest(res, "Provide only one: product_id or category_id");
     }
 
     const mappingExists =
@@ -439,11 +462,21 @@ export const getActiveOfferController = async (req, res) => {
  */
 export const validateOfferController = async (req, res) => {
   try {
-    // Body is pre-validated by `validateOfferPayload` middleware.
-    const { offer_name, total, product_id, category_id } = req.body;
-
-    // TODO: read user id from authenticated request context.
+    // User ID comes from authenticated request context
     const userId = req.user.id;
+
+    // Body is pre-validated by `validateOfferPayload` middleware.
+    const { offer_name, product_id, category_id } = req.body;
+
+    // Step 0: Get cart total from database only (never trust client amount).
+    if (!req.cart || !req.cart.cart_id) {
+      return badRequest(res, "Cart context is required to validate offer");
+    }
+    const cartItems = await getCartItemsWithProduct(req.cart.cart_id);
+    const cartTotal = cartItems.reduce(
+      (sum, item) => sum + Number(item.effective_price) * item.quantity,
+      0,
+    );
 
     // Step 1: Fetch a currently valid offer.
     const result = await getValidateOfferByName(offer_name);
@@ -454,21 +487,34 @@ export const validateOfferController = async (req, res) => {
 
     const offer = result[0];
 
-    // Step 2: Ensure offer is mapped to requested product/category scope.
-    const hasScopeMapping = await isOfferMappedToScope(
-      offer.offer_id,
-      product_id ?? null,
-      category_id ?? null,
-    );
-    if (!hasScopeMapping) {
-      return badRequest(
-        res,
-        "Offer is not applicable for provided product/category",
+    // Step 2: Product/category scope check is required only for scoped offer types.
+    const requiresScopeMapping =
+      offer.offer_type === "product_discount" ||
+      offer.offer_type === "category_discount";
+
+    if (requiresScopeMapping) {
+      if (!product_id && !category_id) {
+        return badRequest(
+          res,
+          "Either product_id or category_id is required for this offer type",
+        );
+      }
+
+      const hasScopeMapping = await isOfferMappedToScope(
+        offer.offer_id,
+        product_id ?? null,
+        category_id ?? null,
       );
+      if (!hasScopeMapping) {
+        return badRequest(
+          res,
+          "Offer is not applicable for provided product/category",
+        );
+      }
     }
 
     // Step 3: Enforce minimum purchase amount if configured.
-    if (offer.min_purchase_amount && total < offer.min_purchase_amount) {
+    if (offer.min_purchase_amount && cartTotal < offer.min_purchase_amount) {
       return badRequest(
         res,
         `Minimum purchase amount is ${offer.min_purchase_amount}`,
@@ -489,7 +535,7 @@ export const validateOfferController = async (req, res) => {
     const type = offer.discount_type.toLowerCase();
 
     if (type === "percentage") {
-      discountAmount = (total * offer.discount_value) / 100;
+      discountAmount = (cartTotal * offer.discount_value) / 100;
 
       if (
         offer.maximum_discount_amount &&
@@ -498,14 +544,14 @@ export const validateOfferController = async (req, res) => {
         discountAmount = offer.maximum_discount_amount;
       }
     } else if (type === "fixed_amount") {
-      discountAmount = Math.min(offer.discount_value, total);
+      discountAmount = Math.min(offer.discount_value, cartTotal);
     }
 
     // Consumer/order module should persist usage in `offer_usage` after successful order placement.
     return ok(res, "Offer is valid", {
       offer_id: offer.offer_id,
       discount_amount: discountAmount,
-      final_amount: total - discountAmount,
+      final_amount: cartTotal - discountAmount,
     });
   } catch (error) {
     console.error(error);

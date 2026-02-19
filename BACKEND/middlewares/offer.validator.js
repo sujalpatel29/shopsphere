@@ -268,41 +268,27 @@ const statusChangeOfferSchema = z.object({
  * Payload schema for validating whether an offer can be applied.
  * Required:
  * - `offer_name`
- * - `total`
  */
-const validateOfferSchema = z
-  .object({
-    offer_name: z
-      .string({ required_error: "offer_name is required" })
-      .trim()
-      .min(1, "offer_name cannot be empty"),
+const validateOfferSchema = z.object({
+  offer_name: z
+    .string({ required_error: "offer_name is required" })
+    .trim()
+    .min(1, "offer_name cannot be empty"),
 
-    total: z.coerce
-      .number({ invalid_type_error: "total must be a number" })
-      .min(1, "total must be greater than 0"),
+  product_id: z.coerce
+    .number({ invalid_type_error: "product_id must be a number" })
+    .int("product_id must be an integer")
+    .min(1, "product_id must be a positive number")
+    .optional()
+    .nullable(),
 
-    product_id: z.coerce
-      .number({ invalid_type_error: "product_id must be a number" })
-      .int("product_id must be an integer")
-      .min(1, "product_id must be a positive number")
-      .optional()
-      .nullable(),
-
-    category_id: z.coerce
-      .number({ invalid_type_error: "category_id must be a number" })
-      .int("category_id must be an integer")
-      .min(1, "category_id must be a positive number")
-      .optional()
-      .nullable(),
-  })
-  .superRefine((data, ctx) => {
-    if (!data.product_id && !data.category_id) {
-      ctx.addIssue({
-        path: ["product_id"],
-        message: "Either product_id or category_id is required",
-      });
-    }
-  });
+  category_id: z.coerce
+    .number({ invalid_type_error: "category_id must be a number" })
+    .int("category_id must be an integer")
+    .min(1, "category_id must be a positive number")
+    .optional()
+    .nullable(),
+});
 
 // ============================================================================
 // OFFER PRODUCT CATEGORY MAPPING VALIDATION SCHEMAS
@@ -312,7 +298,8 @@ const validateOfferSchema = z
  * Payload schema for creating offer_product_category mapping.
  * Requires:
  * - offer_id
- * - exactly one of product_id/category_id
+ * - at most one of product_id/category_id
+ *   (both can be null for flat_discount offers; controller enforces offer-type rules)
  */
 const createOfferProductCategorySchema = z
   .object({
@@ -336,13 +323,6 @@ const createOfferProductCategorySchema = z
       .nullable(),
   })
   .superRefine((data, ctx) => {
-    if (!data.product_id && !data.category_id) {
-      ctx.addIssue({
-        path: ["product_id"],
-        message: "Either product_id or category_id is required",
-      });
-    }
-
     if (data.product_id && data.category_id) {
       ctx.addIssue({
         path: ["product_id"],

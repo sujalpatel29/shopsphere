@@ -1,44 +1,45 @@
-// import express from "express";
-// import {
-//   createOfferController,
-//   createOfferProductCategoryMappingController,
-//   deleteOfferProductCategoryMappingByIdController,
-//   getAllOfferProductCategoryMappingsController,
-//   getOfferProductCategoryMappingsByOfferIdController,
-//   updateOfferProductCategoryMappingByIdController,
-//   deleteOfferByIdController,
-//   getActiveOfferController,
-//   getAllOfferController,
-//   getOfferByIdController,
-//   updateOfferByIdController,
-//   updateOfferStatusController,
-//   validateOfferController,
-//   getOfferUsageByOfferIdController,
-//   getOfferUsageByUserIdController,
-//   getAllOfferUsageSummaryController,
-// } from "../controllers/offer.controller.js";
-// import {
-//   validateCreateOffer,
-//   validateCreateOfferProductCategory,
-//   validateOfferProductCategoryIdParam,
-//   validateOfferProductCategoryOfferIdParam,
-//   validateOfferIdParam,
-//   validateUserIdParam,
-//   validateOfferPayload,
-//   validateUpdateOfferProductCategory,
-//   validatestatusOfferIDParam,
-//   validateUpdateOffer,
-// } from "../middlewares/offer.validator.js";
-// import {
-//   auth, // verifies authenticated user
-//   adminOnly, // allows only admin users
-// } from "../middlewares/auth.middleware.js";
+import express from "express";
+import {
+  createOfferController,
+  createOfferProductCategoryMappingController,
+  deleteOfferProductCategoryMappingByIdController,
+  getAllOfferProductCategoryMappingsController,
+  getOfferProductCategoryMappingsByOfferIdController,
+  updateOfferProductCategoryMappingByIdController,
+  deleteOfferByIdController,
+  getActiveOfferController,
+  getAllOfferController,
+  getOfferByIdController,
+  updateOfferByIdController,
+  updateOfferStatusController,
+  validateOfferController,
+  getOfferUsageByOfferIdController,
+  getOfferUsageByUserIdController,
+  getAllOfferUsageSummaryController,
+} from "../controllers/offer.controller.js";
+import {
+  validateCreateOffer,
+  validateCreateOfferProductCategory,
+  validateOfferProductCategoryIdParam,
+  validateOfferProductCategoryOfferIdParam,
+  validateOfferIdParam,
+  validateUserIdParam,
+  validateOfferPayload,
+  validateUpdateOfferProductCategory,
+  validateStatusOfferIDParam,
+  validateUpdateOffer,
+} from "../middlewares/offer.validator.js";
+import {
+  auth, // verifies authenticated user
+  adminOnly, // allows only admin users
+} from "../middlewares/auth.middleware.js";
+import { validateCart } from "../middlewares/cart.middleware.js";
 
 // // ============================================================================
 // // OFFER ROUTES
 // // ============================================================================
 
-// export const route = express.Router();
+export const route = express.Router();
 
 // // ============================================================================
 // // OFFER MASTER ROUTES
@@ -50,11 +51,11 @@
 //  */
 // route.get("/", auth, adminOnly, getAllOfferController);
 
-// /**
-//  * GET api/offer/active
-//  * Fetch all active offers
-//  */
-// route.get("/active", auth, adminOnly, getActiveOfferController);
+/**
+ * GET api/offer/active
+ * Fetch all active offers (accessible to all authenticated users including customers)
+ */
+route.get("/active", auth, getActiveOfferController);
 
 // /**
 //  * POST api/offer/create
@@ -68,17 +69,17 @@
 //   createOfferController,
 // );
 
-// /**
-//  * POST api/offer/validate
-//  * Validate if offer can be applied
-//  */
-// route.post(
-//   "/validate",
-//   auth,
-//   adminOnly,
-//   validateOfferPayload,
-//   validateOfferController,
-// );
+/**
+ * POST api/offer/validate
+ * Validate if offer can be applied (accessible to customers for their carts)
+ */
+route.post(
+  "/validate",
+  auth,
+  validateCart,
+  validateOfferPayload,
+  validateOfferController,
+);
 
 // /**
 //  * PATCH api/offer/update/:id
@@ -104,18 +105,18 @@
 //   deleteOfferByIdController,
 // );
 
-// /**
-//  * patch api/offer/status/:id
-//  * status change to activated or deactivated by id
-//  */
-// route.patch(
-//   "/status/:id",
-//   auth,
-//   adminOnly,
-//   validateOfferIdParam,
-//   validatestatusOfferIDParam,
-//   updateOfferStatusController,
-// );
+/**
+ * patch api/offer/status/:id
+ * status change to activated or deactivated by id
+ */
+route.patch(
+  "/status/:id",
+  auth,
+  adminOnly,
+  validateOfferIdParam,
+  validateStatusOfferIDParam,
+  updateOfferStatusController,
+);
 
 // // ============================================================================
 // // OFFER PRODUCT CATEGORY MAPPING ROUTES
