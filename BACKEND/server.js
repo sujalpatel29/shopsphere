@@ -9,7 +9,7 @@ import portionRouter from "./routes/portion.route.js";
 
 import orderRouter from "./routes/order_master.route.js";
 import orderItemRouter from "./routes/Order_item.route.js";
-import reviewRouter from "./routes/review.routes.js";
+// import reviewRouter from "./routes/review.routes.js";
 // import cartRouter from "./routes/cart.route.js";
 import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
@@ -18,6 +18,7 @@ import modifierRoute from "./routes/modifier.route.js";
 // import cartRouter from "./routes/cart.route.js";
 
 import productRoutes from "./routes/product.route.js";
+import productImageRoutes from "./routes/productImage.route.js";
 
 
 // Load environment variables
@@ -83,11 +84,11 @@ app.use("/api/cart",cartRouter);
 
 app.use("/api/offer", offerRoute);
 app.use("/api/modifiers", modifierRoute);
-//app.use("/api/payments", paymentRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/offer", offerRoute);
 // Add more routes here as you create them:
 app.use("/api/products", productRoutes);
+app.use("/api/productImages", productImageRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/orders", orderRoutes);
 
@@ -129,3 +130,5 @@ app.listen(port, () => {
   console.log(`  - Portion: http://localhost:${port}/api/products`);
   console.log(`  - Order: http://localhost:${port}/api/order`);
 });
+
+
