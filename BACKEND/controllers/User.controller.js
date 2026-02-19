@@ -109,7 +109,7 @@ export const loginUser = async (req, res) => {
     );
 
     // 4️ Success response
-    return ok(res, "Login successful", { token, refreshToken });
+    return ok(res, "Login successful", { token, refreshToken, user });
   } catch (err) {
     console.error("Login Error:", err);
     return serverError(res);

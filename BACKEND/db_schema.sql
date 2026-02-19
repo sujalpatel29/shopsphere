@@ -680,6 +680,8 @@ CREATE TABLE `user_master` (
   `password` varchar(255) NOT NULL,
   `role` enum('customer','admin') NOT NULL DEFAULT 'customer',
   `is_deleted` tinyint(1) DEFAULT '0',
+  `is_blocked` tinyint(1) DEFAULT '0',
+  `refresh_token` varchar(500) DEFAULT NULL,
   `last_login` timestamp NULL DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `updated_by` int DEFAULT NULL,
