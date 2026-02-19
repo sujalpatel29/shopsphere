@@ -4,8 +4,12 @@ import {
   getCart,
   addItemToCart,
   updateCartItem,
-  removeCartItem
-
+  removeCartItem,
+  applyCartOffer,
+  removeCartOffer,
+  applyCartItemOffer,
+  removeCartItemOffer,
+  getApplicableOffers
 } from "../controllers/cart.controller.js";
 
 import { auth } from "../middlewares/auth.middleware.js";
@@ -76,5 +80,46 @@ router.patch("/items/:cartItemId", auth, validateCart, validateCartItemOwnership
 
 router.delete("/items/:cartItemId", auth, validateCart, validateCartItemOwnership, removeCartItem);
 
+
+// ============================================================================
+// OFFER ROUTES
+// ============================================================================
+
+/**
+ * Get applicable offers for current cart
+ * GET /api/cart/offers
+ * Headers: Authorization: Bearer <token>
+ */
+router.get("/offers", auth, validateCart, getApplicableOffers);
+
+/**
+ * Apply offer to cart (cart-level offer)
+ * POST /api/cart/offer
+ * Headers: Authorization: Bearer <token>
+ * Body: { offer_id }
+ */
+router.post("/offer", auth, validateCart, applyCartOffer);
+
+/**
+ * Remove offer from cart
+ * DELETE /api/cart/offer
+ * Headers: Authorization: Bearer <token>
+ */
+router.delete("/offer", auth, validateCart, removeCartOffer);
+
+/**
+ * Apply offer to cart item (product-level offer)
+ * POST /api/cart/items/:cartItemId/offer
+ * Headers: Authorization: Bearer <token>
+ * Body: { offer_id }
+ */
+router.post("/items/:cartItemId/offer", auth, validateCart, validateCartItemOwnership, applyCartItemOffer);
+
+/**
+ * Remove offer from cart item
+ * DELETE /api/cart/items/:cartItemId/offer
+ * Headers: Authorization: Bearer <token>
+ */
+router.delete("/items/:cartItemId/offer", auth, validateCart, validateCartItemOwnership, removeCartItemOffer);
 
 export default router;
