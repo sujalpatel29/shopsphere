@@ -13,6 +13,7 @@ import modifierRoute from "./routes/modifier.route.js";
 // import cartRouter from "./routes/cart.route.js";
 
 import productRoutes from "./routes/product.route.js";
+import productImageRoutes from "./routes/productImage.route.js";
 
 
 // Load environment variables
@@ -76,6 +77,7 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/offer", offerRoute);
 // Add more routes here as you create them:
 app.use("/api/products", productRoutes);
+app.use("/api/productImages", productImageRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/orders", orderRoutes);
 
@@ -116,3 +118,5 @@ app.listen(port, () => {
   console.log(`  - Offer: http://localhost:${port}/api/offer`);
   console.log(`  - Portion: http://localhost:${port}/api/products`);
 });
+
+
