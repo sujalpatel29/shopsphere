@@ -1,5 +1,5 @@
 import express from "express";
-import { auth } from "../middlewares/auth.middleware.js";
+import { auth, adminOnly } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/Validations.middleware.js";
 import { uploadSingleImage } from "../middlewares/upload.middleware.js";
 import {
@@ -23,7 +23,8 @@ const productImageRouter = express.Router();
 // Upload image and save metadata to product_images.
 productImageRouter.post(
   "/upload",
-  // auth,
+  auth,
+  adminOnly,
   uploadSingleImage("image"),
   validate(uploadProductImageSchema),
   uploadProductImageController,
@@ -47,15 +48,17 @@ productImageRouter.get(
 // Make one image primary for its product.
 productImageRouter.patch(
   "/:image_id/primary",
-  // auth,
+  auth,
+  adminOnly,
   validate(imageIdParamSchema, "params"),
   setPrimaryProductImageController,
 );
 
 // Update main image fields and optionally replace file.
 productImageRouter.patch(
-  "/:image_id",
-  // auth,
+  "/update/:image_id",
+  auth,
+  adminOnly,
   uploadSingleImage("image"),
   validate(imageIdParamSchema, "params"),
   validate(updateProductImageSchema),
@@ -64,8 +67,9 @@ productImageRouter.patch(
 
 // Delete image from cloud and soft-delete in DB.
 productImageRouter.delete(
-  "/:image_id",
-  // auth,
+  "/delete/:image_id",
+  auth,
+  adminOnly,
   validate(imageIdParamSchema, "params"),
   deleteProductImageController,
 );

@@ -184,6 +184,7 @@ export const updateProductImageById = async (
     modifier_portion_id,
     image_level,
     image_url,
+    public_id,
     is_primary,
     updated_by,
   },

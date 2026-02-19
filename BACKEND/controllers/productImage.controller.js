@@ -209,7 +209,7 @@ export const updateProductImageController = async (req, res) => {
   try {
     const userId = getUserId(req);
     const { image_id } = req.validated?.params ?? req.params;
-    const updates = req.validated?.body ?? {};
+    const updates = req.validated?.body ?? req.body ?? {};
     const hasBodyUpdates = Object.keys(updates).length > 0;
 
     if (!req.file && !hasBodyUpdates) {
@@ -266,8 +266,8 @@ export const updateProductImageController = async (req, res) => {
       uploadedImage = await uploadBufferToCloudinary(req.file.buffer, folder);
     }
 
-    const nextImageUrl = uploadedImage?.secure_url ?? existingImage.image_url;
-    const nextPublicId = uploadedImage?.public_id ?? existingImage.public_id;
+    const nextImageUrl = uploadedImage?.secure_url ?? updates.image_url ?? existingImage.image_url;
+    const nextPublicId = uploadedImage?.public_id ?? updates.public_id ?? existingImage.public_id;
 
     const conn = await db.getConnection();
     try {

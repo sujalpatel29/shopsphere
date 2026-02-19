@@ -150,6 +150,28 @@ export const updateProductImageSchema = z.object({
     }),
   product_portion_id: nullableOptionalPositiveInt,
   modifier_portion_id: nullableOptionalPositiveInt,
+  image_url: z
+    .preprocess(
+      normalizeNullableString,
+      z.union([z.string().url("image_url must be a valid URL"), z.literal(""), z.null(), z.undefined()]),
+    )
+    .transform((value) => {
+      if (value === "" || value === null || value === undefined) {
+        return undefined;
+      }
+      return value;
+    }),
+  public_id: z
+    .preprocess(
+      normalizeNullableString,
+      z.union([z.string().trim().min(1, "public_id cannot be empty"), z.literal(""), z.null(), z.undefined()]),
+    )
+    .transform((value) => {
+      if (value === "" || value === null || value === undefined) {
+        return undefined;
+      }
+      return value;
+    }),
   is_primary: optionalPrimaryFlag,
 });
 
