@@ -50,7 +50,7 @@ export const validate = (schema, property = "body") => {
       // store safely (never overwrite express internals)
       req.validated = req.validated || {};
       req.validated[property] = parsed;
-
+      
       next();
     } catch (err) {
       return res.status(400).json({
