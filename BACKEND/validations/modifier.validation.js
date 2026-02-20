@@ -8,15 +8,29 @@ import { z } from "zod";
 
 // Schema for creating a new modifier
 export const createModifierSchema = z.object({
-  modifier_name: z.string().min(1, "Modifier name is required"),
-  modifier_value: z.string().min(1, "Modifier value is required"),
+  modifier_name: z
+    .string()
+    .min(1, "Modifier name is required")
+    .max(100, "Modifier name cannot exceed 100 characters"),
+  modifier_value: z
+    .string()
+    .min(1, "Modifier value is required")
+    .max(100, "Modifier value cannot exceed 100 characters"),
   additional_price: z.number().min(0, "Price cannot be negative").optional(),
 });
 
 // Schema for updating a modifier
 export const updateModifierSchema = z.object({
-  modifier_name: z.string().min(1, "Modifier name is required").optional(),
-  modifier_value: z.string().min(1, "Modifier value is required").optional(),
+  modifier_name: z
+    .string()
+    .min(1, "Modifier name is required")
+    .max(100, "Modifier name cannot exceed 100 characters")
+    .optional(),
+  modifier_value: z
+    .string()
+    .min(1, "Modifier value is required")
+    .max(100, "Modifier value cannot exceed 100 characters")
+    .optional(),
   additional_price: z.number().min(0, "Price cannot be negative").optional(),
   is_active: z.boolean().optional(),
 });
