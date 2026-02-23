@@ -1,14 +1,27 @@
-// TODO: Create your main App component here
-// This is the root component of your application
-
-import React from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ThemeProvider } from './context/ThemeContext';
+import AppRoutes from './routes/AppRoutes';
 
 function App() {
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('shopsphere-theme') === 'dark');
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('shopsphere-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
+  const themeValue = useMemo(
+    () => ({
+      darkMode,
+      toggleDarkMode: () => setDarkMode((prev) => !prev),
+    }),
+    [darkMode]
+  );
+
   return (
-    <div>
-      <h1>Welcome to E-Commerce App</h1>
-      <p>Start building your app here!</p>
-    </div>
+    <ThemeProvider value={themeValue}>
+      <AppRoutes />
+    </ThemeProvider>
   );
 }
 

@@ -1,0 +1,55 @@
+/*
+ * Scrollbar styles for PrimeReact ScrollPanel.
+ * Used by AppLayout (app-scrollpanel) and Sidebar (sidebar-scrollpanel).
+ * Imported LAST in main.jsx for highest cascade priority.
+ */
+
+/* ─── Hide native scrollbar inside ScrollPanel content ─── */
+.app-scrollpanel .p-scrollpanel-content,
+.sidebar-scrollpanel .p-scrollpanel-content {
+  overflow-y: scroll !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.app-scrollpanel .p-scrollpanel-content::-webkit-scrollbar,
+.sidebar-scrollpanel .p-scrollpanel-content::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* ─── Prevent wrapper from showing overflow ─── */
+.app-scrollpanel .p-scrollpanel-wrapper,
+.sidebar-scrollpanel .p-scrollpanel-wrapper {
+  overflow: hidden !important;
+}
+
+/* ─── Custom thin vertical scrollbar ─── */
+.app-scrollpanel .p-scrollpanel-bar-y,
+.sidebar-scrollpanel .p-scrollpanel-bar-y {
+  max-width: 4px !important;
+  right: 2px !important;
+  background: #2f7a6f !important;
+  opacity: 0.5 !important;
+  border-radius: 999px !important;
+  transition:
+    max-width 0.2s,
+    opacity 0.2s !important;
+}
+
+.app-scrollpanel .p-scrollpanel-bar-y:hover,
+.sidebar-scrollpanel .p-scrollpanel-bar-y:hover {
+  max-width: 6px !important;
+  opacity: 0.8 !important;
+}
+
+/* ─── Hide horizontal scrollbar ─── */
+.app-scrollpanel .p-scrollpanel-bar-x,
+.sidebar-scrollpanel .p-scrollpanel-bar-x {
+  display: none !important;
+}
+
+/* ─── Dark mode ─── */
+.dark .app-scrollpanel .p-scrollpanel-bar-y,
+.dark .sidebar-scrollpanel .p-scrollpanel-bar-y {
+  background: #64748b !important;
+}

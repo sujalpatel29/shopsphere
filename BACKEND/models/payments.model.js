@@ -1,4 +1,4 @@
-import pool from "../configs/db.js";
+// import pool from "../configs/db.js";
 
 /**
  * @module PaymentModel
@@ -48,11 +48,11 @@ const PaymentModel = {
     return result;
   },
 
-  /**
-   * Find a single payment by its ID.
-   * @param {number} paymentId - Primary key
-   * @returns {Promise<Object|null>} Payment record or null
-   */
+  //   /**
+  //    * Find a single payment by its ID.
+  //    * @param {number} paymentId - Primary key
+  //    * @returns {Promise<Object|null>} Payment record or null
+  //    */
   async findById(paymentId) {
     const query = `SELECT * FROM payment_master WHERE payment_id = ?`;
     const [rows] = await pool.execute(query, [paymentId]);
@@ -71,12 +71,12 @@ const PaymentModel = {
     return rows[0] || null;
   },
 
-  /**
-   * Find all payments for a given order.
-   * Returns multiple records (retries, partial payments).
-   * @param {number} orderId - Order ID to look up
-   * @returns {Promise<Array>} Array of payment records
-   */
+  //   /**
+  //    * Find all payments for a given order.
+  //    * Returns multiple records (retries, partial payments).
+  //    * @param {number} orderId - Order ID to look up
+  //    * @returns {Promise<Array>} Array of payment records
+  //    */
   async findByOrderId(orderId) {
     const query = `
       SELECT * FROM payment_master
@@ -87,13 +87,13 @@ const PaymentModel = {
     return rows;
   },
 
-  /**
-   * Update payment status with corresponding timestamp.
-   * Automatically sets processing_started_at, succeeded_at, or failed_at.
-   * @param {number} paymentId - Payment to update
-   * @param {string} status - 'pending' | 'processing' | 'completed' | 'failed' | 'refunded'
-   * @returns {Promise<Object>} MySQL update result { affectedRows, changedRows }
-   */
+  //   /**
+  //    * Update payment status with corresponding timestamp.
+  //    * Automatically sets processing_started_at, succeeded_at, or failed_at.
+  //    * @param {number} paymentId - Payment to update
+  //    * @param {string} status - 'pending' | 'processing' | 'completed' | 'failed' | 'refunded'
+  //    * @returns {Promise<Object>} MySQL update result { affectedRows, changedRows }
+  //    */
   async updateStatus(paymentId, status) {
     let timestampField = "";
 
@@ -115,12 +115,12 @@ const PaymentModel = {
     return result;
   },
 
-  /**
-   * Set the external transaction ID after gateway order creation.
-   * @param {number} paymentId - Payment to update
-   * @param {string} transactionId - Gateway transaction/order ID
-   * @returns {Promise<Object>} MySQL update result
-   */
+  //   /**
+  //    * Set the external transaction ID after gateway order creation.
+  //    * @param {number} paymentId - Payment to update
+  //    * @param {string} transactionId - Gateway transaction/order ID
+  //    * @returns {Promise<Object>} MySQL update result
+  //    */
   async updateTransactionId(paymentId, transactionId) {
     const query = `
       UPDATE payment_master
@@ -153,12 +153,12 @@ const PaymentModel = {
     return result;
   },
 
-  /**
-   * Mark a payment as refunded (full or partial).
-   * @param {number} paymentId - Payment to refund
-   * @param {number} refundAmount - Amount to refund
-   * @returns {Promise<Object>} MySQL update result
-   */
+  //   /**
+  //    * Mark a payment as refunded (full or partial).
+  //    * @param {number} paymentId - Payment to refund
+  //    * @param {number} refundAmount - Amount to refund
+  //    * @returns {Promise<Object>} MySQL update result
+  //    */
   async processRefund(paymentId, refundAmount) {
     const query = `
       UPDATE payment_master
@@ -170,12 +170,12 @@ const PaymentModel = {
     return result;
   },
 
-  /**
-   * Mark a COD payment as completed when order is delivered.
-   * Only works for cash_on_delivery payment method.
-   * @param {number} paymentId - COD payment to complete
-   * @returns {Promise<Object>} MySQL update result
-   */
+  //   /**
+  //    * Mark a COD payment as completed when order is delivered.
+  //    * Only works for cash_on_delivery payment method.
+  //    * @param {number} paymentId - COD payment to complete
+  //    * @returns {Promise<Object>} MySQL update result
+  //    */
   async completeCODPayment(paymentId) {
     const query = `
       UPDATE payment_master
