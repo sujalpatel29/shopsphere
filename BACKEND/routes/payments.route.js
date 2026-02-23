@@ -4,11 +4,11 @@ import { auth } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-/**
- * @module PaymentRoutes
- * @description API routes for payment operations.
- * Base path: /api/payments
- */
+// /**
+//  * @module PaymentRoutes
+//  * @description API routes for payment operations.
+//  * Base path: /api/payments
+//  */
 
 // POST /api/payments/initiate - Start a new payment (COD or Stripe)
 router.post("/initiate", auth, PaymentController.initiatePayment);

@@ -10,6 +10,9 @@ import {
   viewUserModel,
   updateUserPassword,
   getUserByIdforpassword,
+  blockUserById,
+  logoutUserModel,
+  refreshTokenHelper,
 } from "../models/user.model.js";
 import {
   created,
@@ -21,19 +24,17 @@ import {
   notFound,
 } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
-// import pool from "../configs/db.js";
+import pool from "../configs/db.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 //user
 export const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
-
   try {
-    //  Basic validation
-    if (!name || !email || !password) {
-      return badRequest(res, "All fields are required");
-    }
+    const { name, email, password } = req.body;
 
-    //  Hash password
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const data = {
@@ -45,18 +46,12 @@ export const registerUser = async (req, res) => {
 
     const result = await createUserModel(data);
 
-    if (!result || result.affectedRows === 0) {
-      return badRequest(res, "User not created");
-    }
-
-    //  Success response (201)
     return created(res, "User created successfully", {
       userId: result.insertId,
     });
   } catch (err) {
     console.error("Register Error:", err);
 
-    //  Handle duplicate email error (MySQL error code)
     if (err.code === "ER_DUP_ENTRY") {
       return conflict(res, "Email already exists");
     }
@@ -66,13 +61,8 @@ export const registerUser = async (req, res) => {
 };
 
 export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    if (!email || !password) {
-      return badRequest(res, "Email and password are required");
-    }
-
+    const { email, password } = req.body;
     // 1️ Find user
     const rows = await loginUserModel(email);
 
@@ -81,6 +71,12 @@ export const loginUser = async (req, res) => {
     }
 
     const user = rows[0];
+
+    if (user.is_blocked) {
+      return res.status(403).json({
+        message: "Your account has been blocked by admin",
+      });
+    }
 
     // 2️ Compare password
     const isMatch = await bcrypt.compare(password, user.password);
@@ -101,11 +97,71 @@ export const loginUser = async (req, res) => {
       { expiresIn: "1h" },
     );
 
+    const refreshToken = jwt.sign(
+      { id: user.user_id, email: user.email, name: user.name, role: user.role },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" },
+    );
+
+    await pool.query(
+      `UPDATE user_master SET last_login = CURRENT_TIMESTAMP, refresh_token = ? WHERE user_id = ?`,
+      [refreshToken, user.user_id],
+    );
+
     // 4️ Success response
-    return ok(res, "Login successful", { token });
+    return ok(res, "Login successful", { token, refreshToken, user });
   } catch (err) {
     console.error("Login Error:", err);
     return serverError(res);
+  }
+};
+
+export const logoutUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Remove refresh token from DB
+    await logoutUserModel(userId);
+
+    return ok(res, "Logged out successfully");
+  } catch (error) {
+    console.error("Logout Error:", error);
+    return serverError(res, "Something went wrong");
+  }
+};
+
+//this will generete the new token
+export const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    // 1️ Check refresh token exists
+    if (!refreshToken) {
+      return unauthorized(res, "Refresh token required");
+    }
+
+    // 2️ Verify token signature
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    // 3️ Check token exists in DB
+    const rows = await refreshTokenHelper(decoded.id, refreshToken);
+
+    if (rows.length === 0) {
+      return forbidden(res, "Invalid refresh token");
+    }
+
+    // 4️ Generate new access token
+    const newAccessToken = jwt.sign(
+      { id: decoded.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "30s" },
+    );
+
+    return ok(res, "Access token refreshed", {
+      accessToken: newAccessToken,
+    });
+  } catch (error) {
+    return forbidden(res, "Invalid or expired refresh token");
   }
 };
 
@@ -134,7 +190,7 @@ export const updateProfile = async (req, res) => {
   try {
     const userId = req.user?.id;
 
-    console.log(userId);
+    // console.log(userId);
 
     if (!userId) {
       return badRequest(res, "Invalid user");
@@ -248,7 +304,15 @@ export const changePassword = async (req, res) => {
         .json({ success: false, message: "Password not updated" });
     }
 
-    res.json({ success: true, message: "Password changed successfully" });
+    await pool.query(
+      `UPDATE user_master SET refresh_token = NULL WHERE user_id = ?`,
+      [id],
+    );
+
+    res.json({
+      success: true,
+      message: "Password changed successfully. Please login again.",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -275,10 +339,6 @@ export const getProfileById = async (req, res) => {
   try {
     //get id from parameter
     const id = req.params.id;
-
-    if (!id) {
-      return badRequest(res, "User ID is required");
-    }
 
     const result = await getUserById(id);
 
@@ -308,5 +368,43 @@ export const deleteUserByAdmin = async (req, res) => {
   } catch (error) {
     console.error("Delete user error:", error);
     return serverError(res, "Failed to delete user");
+  }
+};
+
+export const blockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const adminId = req.user.id;
+
+    // 1️ Validate userId
+    if (!userId) {
+      return badRequest(res, "User ID is required");
+    }
+
+    // 2️ Check if user exists
+    const [rows] = await pool.query(
+      "SELECT is_blocked FROM user_master WHERE user_id = ?",
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return notFound(res, "User not found");
+    }
+
+    const user = rows[0];
+
+    // 3️ Check if already blocked
+    if (Number(user.is_blocked) === 1) {
+      return badRequest(res, "User is already blocked");
+    }
+
+    // 4️ Update block status
+    await blockUserById(userId, adminId);
+
+    return ok(res, "User blocked successfully");
+
+  } catch (error) {
+    console.error("Block User Error:", error);
+    return serverError(res, "Internal server error");
   }
 };
