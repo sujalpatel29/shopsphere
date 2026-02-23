@@ -26,6 +26,39 @@ FROM subcategories;
   return pool.query(query, [categoryId]);
 };
 
+export const getByIds = (categoryIds) => {
+  const placeholders = categoryIds.map(() => "?").join(", ");
+  const query = `
+    SELECT *
+    FROM category_master
+    WHERE category_id IN (${placeholders})
+      AND is_deleted = 0
+  `;
+
+  return pool.query(query, categoryIds);
+};
+
+export const countRoot = () => {
+  return pool.query(
+    `SELECT COUNT(*) as total
+     FROM category_master
+     WHERE parent_id IS NULL
+     AND is_deleted = 0`
+  );
+}
+
+export const getRootPaginated = (limit, offset) => {
+  return pool.query(
+    `SELECT *
+     FROM category_master
+     WHERE parent_id IS NULL
+     AND is_deleted = 0
+     LIMIT ? OFFSET ?`,
+    [limit, offset]
+  );
+}
+
+
 export const getByCategory = (categoryId) => {
   const query = `
 WITH RECURSIVE subcategories AS (

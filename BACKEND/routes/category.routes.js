@@ -8,6 +8,7 @@ import { auth, adminOnly } from "../middlewares/auth.middleware.js";
 import {
   idParamSchema,
   searchQuerySchema,
+  multiCategoryQuerySchema,
   createCategorySchema,
   updateCategorySchema,
 } from "../validations/category.validation.js";
@@ -20,12 +21,12 @@ PUBLIC
 ==============================
 */
 
-router.get("/", categoryController.getAllcategory);
+router.get("/", validate(searchQuerySchema, "query"),categoryController.getAllcategory);
 
 router.get(
-  "/search",
-  validate(searchQuerySchema, "query"),
-  categoryController.searchCategory,
+  "/bulk",
+  validate(multiCategoryQuerySchema, "query"),
+  categoryController.getCategoriesByIds,
 );
 
 router.get(

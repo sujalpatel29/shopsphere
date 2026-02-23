@@ -39,44 +39,44 @@ const getStripeClient = () => {
   };
 };
 
-/**
- * @module PaymentController
- * @description Handles HTTP requests for payment operations.
- * Supports COD and Stripe payment methods.
- */
+// /**
+//  * @module PaymentController
+//  * @description Handles HTTP requests for payment operations.
+//  * Supports COD and Stripe payment methods.
+//  */
 const PaymentController = {
-  /**
-   * POST /api/payments/initiate
-   * @description Start a new payment (COD or Stripe).
-   * For COD: creates a pending payment record.
-   * For Stripe: creates a PaymentIntent and returns client_secret.
-   */
+  //   /**
+  //    * POST /api/payments/initiate
+  //    * @description Start a new payment (COD or Stripe).
+  //    * For COD: creates a pending payment record.
+  //    * For Stripe: creates a PaymentIntent and returns client_secret.
+  //    */
   async initiatePayment(req, res) {
     try {
       const { order_id, amount, payment_method, currency = "INR" } = req.body;
 
-      // Validate required fields
+      //       // Validate required fields
       if (!order_id || !amount || !payment_method) {
         return badRequest(
           res,
-          "order_id, amount, and payment_method are required"
+          "order_id, amount, and payment_method are required",
         );
       }
 
-      // Validate payment method
+      //       // Validate payment method
       if (!["cash_on_delivery", "stripe"].includes(payment_method)) {
         return badRequest(
           res,
-          "Invalid payment method. Use: cash_on_delivery or stripe"
+          "Invalid payment method. Use: cash_on_delivery or stripe",
         );
       }
 
-      // Validate amount
+      // //       // Validate amount
       if (amount <= 0) {
         return badRequest(res, "Amount must be greater than 0");
       }
 
-      // --- COD ---
+      // //       // --- COD ---
       if (payment_method === "cash_on_delivery") {
         const result = await PaymentModel.create({
           order_id,
@@ -94,7 +94,7 @@ const PaymentController = {
         });
       }
 
-      // --- Stripe ---
+      //       // --- Stripe ---
       const { client: stripe, error: stripeError } = getStripeClient();
       if (!stripe) {
         return badRequest(res, stripeError);
@@ -134,7 +134,7 @@ const PaymentController = {
           stripe_publishable_key: process.env.STRIPE_PUBLISHABLE_KEY,
           amount: paymentIntent.amount,
           currency: paymentIntent.currency,
-        }
+        },
       );
     } catch (error) {
       console.error("Initiate payment error:", error);
@@ -142,21 +142,21 @@ const PaymentController = {
     }
   },
 
-  /**
-   * POST /api/payments/verify
-   * @description Verify Stripe payment after frontend checkout.
-   * Retrieves the PaymentIntent from Stripe and checks its status.
-   */
+  //   /**
+  //    * POST /api/payments/verify
+  //    * @description Verify Stripe payment after frontend checkout.
+  //    * Retrieves the PaymentIntent from Stripe and checks its status.
+  //    */
   async verifyPayment(req, res) {
     try {
       const { payment_intent_id } = req.body;
 
-      // Validate required fields
+      //       // Validate required fields
       if (!payment_intent_id) {
         return badRequest(res, "payment_intent_id is required");
       }
 
-      // Find payment record by Stripe PaymentIntent ID
+      //       // Find payment record by Stripe PaymentIntent ID
       const payment = await PaymentModel.findByTransactionId(payment_intent_id);
 
       if (!payment) {
@@ -168,12 +168,12 @@ const PaymentController = {
         return badRequest(res, stripeError);
       }
 
-      // Retrieve the PaymentIntent from Stripe to check its actual status
+      //       // Retrieve the PaymentIntent from Stripe to check its actual status
       const paymentIntent =
         await stripe.paymentIntents.retrieve(payment_intent_id);
 
       if (paymentIntent.status === "succeeded") {
-        // Payment succeeded - mark as completed
+        //         // Payment succeeded - mark as completed
         await PaymentModel.updateStatus(payment.payment_id, "completed");
         await PaymentModel.updateGatewayResponse(payment.payment_id, {
           stripe_payment_intent_id: paymentIntent.id,
@@ -190,23 +190,22 @@ const PaymentController = {
         paymentIntent.status === "requires_payment_method" ||
         paymentIntent.status === "canceled"
       ) {
-        // Payment failed
+        //         // Payment failed
         await PaymentModel.updateStatus(payment.payment_id, "failed");
         await PaymentModel.updateGatewayResponse(payment.payment_id, {
           stripe_payment_intent_id: paymentIntent.id,
           stripe_status: paymentIntent.status,
-          error:
-            paymentIntent.last_payment_error?.message || "Payment failed",
+          error: paymentIntent.last_payment_error?.message || "Payment failed",
           verified: false,
         });
 
         return badRequest(
           res,
-          `Payment verification failed. Status: ${paymentIntent.status}`
+          `Payment verification failed. Status: ${paymentIntent.status}`,
         );
       }
 
-      // Payment is still in progress (e.g., "processing", "requires_action")
+      //       // Payment is still in progress (e.g., "processing", "requires_action")
       await PaymentModel.updateGatewayResponse(payment.payment_id, {
         stripe_payment_intent_id: paymentIntent.id,
         stripe_status: paymentIntent.status,
@@ -219,7 +218,7 @@ const PaymentController = {
         {
           status: paymentIntent.status,
           requires_action: paymentIntent.status === "requires_action",
-        }
+        },
       );
     } catch (error) {
       console.error("Verify payment error:", error);
@@ -227,10 +226,10 @@ const PaymentController = {
     }
   },
 
-  /**
-   * GET /api/payments/:id
-   * @description Get a single payment by its ID.
-   */
+  // //   /**
+  // //    * GET /api/payments/:id
+  // //    * @description Get a single payment by its ID.
+  // //    */
   async getPayment(req, res) {
     try {
       const { id } = req.params;
@@ -247,10 +246,10 @@ const PaymentController = {
     }
   },
 
-  /**
-   * GET /api/payments/order/:orderId
-   * @description Get all payment attempts for a given order.
-   */
+  // //   /**
+  // //    * GET /api/payments/order/:orderId
+  // //    * @description Get all payment attempts for a given order.
+  // //    */
   async getPaymentsByOrder(req, res) {
     try {
       const { orderId } = req.params;
@@ -263,12 +262,12 @@ const PaymentController = {
     }
   },
 
-  /**
-   * POST /api/payments/:id/refund
-   * @description Process a full or partial refund.
-   * For Stripe: calls Stripe refund API.
-   * For COD: marks as refunded (manual process).
-   */
+  //   /**
+  //    * POST /api/payments/:id/refund
+  //    * @description Process a full or partial refund.
+  //    * For Stripe: calls Stripe refund API.
+  //    * For COD: marks as refunded (manual process).
+  //    */
   async refundPayment(req, res) {
     try {
       const { id } = req.params;
@@ -295,7 +294,7 @@ const PaymentController = {
         return badRequest(res, "Refund amount cannot exceed payment amount");
       }
 
-      // Stripe refund
+      //       // Stripe refund
       if (payment.payment_method === "stripe") {
         const { client: stripe, error: stripeError } = getStripeClient();
         if (!stripe) {
@@ -312,7 +311,7 @@ const PaymentController = {
         if (!gatewayData.stripe_payment_intent_id) {
           return badRequest(
             res,
-            "Stripe PaymentIntent ID not found. Cannot process refund."
+            "Stripe PaymentIntent ID not found. Cannot process refund.",
           );
         }
 
@@ -344,7 +343,7 @@ const PaymentController = {
       return ok(
         res,
         `Refund of ${refundAmount} processed successfully`,
-        updatedPayment
+        updatedPayment,
       );
     } catch (error) {
       console.error("Refund payment error:", error);
@@ -352,10 +351,10 @@ const PaymentController = {
     }
   },
 
-  /**
-   * PUT /api/payments/:id/complete-cod
-   * @description Mark a COD payment as completed when order is delivered.
-   */
+  // //   /**
+  // //    * PUT /api/payments/:id/complete-cod
+  // //    * @description Mark a COD payment as completed when order is delivered.
+  // //    */
   async completeCOD(req, res) {
     try {
       const { id } = req.params;
@@ -383,11 +382,11 @@ const PaymentController = {
     }
   },
 
-  /**
-   * POST /api/payments/webhook
-   * @description Handle Stripe webhook events for async payment updates.
-   * Verifies the webhook signature and processes the event.
-   */
+  //   /**
+  //    * POST /api/payments/webhook
+  //    * @description Handle Stripe webhook events for async payment updates.
+  //    * Verifies the webhook signature and processes the event.
+  //    */
   async handleWebhook(req, res) {
     const { client: stripe, error: stripeError } = getStripeClient();
     if (!stripe) {
@@ -401,7 +400,7 @@ const PaymentController = {
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET
+        process.env.STRIPE_WEBHOOK_SECRET,
       );
     } catch (err) {
       console.error("Webhook signature verification failed:", err.message);
@@ -412,7 +411,7 @@ const PaymentController = {
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object;
         const payment = await PaymentModel.findByTransactionId(
-          paymentIntent.id
+          paymentIntent.id,
         );
         if (payment && payment.status !== "completed") {
           await PaymentModel.updateStatus(payment.payment_id, "completed");
@@ -430,7 +429,7 @@ const PaymentController = {
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object;
         const payment = await PaymentModel.findByTransactionId(
-          paymentIntent.id
+          paymentIntent.id,
         );
         if (payment && payment.status !== "failed") {
           await PaymentModel.updateStatus(payment.payment_id, "failed");
