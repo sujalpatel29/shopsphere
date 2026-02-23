@@ -396,25 +396,86 @@ import {
 GET ALL
 =====================================
 */
+// export const getAllcategory = async (req, res) => {
+//   try {
+//     const [categories] = await Category.getAll();
+//     if (!categories.length) {
+//       return notFound(res, "Category not found");
+//     }
+
+//     const tree = buildCategoryTree(categories);
+//     const totalNodes = countTreeNodes(tree);
+
+//     return ok(res, "categories fetched successfully", {
+//       count: totalNodes,
+//       item: tree[0],
+//     });
+
+//     // return ok(res, "Categories fetched successfully", {
+//     //   count: categories.length,
+//     //   items: categories,
+//     // });
+//   } catch (error) {
+//     return serverError(res, error.message);
+//   }
+// };
+
 export const getAllcategory = async (req, res) => {
   try {
-    const [categories] = await Category.getAll();
-    if (!categories.length) {
-      return notFound(res, "Category not found");
+    const hasQueryParams = Object.keys(req.query || {}).length > 0;
+
+    // Plain GET /categories -> return all (no pagination)
+    if (!hasQueryParams) {
+      const [categories] = await Category.getAll();
+      return ok(res, "Categories fetched successfully", {
+        count: categories.length,
+        items: categories,
+      });
     }
 
-    const tree = buildCategoryTree(categories);
-    const totalNodes = countTreeNodes(tree);
+    let { name, page, limit } = req.validated.query;
+    name = (name || "").trim();
 
-    return ok(res, "categories fetched successfully", {
-      count: totalNodes,
-      item: tree[0],
-    });
+    const currentPage = Number(page) || 1;
+    const perPage = Number(limit) || 5;
+    const offset = (currentPage - 1) * perPage;
 
-    // return ok(res, "Categories fetched successfully", {
-    //   count: categories.length,
-    //   items: categories,
-    // });
+    // If name is empty but pagination params are provided -> paginate all
+    if (name === "") {
+      const [allCategories] = await Category.getAll();
+      const total = Number(allCategories.length) || 0;
+
+      const paginatedData = allCategories.slice(offset, offset + perPage);
+
+      return paginated(
+        res,
+        "Categories fetched successfully",
+        {
+          page: currentPage,
+          limit: perPage,
+          total,
+          totalPages: Math.ceil(total / perPage),
+        },
+        paginatedData,
+      );
+    }
+
+    const [countRows] = await Category.countByName(name);
+    const total = Number(countRows?.[0]?.total ?? 0);
+
+    const [categories] = await Category.searchByName(name, perPage, offset);
+
+    return paginated(
+      res,
+      "Search result fetched successfully",
+      {
+        page: currentPage,
+        limit: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+      categories,
+    );
   } catch (error) {
     return serverError(res, error.message);
   }
@@ -441,6 +502,40 @@ export const getCategoryById = async (req, res) => {
     return ok(res, "Category fetched successfully", {
       count: totalNodes,
       item: tree[0],
+    });
+  } catch (error) {
+    return serverError(res, error.message);
+  }
+};
+
+/*
+=====================================
+GET MULTIPLE BY IDS
+=====================================
+*/
+export const getCategoriesByIds = async (req, res) => {
+  try {
+    const { ids } = req.validated.query;
+
+    const [categories] = await Category.getByIds(ids);
+
+    const positionById = new Map(ids.map((id, idx) => [id, idx]));
+    const sortedCategories = [...categories].sort(
+      (a, b) =>
+        (positionById.get(Number(a.category_id)) ?? Number.MAX_SAFE_INTEGER) -
+        (positionById.get(Number(b.category_id)) ?? Number.MAX_SAFE_INTEGER),
+    );
+
+    const foundIds = new Set(
+      sortedCategories.map((item) => Number(item.category_id)),
+    );
+    const missingIds = ids.filter((id) => !foundIds.has(id));
+
+    return ok(res, "Categories fetched successfully", {
+      requestedCount: ids.length,
+      foundCount: sortedCategories.length,
+      missingIds,
+      items: sortedCategories,
     });
   } catch (error) {
     return serverError(res, error.message);
@@ -667,6 +762,7 @@ export const restoreCategory = async (req, res) => {
 
 const categoryController = {
   getAllcategory,
+  getCategoriesByIds,
   getCategoryById,
   getProductsByCategory,
   searchCategory,
