@@ -1,5 +1,5 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useSelector } from "react-redux";
 import AppLayout from "../components/layout/AppLayout";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
@@ -8,12 +8,13 @@ import DashboardPage from "../pages/customer/DashboardPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 
 function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
+  const { currentUser } = useSelector((state) => state.auth);
+  const isAuthenticated = Boolean(currentUser);
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 function AdminRoute({ children }) {
-  const { currentUser } = useAuth();
+  const { currentUser } = useSelector((state) => state.auth);
   if (currentUser?.role !== "admin") {
     return <Navigate to="/dashboard" replace />;
   }

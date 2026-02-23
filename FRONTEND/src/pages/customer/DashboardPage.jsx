@@ -15,7 +15,7 @@ import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Tag } from "primereact/tag";
-import { useAuth } from "../../context/AuthContext";
+import { useSelector } from "react-redux";
 
 const profileNav = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,7 +30,7 @@ const profileNav = [
 ];
 
 function DashboardPage() {
-  const { currentUser } = useAuth();
+  const { currentUser } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const userOrders = useMemo(() => [], []);

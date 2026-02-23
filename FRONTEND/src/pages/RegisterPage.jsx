@@ -3,29 +3,32 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
-import { useAuth } from "../context/AuthContext";
+import { useDispatch, useSelector } from "react-redux";
+import { registerUser } from "../redux/slices/authSlice";
 
 function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const { register } = useAuth();
+  const [validationError, setValidationError] = useState("");
+  const dispatch = useDispatch();
+  const { loading, error: authError } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError("");
+    setValidationError("");
 
-    const result = await register(email, password, name);
-    if (!result.ok) {
-      console.log(result.message);
-      setError(result.message);
+    if (password !== confirmPassword) {
+      setValidationError("Passwords do not match.");
       return;
     }
 
-    navigate("/login");
+    const resultAction = await dispatch(registerUser({ name, email, password }));
+    if (registerUser.fulfilled.match(resultAction)) {
+      navigate("/login");
+    }
   };
 
   return (
@@ -96,15 +99,22 @@ function RegisterPage() {
                 required
               />
 
-              {error && (
+              {validationError && (
                 <p className="text-sm text-red-500 dark:text-red-400">
-                  {error}
+                  {validationError}
+                </p>
+              )}
+
+              {authError && (
+                <p className="text-sm text-red-500 dark:text-red-400">
+                  {authError}
                 </p>
               )}
 
               <Button
                 type="submit"
-                label="Create Account"
+                label={loading ? "Creating..." : "Create Account"}
+                disabled={loading}
                 className="w-full !rounded-lg !bg-amber-600 !px-6 !py-3 !font-medium !text-white !shadow-lg !shadow-amber-600/20 transition-all hover:!bg-amber-700"
               />
             </div>

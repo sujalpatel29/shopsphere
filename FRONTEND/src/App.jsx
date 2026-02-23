@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import FloatingThemeToggle from './components/layout/FloatingThemeToggle';
 import AppRoutes from './routes/AppRoutes';
 
 function App() {
@@ -21,12 +19,9 @@ function App() {
   );
 
   return (
-    <AuthProvider>
-        <ThemeProvider value={themeValue}>
-          <AppRoutes />
-          <FloatingThemeToggle />
-        </ThemeProvider>
-    </AuthProvider>
+    <ThemeProvider value={themeValue}>
+      <AppRoutes />
+    </ThemeProvider>
   );
 }
 

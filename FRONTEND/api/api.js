@@ -2,9 +2,10 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
+  withCredentials: true, // important for refresh cookies
 });
 
-// Attach token automatically
+//  Attach access token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
 
@@ -15,34 +16,40 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+//  Handle 401 & Refresh
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    //  Skip refresh for login & register
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
       !originalRequest.url.includes("login-user") &&
-      !originalRequest.url.includes("create-user")
+      !originalRequest.url.includes("create-user") &&
+      !originalRequest.url.includes("refresh-token")
     ) {
       originalRequest._retry = true;
 
       try {
-        const res = await axios.post(
-          "http://localhost:3000/api/users/refresh-token",
-          {},
-          { withCredentials: true }
-        );
+        const res = await api.post("/users/refresh-token");
 
-        localStorage.setItem("accessToken", res.data.accessToken);
+        const newAccessToken = res.data.accessToken;
+
+        localStorage.setItem("token", newAccessToken);
 
         originalRequest.headers.Authorization =
-          "Bearer " + res.data.accessToken;
+          "Bearer " + newAccessToken;
 
         return api(originalRequest);
       } catch (refreshError) {
+        //  Refresh failed → logout
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("currentUser");
+
+        window.location.href = "/login";
+
         return Promise.reject(refreshError);
       }
     }
@@ -50,6 +57,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 
 export default api;

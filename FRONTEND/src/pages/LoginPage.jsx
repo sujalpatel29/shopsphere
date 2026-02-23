@@ -3,24 +3,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
-import { useAuth } from "../context/AuthContext";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "../redux/slices/authSlice";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const { login } = useAuth();
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.auth);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const result = await login(email, password);
-    if (!result.ok) {
-      // console.log(result.message);
-      setError(result.message);
-      return;
+
+    const resultAction = await dispatch(loginUser({ email, password }));
+
+    if (loginUser.fulfilled.match(resultAction)) {
+      navigate("/");
     }
-    navigate("/");
   };
 
   return (
@@ -82,7 +83,8 @@ function LoginPage() {
 
               <Button
                 type="submit"
-                label="Sign In"
+                label={loading ? "Signing In..." : "Sign In"}
+                disabled={loading}
                 className="w-full !rounded-lg !bg-amber-600 !px-6 !py-3 !font-medium !text-white !shadow-lg !shadow-amber-600/20 transition-all hover:!bg-amber-700"
               />
             </div>

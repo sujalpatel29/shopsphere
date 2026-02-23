@@ -4,8 +4,10 @@ import {
   ChevronDown,
   ChevronRight,
   Menu,
+  Moon,
   Search,
   ShoppingCart,
+  Sun,
   UserCircle2,
   X,
 } from "lucide-react";
@@ -13,7 +15,8 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Sidebar } from "primereact/sidebar";
 import { ScrollPanel } from "primereact/scrollpanel";
-import { useAuth } from "../../context/AuthContext";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../redux/slices/authSlice";
 import { useTheme } from "../../context/ThemeContext";
 
 const menuSections = [
@@ -34,9 +37,19 @@ const menuSections = [
   },
 ];
 
+const topNavLinks = [
+  { label: "Categories", href: "/products" },
+  { label: "Today's Deals", href: "/products" },
+  { label: "New Releases", href: "/products" },
+  { label: "Electronics", href: "/products" },
+  { label: "Fashion", href: "/products" },
+  { label: "Customer Service", href: "/products" },
+];
+
 function Navbar() {
-  const { darkMode } = useTheme();
-  const { currentUser, logout } = useAuth();
+  const { darkMode, toggleDarkMode } = useTheme();
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.auth);
   const itemCount = 0;
   const dashboardPath =
     currentUser?.role === "admin" ? "/admin/dashboard" : "/dashboard";
@@ -69,7 +82,8 @@ function Navbar() {
   };
 
   const handleLogout = () => {
-    logout();
+    setMenuOpen(false);
+    dispatch(logout());
     navigate("/");
   };
 
@@ -117,6 +131,20 @@ function Navbar() {
           </div>
 
           <nav className="ml-auto flex items-center gap-3 font-accent text-sm font-medium md:gap-4">
+            <Button
+              type="button"
+              onClick={toggleDarkMode}
+              className={`!inline-flex !items-center !gap-1.5 !rounded-lg !border !bg-transparent !px-2.5 !py-2 !text-xs !font-semibold !shadow-none ${
+                darkMode
+                  ? "!border-[#1f2933] !text-amber-300 hover:!border-amber-400 hover:!bg-[#1a2327]"
+                  : "!border-amber-200 !text-amber-700 hover:!bg-amber-50"
+              }`}
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              <span className="hidden md:inline">{darkMode ? "Light" : "Dark"}</span>
+            </Button>
+
             <Link
               to="/"
               className={`hidden transition md:inline-flex ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
@@ -150,13 +178,6 @@ function Navbar() {
                   <UserCircle2 className="h-4 w-4" />
                   <span className="hidden md:inline">Profile</span>
                 </Link>
-                <Button
-                  type="button"
-                  onClick={handleLogout}
-                  label="Logout"
-                  icon="pi pi-sign-out"
-                  className="!rounded-lg !border-2 !border-amber-600 !bg-transparent !px-3 !py-2 !text-amber-600 !shadow-none hover:!bg-amber-50 dark:hover:!bg-amber-500/10"
-                />
               </>
             ) : (
               <Link
@@ -166,6 +187,38 @@ function Navbar() {
                 Login
               </Link>
             )}
+          </nav>
+        </div>
+
+        <div
+          className={`hidden border-t md:block ${
+            darkMode ? "border-[#1f2933] bg-[#1a2327]" : "border-amber-200/70 bg-[#f5ecde]"
+          }`}
+        >
+          <nav className="relative mx-auto flex w-full max-w-[1600px] items-center gap-2 overflow-hidden px-4 py-1.5 md:px-8 lg:px-12">
+            <span
+              className={`pointer-events-none absolute -left-12 top-1/2 h-14 w-14 -translate-y-1/2 rounded-full blur-2xl animate-pulse ${
+                darkMode ? "bg-amber-300/20" : "bg-amber-400/25"
+              }`}
+            />
+            <span
+              className={`pointer-events-none absolute right-10 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full blur-xl animate-pulse ${
+                darkMode ? "bg-teal-300/15" : "bg-orange-300/25"
+              }`}
+            />
+            {topNavLinks.map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                className={`relative z-10 rounded-md px-2 py-1 font-accent text-[13px] font-semibold transition ${
+                  darkMode
+                    ? "text-slate-300 hover:text-amber-300"
+                    : "text-gray-700 hover:text-amber-700"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
         </div>
 
@@ -193,7 +246,7 @@ function Navbar() {
         showCloseIcon={false}
         blockScroll
         className={`shopsphere-sidebar ${darkMode ? "bg-[#151e22] text-slate-100" : "bg-[#fff8ee] text-gray-900"} !w-[86vw] !max-w-[380px]`}
-        contentClassName="p-0"
+        contentClassName="flex h-full flex-col p-0"
       >
         <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2927] to-[#163b36] px-4 py-4 text-white">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(201,184,138,0.08),transparent_60%)]" />
@@ -295,10 +348,27 @@ function Navbar() {
             </div>
           </ScrollPanel>
         </div>
+
+        {currentUser && (
+          <div
+            className={`border-t px-4 py-4 ${darkMode ? "border-[#1f2933] bg-[#10171b]" : "border-amber-200/70 bg-[#fff3df]"}`}
+          >
+            <Button
+              type="button"
+              onClick={handleLogout}
+              icon="pi pi-sign-out"
+              label="Logout"
+              className={`!w-full !justify-center !rounded-xl !border !px-4 !py-3 !text-sm !font-semibold !shadow-none transition-all ${
+                darkMode
+                  ? "!border-[#c9b88a]/45 !bg-gradient-to-r !from-[#1f2a2f] !to-[#26333a] !text-amber-300 hover:!from-[#26333a] hover:!to-[#30424a] hover:!shadow-[0_10px_25px_-12px_rgba(201,184,138,0.7)]"
+                  : "!border-amber-300/80 !bg-gradient-to-r !from-amber-50 !to-[#fff1dc] !text-amber-800 hover:!from-amber-100 hover:!to-[#ffe7bf] hover:!shadow-[0_10px_20px_-12px_rgba(217,119,6,0.6)]"
+              }`}
+            />
+          </div>
+        )}
       </Sidebar>
     </>
   );
 }
 
 export default Navbar;
-

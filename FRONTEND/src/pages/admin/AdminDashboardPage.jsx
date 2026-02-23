@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { useAuth } from "../../context/AuthContext";
+import { useSelector } from "react-redux";
 
 const adminNav = [
   { key: "users", label: "Users", icon: Users },
@@ -36,7 +36,7 @@ const adminNav = [
 ];
 
 function AdminDashboardPage() {
-  const { currentUser } = useAuth();
+  const { currentUser } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState("users");
   const [productsOpen, setProductsOpen] = useState(true);
 
