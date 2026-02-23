@@ -281,6 +281,18 @@ export const createModifierPortionController = async (req, res) => {
     const { modifier_id, product_portion_id, additional_price, stock } =
       req.body;
 
+    // Check if modifier exists
+    const modifierExists = await getModifierByIdForAdmin(modifier_id);
+    if (!modifierExists) {
+      return notFound(res, "Modifier not found");
+    }
+
+    // Check if product portion exists
+    const portionExists = await checkProductPortionExists(product_portion_id);
+    if (!portionExists) {
+      return notFound(res, "Product portion not found");
+    }
+
     // Check if duplicate exists
     const exists = await checkModifierPortionExists(
       modifier_id,
@@ -335,7 +347,13 @@ export const updateModifierPortionController = async (req, res) => {
     // Set default updatedBy
     const updated_by = req.user.id;
 
-    // Call model function (no need to check if exists, model will handle it)
+    // Check if modifier portion exists
+    const existingPortion = await getModifierPortionById(id);
+    if (!existingPortion) {
+      return notFound(res, "Modifier portion not found");
+    }
+
+    // Call model function
     await updateModifierPortion(id, {
       additional_price,
       stock,
@@ -359,7 +377,13 @@ export const deleteModifierPortionController = async (req, res) => {
     // Set default deletedBy
     const deleted_by = req.user.id;
 
-    // Call model function (no need to check if exists, model will handle it)
+    // Check if modifier portion exists
+    const existingPortion = await getModifierPortionById(id);
+    if (!existingPortion) {
+      return notFound(res, "Modifier portion not found");
+    }
+
+    // Call model function
     await deleteModifierPortion(id, deleted_by);
 
     // Send success response
