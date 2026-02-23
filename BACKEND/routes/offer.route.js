@@ -49,7 +49,7 @@ export const route = express.Router();
 //  * GET api/offer
 //  * Fetch all offers
 //  */
-// route.get("/", auth, adminOnly, getAllOfferController);
+route.get("/", auth, adminOnly, getAllOfferController);
 
 /**
  * GET api/offer/active
@@ -57,17 +57,17 @@ export const route = express.Router();
  */
 route.get("/active", auth, getActiveOfferController);
 
-// /**
-//  * POST api/offer/create
-//  * Create a new offer
-//  */
-// route.post(
-//   "/create",
-//   auth,
-//   adminOnly,
-//   validateCreateOffer,
-//   createOfferController,
-// );
+/**
+ * POST api/offer/create
+ * Create a new offer
+ */
+route.post(
+  "/create",
+  auth,
+  adminOnly,
+  validateCreateOffer,
+  createOfferController,
+);
 
 /**
  * POST api/offer/validate
@@ -85,25 +85,25 @@ route.post(
 //  * PATCH api/offer/update/:id
 //  * Update offer by id
 //  */
-// route.patch(
-//   "/update/:id",
-//   auth,
-//   adminOnly,
-//   validateOfferIdParam,
-//   validateUpdateOffer,
-//   updateOfferByIdController,
-// );
+route.patch(
+  "/update/:id",
+  auth,
+  adminOnly,
+  validateOfferIdParam,
+  validateUpdateOffer,
+  updateOfferByIdController,
+);
 // /**
 //  * delete api/offer/delete/:id
 //  * delete offer by id
 //  */
-// route.delete(
-//   "/delete/:id",
-//   auth,
-//   adminOnly,
-//   validateOfferIdParam,
-//   deleteOfferByIdController,
-// );
+route.delete(
+  "/delete/:id",
+  auth,
+  adminOnly,
+  validateOfferIdParam,
+  deleteOfferByIdController,
+);
 
 /**
  * patch api/offer/status/:id
@@ -126,61 +126,61 @@ route.patch(
 //  * POST api/offer/mapping/create
 //  * Create offer to product/category mapping
 //  */
-// route.post(
-//   "/mapping/create",
-//   auth,
-//   adminOnly,
-//   validateCreateOfferProductCategory,
-//   createOfferProductCategoryMappingController,
-// );
+route.post(
+  "/mapping/create",
+  auth,
+  adminOnly,
+  validateCreateOfferProductCategory,
+  createOfferProductCategoryMappingController,
+);
 
 // /**
 //  * GET api/offer/mapping
 //  * Fetch all mappings
 //  */
-// route.get(
-//   "/mapping",
-//   auth,
-//   adminOnly,
-//   getAllOfferProductCategoryMappingsController,
-// );
+route.get(
+  "/mapping",
+  auth,
+  adminOnly,
+  getAllOfferProductCategoryMappingsController,
+);
 
 // /**
 //  * GET api/offer/mapping/offer/:id
 //  * Fetch all mappings for a given offer id
 //  */
-// route.get(
-//   "/mapping/offer/:id",
-//   auth,
-//   adminOnly,
-//   validateOfferProductCategoryOfferIdParam,
-//   getOfferProductCategoryMappingsByOfferIdController,
-// );
+route.get(
+  "/mapping/offer/:id",
+  auth,
+  adminOnly,
+  validateOfferProductCategoryOfferIdParam,
+  getOfferProductCategoryMappingsByOfferIdController,
+);
 
 // /**
 //  * PATCH api/offer/mapping/update/:id
 //  * Update mapping (is_active and/or product/category scope)
 //  */
-// route.patch(
-//   "/mapping/update/:id",
-//   auth,
-//   adminOnly,
-//   validateOfferProductCategoryIdParam,
-//   validateUpdateOfferProductCategory,
-//   updateOfferProductCategoryMappingByIdController,
-// );
+route.patch(
+  "/mapping/update/:id",
+  auth,
+  adminOnly,
+  validateOfferProductCategoryIdParam,
+  validateUpdateOfferProductCategory,
+  updateOfferProductCategoryMappingByIdController,
+);
 
 // /**
 //  * DELETE api/offer/mapping/delete/:id
 //  * Soft delete mapping by id
 //  */
-// route.delete(
-//   "/mapping/delete/:id",
-//   auth,
-//   adminOnly,
-//   validateOfferProductCategoryIdParam,
-//   deleteOfferProductCategoryMappingByIdController,
-// );
+route.delete(
+  "/mapping/delete/:id",
+  auth,
+  adminOnly,
+  validateOfferProductCategoryIdParam,
+  deleteOfferProductCategoryMappingByIdController,
+);
 
 // // ============================================================================
 // // OFFER USAGE ROUTES
@@ -190,41 +190,41 @@ route.patch(
 //  * GET api/offer/usage/summary
 //  * Fetch summary of all offers usage (admin analytics)
 //  */
-// route.get("/usage/summary", auth, adminOnly, getAllOfferUsageSummaryController);
+route.get("/usage/summary", auth, adminOnly, getAllOfferUsageSummaryController);
 
 // /**
 //  * GET api/offer/usagebyoffer/:id
 //  * Fetch offer usage details by offer id
 //  */
-// route.get(
-//   "/usagebyoffer/:id",
-//   auth,
-//   adminOnly,
-//   validateOfferIdParam,
-//   getOfferUsageByOfferIdController,
-// );
+route.get(
+  "/usagebyoffer/:id",
+  auth,
+  adminOnly,
+  validateOfferIdParam,
+  getOfferUsageByOfferIdController,
+);
 
 // /**
 //  * GET api/offer/usagebyuser/:id
 //  * Fetch offer usage details by user id
 //  */
-// route.get(
-//   "/usagebyuser/:id",
-//   auth,
-//   adminOnly,
-//   validateUserIdParam,
-//   getOfferUsageByUserIdController,
-// );
+route.get(
+  "/usagebyuser/:id",
+  auth,
+  adminOnly,
+  validateUserIdParam,
+  getOfferUsageByUserIdController,
+);
 
 // /**
 //  * GET api/offer/:id
 //  * Fetch a single offer by id
 //  */
 
-// route.get(
-//   "/:id",
-//   auth,
-//   adminOnly,
-//   validateOfferIdParam,
-//   getOfferByIdController,
-// );
+route.get(
+  "/:id",
+  auth,
+  adminOnly,
+  validateOfferIdParam,
+  getOfferByIdController,
+);

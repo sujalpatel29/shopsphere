@@ -2,23 +2,18 @@ import express from "express";
 import dotenv from "dotenv";
 import categoryRoutes from "./routes/category.routes.js";
 // Import Routes
-// import paymentRoutes from "./routes/payments.route.js";
+import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
 import portionRouter from "./routes/portion.route.js";
-
-
 import orderRouter from "./routes/order_master.route.js";
 import orderItemRouter from "./routes/Order_item.route.js";
-// import reviewRouter from "./routes/review.routes.js";
-// import cartRouter from "./routes/cart.route.js";
 import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
 import reviewRouter from "./routes/review.routes.js";
 import modifierRoute from "./routes/modifier.route.js";
-// import cartRouter from "./routes/cart.route.js";
 import cors from 'cors'
 import productRoutes from "./routes/product.route.js";
-// import productImageRoutes from "./routes/productImage.route.js";
+import productImageRoutes from "./routes/productImage.route.js";
 
 
 // Load environment variables
@@ -81,7 +76,7 @@ app.use("/api/order-item", orderItemRouter)
 // API Routes
 app.use("/api/users", userRoute);
 // app.use("/api/cart", cartRouter);
-// app.use("/api/payments", paymentRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
 app.use("/api/review", reviewRouter);
 app.use("/api/cart",cartRouter);
@@ -90,10 +85,10 @@ app.use("/api/cart",cartRouter);
 // app.use("/api/offer", offerRoute);
 app.use("/api/modifiers", modifierRoute);
 app.use("/api/category", categoryRoutes);
-// app.use("/api/offer", offerRoute);
+app.use("/api/offer", offerRoute);
 // Add more routes here as you create them:
 app.use("/api/products", productRoutes);
-// app.use("/api/productImages", productImageRoutes);
+app.use("/api/productImages", productImageRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/orders", orderRoutes);
 

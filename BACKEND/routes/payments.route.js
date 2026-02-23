@@ -1,8 +1,8 @@
 import express from "express";
-// import PaymentController from "../controllers/payments.controller.js";
+import PaymentController from "../controllers/payments.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
-// const router = express.Router();
+const router = express.Router();
 
 // /**
 //  * @module PaymentRoutes
@@ -35,4 +35,4 @@ router.post("/:id/refund", auth, PaymentController.refundPayment);
 // PUT /api/payments/:id/complete-cod - Mark COD as paid on delivery
 router.put("/:id/complete-cod", auth, PaymentController.completeCOD);
 
-// export default router;
+export default router;
