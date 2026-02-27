@@ -383,7 +383,8 @@ DROP TABLE IF EXISTS `modifier_portion`;
 CREATE TABLE `modifier_portion` (
   `modifier_portion_id` int NOT NULL AUTO_INCREMENT,
   `modifier_id` int NOT NULL,
-  `product_portion_id` int NOT NULL,
+  `product_portion_id` int DEFAULT NULL,
+  `product_id` int DEFAULT NULL,
   `additional_price` decimal(10,2) DEFAULT '0.00',
   `stock` int DEFAULT '0',
   `is_active` tinyint(1) DEFAULT '1',
@@ -394,12 +395,15 @@ CREATE TABLE `modifier_portion` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`modifier_portion_id`),
   UNIQUE KEY `unique_modifier_product_portion` (`modifier_id`,`product_portion_id`),
+  UNIQUE KEY `unique_modifier_product` (`modifier_id`,`product_id`),
   KEY `fk_modifier_portion_product_portion` (`product_portion_id`),
+  KEY `fk_modifier_portion_product` (`product_id`),
   KEY `fk_modifier_portion_created_by` (`created_by`),
   KEY `fk_modifier_portion_updated_by` (`updated_by`),
   CONSTRAINT `fk_modifier_portion_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
   CONSTRAINT `fk_modifier_portion_modifier` FOREIGN KEY (`modifier_id`) REFERENCES `modifier_master` (`modifier_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_modifier_portion_product_portion` FOREIGN KEY (`product_portion_id`) REFERENCES `product_portion` (`product_portion_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_modifier_portion_product` FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_modifier_portion_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

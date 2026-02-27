@@ -134,7 +134,7 @@ function Navbar() {
             <Button
               type="button"
               onClick={toggleDarkMode}
-              className={`!inline-flex !items-center !gap-1.5 !rounded-lg !border !bg-transparent !px-2.5 !py-2 !text-xs !font-semibold !shadow-none ${
+              className={`!inline-flex !items-center !justify-center !rounded-lg !border !bg-transparent !px-2.5 !py-2 !text-xs !font-semibold !shadow-none ${
                 darkMode
                   ? "!border-[#1f2933] !text-amber-300 hover:!border-amber-400 hover:!bg-[#1a2327]"
                   : "!border-amber-200 !text-amber-700 hover:!bg-amber-50"
@@ -142,7 +142,6 @@ function Navbar() {
               aria-label="Toggle dark mode"
             >
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              <span className="hidden md:inline">{darkMode ? "Light" : "Dark"}</span>
             </Button>
 
             <Link

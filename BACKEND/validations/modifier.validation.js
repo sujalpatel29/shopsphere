@@ -62,7 +62,15 @@ export const createModifierPortionSchema = z.object({
   product_portion_id: z
     .number()
     .int()
-    .positive("Product portion ID must be a positive integer"),
+    .positive("Product portion ID must be a positive integer")
+    .optional()
+    .nullable(),
+  product_id: z
+    .number()
+    .int()
+    .positive("Product ID must be a positive integer")
+    .optional()
+    .nullable(),
   additional_price: z.number().min(0, "Price cannot be negative").optional(),
   stock: z.number().int().min(0, "Stock cannot be negative").optional(),
 });
