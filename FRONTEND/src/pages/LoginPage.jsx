@@ -20,7 +20,8 @@ function LoginPage() {
     const resultAction = await dispatch(loginUser({ email, password }));
 
     if (loginUser.fulfilled.match(resultAction)) {
-      navigate("/");
+      const role = resultAction.payload?.role;
+      navigate(role === "admin" ? "/admin/dashboard" : "/");
     }
   };
 

@@ -23,6 +23,7 @@ import {
   toggleModifierController,
   getAllModifierPortionsController,
   getModifiersByProductPortionController,
+  getModifiersByProductController,
   createModifierPortionController,
   updateModifierPortionController,
   deleteModifierPortionController,
@@ -102,6 +103,12 @@ modifierRouter.post(
 modifierRouter.get(
   "/by-portion/:product_portion_id",
   getModifiersByProductPortionController,
+);
+
+// GET /api/modifiers/by-product/:product_id - Get modifiers linked directly to a product (no portion)
+modifierRouter.get(
+  "/by-product/:product_id",
+  getModifiersByProductController,
 );
 
 // PUT /api/modifiers/portions/:id - Update modifier portion

@@ -1,4 +1,4 @@
-// import pool from "../configs/db.js";
+import pool from "../configs/db.js";
 
 /**
  * @module PaymentModel
