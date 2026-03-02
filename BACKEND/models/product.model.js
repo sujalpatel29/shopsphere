@@ -117,8 +117,19 @@ const Product = {
 
     // Search by name
     if (filters.search) {
-      conditions.push("p.name LIKE ?");
-      values.push(`%${filters.search}%`);
+      const normalizedSearch = String(filters.search)
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, "")
+        .replace(/\s+/g, "");
+
+      conditions.push(`(
+        LOWER(REPLACE(COALESCE(p.name, ''), ' ', '')) LIKE ?
+        OR LOWER(REPLACE(COALESCE(p.display_name, ''), ' ', '')) LIKE ?
+        OR LOWER(REPLACE(COALESCE(p.description, ''), ' ', '')) LIKE ?
+      )`);
+      values.push(`%${normalizedSearch}%`);
+      values.push(`%${normalizedSearch}%`);
+      values.push(`%${normalizedSearch}%`);
     }
 
     // Status filter

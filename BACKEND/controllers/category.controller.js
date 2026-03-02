@@ -476,13 +476,10 @@ export const getAllcategory = async (req, res) => {
       },
       categories,
     );
-
   } catch (error) {
     return serverError(res, error.message);
   }
 };
-
-
 
 /*
 =====================================
@@ -529,7 +526,9 @@ export const getCategoriesByIds = async (req, res) => {
         (positionById.get(Number(b.category_id)) ?? Number.MAX_SAFE_INTEGER),
     );
 
-    const foundIds = new Set(sortedCategories.map((item) => Number(item.category_id)));
+    const foundIds = new Set(
+      sortedCategories.map((item) => Number(item.category_id)),
+    );
     const missingIds = ids.filter((id) => !foundIds.has(id));
 
     return ok(res, "Categories fetched successfully", {
@@ -551,13 +550,68 @@ GET PRODUCTS
 export const getProductsByCategory = async (req, res) => {
   try {
     const categoryId = Number(req.params.id);
+    const hasQueryParams = Object.keys(req.query || {}).length > 0;
 
-    const [products] = await Category.getByCategory(categoryId);
+    // Plain GET /categories/:id/products -> return all (no pagination)
+    if (!hasQueryParams) {
+      const [products] = await Category.getByCategory(categoryId);
+      return ok(res, "Products fetched successfully", {
+        count: products.length,
+        items: products,
+      });
+    }
 
-    return ok(res, "Products fetched successfully", {
-      count: products.length,
-      items: products,
-    });
+    let { page, limit, search } = req.query;
+    search = (search || "").trim();
+
+    const currentPage = Number(page) || 1;
+    const perPage = Number(limit) || 5;
+    const offset = (currentPage - 1) * perPage;
+
+    // Get all products for the category
+    const [allProducts] = await Category.getByCategory(categoryId);
+
+    // Filter by search term if provided
+    let filteredProducts = allProducts;
+    if (search) {
+      const normalizedSearch = String(search)
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      const compactSearch = normalizedSearch.replace(/\s+/g, "");
+
+      filteredProducts = allProducts.filter((product) => {
+        const source = String(
+          `${product.product_name || ""} ${product.name || ""} ${product.display_name || ""} ${product.description || ""}`,
+        )
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        const compactSource = source.replace(/\s+/g, "");
+
+        return (
+          source.includes(normalizedSearch) ||
+          compactSource.includes(compactSearch)
+        );
+      });
+    }
+
+    const total = filteredProducts.length;
+    const paginatedData = filteredProducts.slice(offset, offset + perPage);
+
+    return paginated(
+      res,
+      "Products fetched successfully",
+      {
+        page: currentPage,
+        limit: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+      paginatedData,
+    );
   } catch (error) {
     return serverError(res, error.message);
   }

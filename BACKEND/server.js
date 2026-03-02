@@ -1,11 +1,11 @@
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import categoryRoutes from "./routes/category.routes.js";
 // Import Routes
 import paymentRoutes from "./routes/payments.route.js";
 import userRoute from "./routes/User.route.js";
 import portionRouter from "./routes/portion.route.js";
-
 
 import orderRouter from "./routes/order_master.route.js";
 import orderItemRouter from "./routes/Order_item.route.js";
@@ -20,7 +20,6 @@ import modifierRoute from "./routes/modifier.route.js";
 import productRoutes from "./routes/product.route.js";
 import productImageRoutes from "./routes/productImage.route.js";
 
-
 // Load environment variables
 dotenv.config();
 
@@ -31,6 +30,9 @@ const port = process.env.PORT || 3000;
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
+// Enable CORS for frontend requests
+app.use(cors());
+
 // Parse JSON request bodies (skip for Stripe webhook - it needs raw body)
 app.use((req, res, next) => {
   if (req.originalUrl === "/api/payments/webhook") {
@@ -70,8 +72,8 @@ app.get("/", (req, res) => {
 // app.use("/", (req, res) => {
 //  res.send("Om prajapati");
 // });
-app.use("/api/order", orderRouter)
-app.use("/api/order-item", orderItemRouter)
+app.use("/api/order", orderRouter);
+app.use("/api/order-item", orderItemRouter);
 
 // API Routes
 app.use("/api/users", userRoute);
@@ -79,8 +81,7 @@ app.use("/api/cart", cartRouter);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
 app.use("/api/review", reviewRouter);
-app.use("/api/cart",cartRouter);
-
+app.use("/api/cart", cartRouter);
 
 app.use("/api/offer", offerRoute);
 app.use("/api/modifiers", modifierRoute);
@@ -129,6 +130,5 @@ app.listen(port, () => {
   console.log(`  - Offer: http://localhost:${port}/api/offer`);
   console.log(`  - Portion: http://localhost:${port}/api/products`);
   console.log(`  - Order: http://localhost:${port}/api/order`);
+  console.log(`  - Order: http://localhost:3306/api/category`);
 });
-
-
