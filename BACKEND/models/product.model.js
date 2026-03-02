@@ -87,11 +87,50 @@ const Product = {
 
   // find all product with filtering
   findAll: async (filters = {}, pagination = {}, conn = db) => {
+    // Unfiltered stats — always reflect entire catalog
+    const [statsRows] = await conn.execute(`
+      SELECT
+        COUNT(*) AS totalAll,
+        SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS totalActive
+      FROM product_master
+      WHERE is_deleted = 0
+    `);
+    const { totalAll, totalActive } = statsRows[0];
+
     const conditions = ["p.is_deleted = 0"];
     const values = [];
 
     let baseSql = `
-      FROM product_master p 
+      FROM product_master p
+      LEFT JOIN category_master c ON p.category_id = c.category_id
+      LEFT JOIN product_images pi ON pi.product_id = p.product_id AND pi.is_primary = 1 AND pi.image_level = 'PRODUCT' AND pi.is_deleted = 0
+      LEFT JOIN (
+        SELECT pp.product_id,
+               COUNT(*) AS portion_count,
+               GROUP_CONCAT(po.portion_value ORDER BY po.portion_value SEPARATOR ', ') AS portion_values,
+               GROUP_CONCAT(
+                 CONCAT(pp.product_portion_id, '@@', po.portion_value, '||', pp.price, '||', COALESCE(pp.discounted_price, ''), '||', pp.stock)
+                 ORDER BY po.portion_value SEPARATOR ';;'
+               ) AS portion_details
+        FROM product_portion pp
+        JOIN portion_master po ON po.portion_id = pp.portion_id
+        WHERE pp.is_deleted = 0
+        GROUP BY pp.product_id
+      ) ptc ON p.product_id = ptc.product_id
+      LEFT JOIN (
+        SELECT pp2.product_id,
+               COUNT(DISTINCT mp.modifier_id) AS modifier_count,
+               GROUP_CONCAT(DISTINCT CONCAT(mm.modifier_name, ': ', mm.modifier_value) ORDER BY mm.modifier_name SEPARATOR ', ') AS modifier_values,
+               GROUP_CONCAT(
+                 CONCAT(pp2.product_portion_id, '@@', mm.modifier_name, ': ', mm.modifier_value, '||', COALESCE(mp.additional_price, 0), '||', mp.stock)
+                 ORDER BY pp2.product_portion_id, mm.modifier_name SEPARATOR ';;'
+               ) AS modifier_details
+        FROM product_portion pp2
+        JOIN modifier_portion mp ON mp.product_portion_id = pp2.product_portion_id AND mp.is_deleted = 0
+        JOIN modifier_master mm ON mm.modifier_id = mp.modifier_id AND mm.is_deleted = 0
+        WHERE pp2.is_deleted = 0
+        GROUP BY pp2.product_id
+      ) mc ON p.product_id = mc.product_id
     `;
 
     // category filtering
@@ -115,7 +154,7 @@ const Product = {
       values.push(filters.max_price);
     }
 
-    // Search by name
+    // Search by name or display name
     if (filters.search) {
       const normalizedSearch = String(filters.search)
         .toLowerCase()
@@ -153,11 +192,33 @@ const Product = {
     const limit = Number(pagination.limit);
     const offset = Number(pagination.offset);
 
+    // Sorting — whitelist allowed columns to prevent SQL injection
+    const sortableColumns = {
+      product_id: "p.product_id",
+      display_name: "p.display_name",
+      category_name: "c.category_name",
+      price: "p.price",
+      stock: "p.stock",
+      is_active: "p.is_active",
+    };
+
+    let orderClause = "ORDER BY p.product_id ASC";
+    if (pagination.sortField && sortableColumns[pagination.sortField]) {
+      const dir = pagination.sortOrder === "desc" ? "DESC" : "ASC";
+      orderClause = `ORDER BY ${sortableColumns[pagination.sortField]} ${dir}`;
+    }
+
     const dataSql = `
-      SELECT DISTINCT p.*
+      SELECT DISTINCT p.*, c.category_name, pi.image_url,
+             COALESCE(ptc.portion_count, 0) AS portion_count,
+             ptc.portion_values,
+             ptc.portion_details,
+             COALESCE(mc.modifier_count, 0) AS modifier_count,
+             mc.modifier_values,
+             mc.modifier_details
       ${baseSql}
       ${whereClause}
-      ORDER BY p.created_at DESC
+      ${orderClause}
       LIMIT ${limit} OFFSET ${offset}
     `;
 
@@ -166,7 +227,7 @@ const Product = {
       values
     );
 
-    return { total, data: dataRows };
+    return { total, data: dataRows, totalAll, totalActive };
   },
 
   findById: (id) => {

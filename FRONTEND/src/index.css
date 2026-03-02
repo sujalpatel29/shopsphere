@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply text-gray-900;
+    font-family: "Jost", sans-serif;
+    background-color: #f3ecdf;
+    overflow: hidden;
+  }
+
+  .dark body {
+    background-color: #0b1114;
+    @apply text-slate-200;
+  }
+
+  /* Force Jost on all PrimeReact components */
+  .p-component,
+  .p-component * {
+    font-family: "Jost", sans-serif;
+  }
+
+  html:not(.dark) .bg-white {
+    background-color: #fff8ee !important;
+  }
+
+  html:not(.dark) .bg-gray-50 {
+    background-color: #f5ecde !important;
+  }
+}
+
+/* ─── PrimeReact Slider theming ─── */
+.p-slider.p-component {
+  background: #cbd5e1 !important;
+  border-radius: 6px !important;
+  border: none !important;
+  height: 6px !important;
+}
+
+.p-slider .p-slider-range {
+  background: #2f7a6f !important;
+}
+
+.p-slider .p-slider-handle {
+  border: 2px solid #2f7a6f !important;
+  background: #fff !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  margin-top: -7px !important; /* 18px handle - 6px track = 12px diff / 2 = 6px (approx 7 to center visual) */
+}
+
+.p-slider .p-slider-handle:hover {
+  background: #2f7a6f !important;
+  border-color: #2f7a6f !important;
+  transform: scale(1.1);
+  transition: transform 0.2s;
+}
+
+.dark .p-slider.p-component {
+  background: #334155 !important;
+}
+
+.dark .p-slider .p-slider-range {
+  background: #2f7a6f !important;
+}
+
+.dark .p-slider .p-slider-handle {
+  border-color: #2f7a6f !important;
+  background: #0f172a !important;
+}
+
+.dark .p-slider .p-slider-handle:hover {
+  background: #2f7a6f !important;
+}
+
+@layer components {
+  .shopsphere-sidebar {
+    border-right: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow:
+      0 0 0 1px rgba(148, 163, 184, 0.08),
+      0 30px 50px -30px rgba(2, 6, 23, 0.65);
+    overflow: hidden !important;
+  }
+
+  .shopsphere-sidebar .p-sidebar-header {
+    display: none;
+  }
+
+  .shopsphere-sidebar .p-sidebar-content {
+    padding: 0;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+}
+
+/* ─── PrimeReact Checkbox theming ─── */
+.p-checkbox .p-checkbox-box.p-highlight {
+  border-color: #2f7a6f !important;
+  background: #2f7a6f !important;
+}
+
+.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-highlight:hover {
+  border-color: #26635a !important;
+  background: #26635a !important;
+}
+
+.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box:hover {
+  border-color: #2f7a6f !important;
+}
+
+.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-focus {
+  box-shadow: 0 0 0 2px rgba(47, 122, 111, 0.2) !important;
+  border-color: #2f7a6f !important;
+}
+
+/* ─── PrimeReact Dropdown theming ─── */
+.p-dropdown:not(.p-disabled).p-focus {
+  box-shadow: 0 0 0 2px rgba(47, 122, 111, 0.2) !important;
+  border-color: #2f7a6f !important;
+}
+
+.p-dropdown:not(.p-disabled):hover {
+  border-color: #2f7a6f !important;
+}
+
+.p-dropdown-panel .p-dropdown-item.p-highlight {
+  color: #2f7a6f !important;
+  background: rgba(47, 122, 111, 0.04) !important;
+}
+
+.p-dropdown-panel .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+  color: #2f7a6f !important;
+  background: rgba(47, 122, 111, 0.04) !important;
+}
+
+/* ─── PrimeReact DataTable theming ─── */
+/* Force Light Mode Transparent Backgrounds */
+html:not(.dark) .p-datatable .p-datatable-header,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th.p-highlight,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th:hover,
+html:not(.dark) .p-datatable .p-datatable-tbody > tr > td,
+html:not(.dark) .p-datatable .p-datatable-tbody > tr > td.p-highlight,
+html:not(.dark) .p-datatable .p-datatable-tfoot > tr > td {
+  background: transparent !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark)
+  .p-datatable
+  .p-datatable-tbody
+  > tr:not(.p-highlight):hover
+  > td {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Dark Mode Overrides */
+.dark .p-datatable .p-datatable-header {
+  background: #151e22 !important;
+  color: #e2e8f0 !important;
+  border-color: #1f2933 !important;
+}
+
+.dark .p-datatable .p-datatable-thead > tr > th {
+  background: #151e22 !important;
+  color: #e2e8f0 !important;
+  border-color: #1f2933 !important;
+}
+
+.dark .p-datatable .p-datatable-tbody > tr > td {
+  background: #151e22 !important;
+  color: #e2e8f0 !important;
+  border-color: #1f2933 !important;
+}
+
+.dark .p-datatable .p-datatable-tbody > tr.p-row-odd > td {
+  background: #1a2327 !important;
+}
+
+.dark .p-datatable .p-datatable-tbody > tr:not(.p-highlight):hover > td {
+  background: #1f2933 !important;
+  color: #e2e8f0 !important;
+}

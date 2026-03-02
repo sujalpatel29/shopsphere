@@ -35,20 +35,20 @@ import {
 } from "../middlewares/auth.middleware.js";
 import { validateCart } from "../middlewares/cart.middleware.js";
 
-// ============================================================================
-// OFFER ROUTES
-// ============================================================================
+// // ============================================================================
+// // OFFER ROUTES
+// // ============================================================================
 
 export const route = express.Router();
 
-// ============================================================================
-// OFFER MASTER ROUTES
-// ============================================================================
+// // ============================================================================
+// // OFFER MASTER ROUTES
+// // ============================================================================
 
-/**
- * GET api/offer
- * Fetch all offers
- */
+// /**
+//  * GET api/offer
+//  * Fetch all offers
+//  */
 route.get("/", auth, adminOnly, getAllOfferController);
 
 /**
@@ -81,10 +81,10 @@ route.post(
   validateOfferController,
 );
 
-/**
- * PATCH api/offer/update/:id
- * Update offer by id
- */
+// /**
+//  * PATCH api/offer/update/:id
+//  * Update offer by id
+//  */
 route.patch(
   "/update/:id",
   auth,
@@ -93,10 +93,10 @@ route.patch(
   validateUpdateOffer,
   updateOfferByIdController,
 );
-/**
- * delete api/offer/delete/:id
- * delete offer by id
- */
+// /**
+//  * delete api/offer/delete/:id
+//  * delete offer by id
+//  */
 route.delete(
   "/delete/:id",
   auth,
@@ -118,14 +118,14 @@ route.patch(
   updateOfferStatusController,
 );
 
-// ============================================================================
-// OFFER PRODUCT CATEGORY MAPPING ROUTES
-// ============================================================================
+// // ============================================================================
+// // OFFER PRODUCT CATEGORY MAPPING ROUTES
+// // ============================================================================
 
-/**
- * POST api/offer/mapping/create
- * Create offer to product/category mapping
- */
+// /**
+//  * POST api/offer/mapping/create
+//  * Create offer to product/category mapping
+//  */
 route.post(
   "/mapping/create",
   auth,
@@ -134,10 +134,10 @@ route.post(
   createOfferProductCategoryMappingController,
 );
 
-/**
- * GET api/offer/mapping
- * Fetch all mappings
- */
+// /**
+//  * GET api/offer/mapping
+//  * Fetch all mappings
+//  */
 route.get(
   "/mapping",
   auth,
@@ -145,10 +145,10 @@ route.get(
   getAllOfferProductCategoryMappingsController,
 );
 
-/**
- * GET api/offer/mapping/offer/:id
- * Fetch all mappings for a given offer id
- */
+// /**
+//  * GET api/offer/mapping/offer/:id
+//  * Fetch all mappings for a given offer id
+//  */
 route.get(
   "/mapping/offer/:id",
   auth,
@@ -157,10 +157,10 @@ route.get(
   getOfferProductCategoryMappingsByOfferIdController,
 );
 
-/**
- * PATCH api/offer/mapping/update/:id
- * Update mapping (is_active and/or product/category scope)
- */
+// /**
+//  * PATCH api/offer/mapping/update/:id
+//  * Update mapping (is_active and/or product/category scope)
+//  */
 route.patch(
   "/mapping/update/:id",
   auth,
@@ -170,10 +170,10 @@ route.patch(
   updateOfferProductCategoryMappingByIdController,
 );
 
-/**
- * DELETE api/offer/mapping/delete/:id
- * Soft delete mapping by id
- */
+// /**
+//  * DELETE api/offer/mapping/delete/:id
+//  * Soft delete mapping by id
+//  */
 route.delete(
   "/mapping/delete/:id",
   auth,
@@ -182,20 +182,20 @@ route.delete(
   deleteOfferProductCategoryMappingByIdController,
 );
 
-// ============================================================================
-// OFFER USAGE ROUTES
-// ============================================================================
+// // ============================================================================
+// // OFFER USAGE ROUTES
+// // ============================================================================
 
-/**
- * GET api/offer/usage/summary
- * Fetch summary of all offers usage (admin analytics)
- */
+// /**
+//  * GET api/offer/usage/summary
+//  * Fetch summary of all offers usage (admin analytics)
+//  */
 route.get("/usage/summary", auth, adminOnly, getAllOfferUsageSummaryController);
 
-/**
- * GET api/offer/usagebyoffer/:id
- * Fetch offer usage details by offer id
- */
+// /**
+//  * GET api/offer/usagebyoffer/:id
+//  * Fetch offer usage details by offer id
+//  */
 route.get(
   "/usagebyoffer/:id",
   auth,
@@ -204,10 +204,10 @@ route.get(
   getOfferUsageByOfferIdController,
 );
 
-/**
- * GET api/offer/usagebyuser/:id
- * Fetch offer usage details by user id
- */
+// /**
+//  * GET api/offer/usagebyuser/:id
+//  * Fetch offer usage details by user id
+//  */
 route.get(
   "/usagebyuser/:id",
   auth,
@@ -216,10 +216,10 @@ route.get(
   getOfferUsageByUserIdController,
 );
 
-/**
- * GET api/offer/:id
- * Fetch a single offer by id
- */
+// /**
+//  * GET api/offer/:id
+//  * Fetch a single offer by id
+//  */
 
 route.get(
   "/:id",
