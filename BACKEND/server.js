@@ -22,10 +22,27 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-app.use(cors({
-   origin: "http://localhost:5173",
-  credentials: true
-}));
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+];
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow non-browser clients (no Origin header), and allowed frontend origins.
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 const port = process.env.PORT || 3000;
 
 // ============================================================================

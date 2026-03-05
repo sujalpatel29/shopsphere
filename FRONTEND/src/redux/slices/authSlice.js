@@ -46,15 +46,11 @@ export const loginUser = createAsyncThunk(
 //  REGISTER
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
-  async ({ name, email, password }, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.post("/users/create-user", {
-        name,
-        email,
-        password,
-      });
-
-      return data;
+      return rejectWithValue(
+        "Direct registration is disabled. Use OTP registration flow.",
+      );
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Server error");
     }

@@ -337,6 +337,80 @@
   background: rgba(239, 68, 68, 0.1) !important;
 }
 
+/* ===== Users Table Tokens ===== */
+.admin-user-avatar {
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(42, 104, 87, 0.14);
+  color: #1f4e41;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.dark .admin-user-avatar {
+  background: rgba(201, 184, 138, 0.16);
+  color: #d9cca6;
+}
+
+.admin-badge {
+  border: none !important;
+  border-radius: 9999px !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.55rem !important;
+}
+
+.admin-badge--active {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #15803d !important;
+}
+
+.admin-badge--blocked {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #b45309 !important;
+}
+
+.admin-badge--role {
+  background: rgba(42, 104, 87, 0.12) !important;
+  color: #1f4e41 !important;
+}
+
+.admin-badge--role-admin {
+  background: rgba(6, 182, 212, 0.15) !important;
+  color: #0e7490 !important;
+}
+
+.admin-badge--role-customer {
+  background: rgba(42, 104, 87, 0.12) !important;
+  color: #1f4e41 !important;
+}
+
+.dark .admin-badge--active {
+  background: rgba(34, 197, 94, 0.2) !important;
+  color: #86efac !important;
+}
+
+.dark .admin-badge--blocked {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fcd34d !important;
+}
+
+.dark .admin-badge--role,
+.dark .admin-badge--role-customer {
+  background: rgba(201, 184, 138, 0.2) !important;
+  color: #d9cca6 !important;
+}
+
+.dark .admin-badge--role-admin {
+  background: rgba(34, 211, 238, 0.16) !important;
+  color: #67e8f9 !important;
+}
+
 /* ===== Status Switch Styles ===== */
 /* Light mode - unchecked */
 .admin-status-switch.p-inputswitch .p-inputswitch-slider {
@@ -481,6 +555,8 @@
   border: 1px solid rgba(201, 184, 138, 0.2) !important;
   height: 2.5rem !important;
   border-radius: 0.5rem !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .dark .admin-dropdown-root {
@@ -594,6 +670,9 @@
 
 .admin-dialog .p-dropdown-label {
   color: #374151 !important;
+  line-height: 1.25rem !important;
+  display: flex;
+  align-items: center;
 }
 
 .dark .admin-dialog .p-dropdown-label {

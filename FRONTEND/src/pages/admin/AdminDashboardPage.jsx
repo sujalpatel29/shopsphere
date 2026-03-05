@@ -37,7 +37,9 @@ import {
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { useSelector } from "react-redux";
+import { logoutUser } from "../../redux/slices/authSlice";
+import { useTheme } from "../../context/ThemeContext";
+import "./AdminDashboard.css";
 
 const adminNav = [
   { key: "users", label: "Users", icon: Users },
@@ -63,6 +65,7 @@ const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
 const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
 const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
 const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
+const AdminUsersTab = lazy(() => import("./AdminUsersTab"));
 
 // Collect all valid tab keys for hash validation
 const validTabKeys = new Set(
@@ -91,9 +94,61 @@ const TabLoader = () => (
 );
 
 function AdminDashboardPage() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.auth);
-  const [activeTab, setActiveTab] = useState("users");
-  const [productsOpen, setProductsOpen] = useState(true);
+  const { darkMode, toggleDarkMode } = useTheme();
+  const [activeTab, setActiveTabState] = useState(getTabFromHash);
+  const [productsOpen, setProductsOpen] = useState(() => {
+    // Auto-expand products section if a product child tab is active
+    const tab = getTabFromHash();
+    return adminNav
+      .find((item) => item.children)
+      ?.children.some((c) => c.key === tab) ?? true;
+  });
+
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try {
+      const stored = localStorage.getItem("admin-sidebar-open");
+      return stored === null ? true : stored === "true";
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("admin-sidebar-open", String(next)); } catch { /* noop */ }
+      return next;
+    });
+  }, []);
+
+  // Wrap setActiveTab to also update the URL hash
+  const setActiveTab = useCallback((tab) => {
+    setActiveTabState(tab);
+    window.location.hash = tab;
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    dispatch(logoutUser());
+    navigate("/login");
+  }, [dispatch, navigate]);
+
+  // Listen for browser back/forward navigation
+  useEffect(() => {
+    const onHashChange = () => {
+      const tab = getTabFromHash();
+      setActiveTabState(tab);
+      // Auto-expand products section if navigating to a child tab
+      const productsNav = adminNav.find((item) => item.children);
+      if (productsNav?.children.some((c) => c.key === tab)) {
+        setProductsOpen(true);
+      }
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   const activeLabel = useMemo(() => {
     for (const item of adminNav) {
@@ -104,53 +159,6 @@ function AdminDashboardPage() {
     }
     return "Dashboard";
   }, [activeTab]);
-
-  const renderActiveContent = () => {
-    if (activeTab === "users") {
-      return <UserTable />;
-    }
-
-    return (
-      <>
-        <h3 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
-          {activeLabel}
-        </h3>
-        <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
-          This section is ready for backend/API integration.
-        </p>
-      </>
-    );
-  };
-
-  const dashboardStats = useMemo(() => {
-    const totalUsers = pagination?.total ?? users.length;
-    const blockedUsers = users.filter((user) => Number(user.is_blocked) === 1).length;
-    const activeUsers = users.length - blockedUsers;
-    const adminUsers = users.filter((user) => user.role === "admin").length;
-
-    return [
-      {
-        label: "Total Users",
-        value: totalUsers,
-        tone: "text-cyan-700 dark:text-cyan-300",
-      },
-      {
-        label: "Active Users",
-        value: activeUsers,
-        tone: "text-emerald-700 dark:text-emerald-300",
-      },
-      {
-        label: "Blocked Users",
-        value: blockedUsers,
-        tone: "text-rose-700 dark:text-rose-300",
-      },
-      {
-        label: "Admin Users",
-        value: adminUsers,
-        tone: "text-amber-700 dark:text-amber-300",
-      },
-    ];
-  }, [users, pagination]);
 
   return (
     <div className={`admin-dashboard-grid grid items-start gap-6 p-6 ${sidebarOpen ? "lg:grid-cols-[290px_1fr]" : "lg:grid-cols-1"}`}>
@@ -234,31 +242,75 @@ function AdminDashboardPage() {
             );
           })}
         </nav>
-      </Card>
 
-      <section className="space-y-4">
-        <Card
-          className="rounded-3xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]"
-          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
-        >
-          <h2 className="font-serif text-3xl text-gray-900 dark:text-slate-100">
-            Admin Dashboard
-          </h2>
-          <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
-            Manage platform operations and modules from the sidebar.
-          </p>
-        </Card>
+        <div className="flex-shrink-0 mt-4 border-t border-gray-200 pt-4 dark:border-gray-700 space-y-1">
+          <Button
+            type="button"
+            onClick={toggleDarkMode}
+            className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"
+          >
+            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {darkMode ? "Light Mode" : "Dark Mode"}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleLogout}
+            className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-red-600 hover:!bg-red-50 dark:!text-red-400 dark:hover:!bg-red-500/10"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      </div>
 
+      <section className="min-w-[0] min-h-0 h-full">
         <Card
           className="rounded-2xl border border-gray-100 bg-white pt-6 px-6 pb-1 dark:border-[#1f2933] dark:bg-[#151e22] shadow-sm h-full overflow-hidden"
           pt={{ body: { className: "p-0 h-full flex flex-col" }, content: { className: "p-0 flex-1 flex flex-col min-h-0" } }}
         >
-          <h3 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
-            {activeLabel}
-          </h3>
-          <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
-            This section is ready for backend/API integration.
-          </p>
+          <div className="mb-4 flex items-center gap-3">
+            <Button
+              type="button"
+              onClick={toggleSidebar}
+              className="!hidden lg:!flex !items-center !justify-center !w-9 !h-9 !p-0 !rounded-lg !shadow-none !bg-transparent !text-gray-500 hover:!bg-gray-100 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!bg-gray-800 dark:hover:!text-gray-200 !transition-colors !border-none"
+              tooltip={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              tooltipOptions={{ position: "right" }}
+            >
+              {sidebarOpen ? (
+                <PanelLeftClose className="h-5 w-5" />
+              ) : (
+                <PanelLeft className="h-5 w-5" />
+              )}
+            </Button>
+            <div>
+              <h3 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
+                {activeLabel}
+              </h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
+                Manage {activeLabel.toLowerCase()} here.
+              </p>
+            </div>
+          </div>
+
+          <Suspense fallback={<TabLoader />}>
+            {activeTab === "users" ? (
+              <AdminUsersTab />
+            ) : activeTab === "products-list" ? (
+              <AdminProductsTab />
+            ) : activeTab === "products-portions" ? (
+              <AdminPortionsTab />
+            ) : activeTab === "products-modifiers" ? (
+              <AdminModifiersTab />
+            ) : activeTab === "orders" ? (
+              <AdminOrdersTab />
+            ) : (
+              <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {activeLabel} view is ready for backend/API integration.
+                </p>
+              </div>
+            )}
+          </Suspense>
         </Card>
       </section>
     </div>

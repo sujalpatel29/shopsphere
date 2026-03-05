@@ -2,28 +2,41 @@ import express from "express";
 import {
   deleteByUser,
   deleteUserByAdmin,
+  forgotPasswordRequestOtp,
+  forgotPasswordResetWithToken,
+  forgotPasswordVerifyOtp,
   getAllUsers,
   getProfileById,
   loginUser,
-  registerUser,
+  registerRequestOtp,
+  registerVerifyOtp,
   changePassword,
   updateProfile,
   viewProfile,
   blockUser,
   logoutUser,
   refreshToken,
+  unblockUser,
+  createUserByAdmin,
 } from "../controllers/User.controller.js";
 import { auth, adminOnly } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/Validations.middleware.js";
 import {
   addressSchema,
+  forgotPasswordOtpRequestSchema,
+  forgotPasswordOtpVerifySchema,
   updateAddressSchema,
   updateProfileSchema,
 } from "../validations/user.validation.js";
 import { updatePasswordSchema } from "../validations/user.validation.js";
-import { registerSchema } from "../validations/user.validation.js";
 import { loginSchema } from "../validations/user.validation.js";
 import { idParamSchema } from "../validations/user.validation.js";
+import {
+  registerOtpRequestSchema,
+  registerOtpVerifySchema,
+  resetPasswordWithTokenSchema,
+  adminCreateUserSchema,
+} from "../validations/user.validation.js";
 import {
   addUserAddress,
   deleteAddress,
@@ -38,11 +51,39 @@ const userRoute = express.Router();
 
 // ================= USER ROUTES =================
 
-// Register
-userRoute.post("/create-user", validate(registerSchema), registerUser);
+// Legacy direct register endpoint removed to enforce OTP-only signup.
+
+// OTP-based register
+userRoute.post(
+  "/register/request-otp",
+  validate(registerOtpRequestSchema),
+  registerRequestOtp,
+);
+userRoute.post(
+  "/register/verify-otp",
+  validate(registerOtpVerifySchema),
+  registerVerifyOtp,
+);
 
 // Login
 userRoute.post("/login-user", validate(loginSchema), loginUser);
+
+// OTP-based forgot password
+userRoute.post(
+  "/forgot-password/request-otp",
+  validate(forgotPasswordOtpRequestSchema),
+  forgotPasswordRequestOtp,
+);
+userRoute.post(
+  "/forgot-password/verify-otp",
+  validate(forgotPasswordOtpVerifySchema),
+  forgotPasswordVerifyOtp,
+);
+userRoute.post(
+  "/forgot-password/reset",
+  validate(resetPasswordWithTokenSchema),
+  forgotPasswordResetWithToken,
+);
 
 //Logout
 userRoute.post("/logout", auth, logoutUser);
@@ -116,6 +157,15 @@ userRoute.patch(
 // Get all users
 userRoute.get("/view-users", auth, adminOnly, getAllUsers);
 
+// Admin create user
+userRoute.post(
+  "/admin/create",
+  auth,
+  adminOnly,
+  validate(adminCreateUserSchema),
+  createUserByAdmin,
+);
+
 // Get single user by ID
 userRoute.get(
   "/view-user/:id",
@@ -141,6 +191,14 @@ userRoute.patch(
   adminOnly,
   validate(idParamSchema, "params"),
   blockUser,
+);
+
+userRoute.patch(
+  "/unblock/:id",
+  auth,
+  adminOnly,
+  validate(idParamSchema, "params"),
+  unblockUser,
 );
 
 export default userRoute;

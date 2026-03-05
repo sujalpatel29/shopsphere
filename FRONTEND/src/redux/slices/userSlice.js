@@ -6,10 +6,28 @@ import api from "../../../api/api";
 // ===============================
 export const fetchAllUsers = createAsyncThunk(
   "users/fetchAllUsers",
-  async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
+  async (
+    {
+      page = 1,
+      limit = 10,
+      search = "",
+      role = "",
+      status = "",
+      sortField = "",
+      sortOrder = "desc",
+    } = {},
+    { rejectWithValue }
+  ) => {
     try {
+      const params = { page, limit };
+      if (search) params.search = search;
+      if (role) params.role = role;
+      if (status) params.status = status;
+      if (sortField) params.sortField = sortField;
+      if (sortOrder) params.sortOrder = sortOrder;
+
       const response = await api.get("/users/view-users", {
-        params: { page, limit },
+        params,
       });
 
       return {
@@ -67,6 +85,18 @@ export const deleteUserByAdmin = createAsyncThunk(
     try {
       await api.delete(`/users/delete/${userId}`);
       return userId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Server error");
+    }
+  },
+);
+
+export const createUserByAdmin = createAsyncThunk(
+  "users/createUserByAdmin",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/users/admin/create", payload);
+      return response.data?.data || null;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Server error");
     }
@@ -164,6 +194,17 @@ const userSlice = createSlice({
         }
       })
       .addCase(deleteUserByAdmin.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(createUserByAdmin.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(createUserByAdmin.fulfilled, (state) => {
+        state.actionLoading = false;
+      })
+      .addCase(createUserByAdmin.rejected, (state, action) => {
         state.actionLoading = false;
         state.error = action.payload;
       });
