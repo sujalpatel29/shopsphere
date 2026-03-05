@@ -18,12 +18,15 @@ import {
   getAllOrdersAdmin as modelGetAllOrdersAdmin,
   getAllItemsByCountAdmin as modelGetAllItemsByCountAdmin,
   getAllItemsAdmin as modelGetAllItemsAdmin,
+  findAllOrdersAdmin,
+  getOrderDetailAdmin as modelGetOrderDetail,
+  updatePaymentStatusAdmin as modelUpdatePaymentStatus,
 } from "../models/Order_master.model.js";
 
 import {
   insertQuery
 } from "../models/Order_items.model.js";
-import { notFound, ok, serverError, created } from "../utils/apiResponse.js";
+import { badRequest, notFound, ok, serverError, created } from "../utils/apiResponse.js";
 
 // Create a new order from user's cart with tax, discounts, and shipping calculations
 export const Order_master = async (req, res) => {
@@ -328,5 +331,112 @@ export const getAllItemsAdmin = async (req, res) => {
   } catch (err) {
     console.error(err);
     return serverError(res);
+  }
+};
+
+/**
+ * GET /api/order/admin/orders
+ *
+ * Admin endpoint: Returns paginated orders enriched with user, address, and
+ * payment data. Supports search, filters, and sorting via query params.
+ *
+ * Query params: page, limit, search, sortField, sortOrder, order_status,
+ *               payment_status, payment_method, date_from, date_to
+ *
+ * Response: { pagination, stats, data[] }
+ */
+export const getAdminOrdersPaginated = async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 10);
+    const offset = (page - 1) * limit;
+
+    const filters = {};
+    if (req.query.search) filters.search = req.query.search;
+    if (req.query.order_status) filters.order_status = req.query.order_status;
+    if (req.query.payment_status) filters.payment_status = req.query.payment_status;
+    if (req.query.payment_method) filters.payment_method = req.query.payment_method;
+    if (req.query.date_from) filters.date_from = req.query.date_from;
+    if (req.query.date_to) filters.date_to = req.query.date_to;
+
+    const pagination = {
+      limit,
+      offset,
+      sortField: req.query.sortField || null,
+      sortOrder: req.query.sortOrder || "desc",
+    };
+
+    const { total, data, stats } = await findAllOrdersAdmin(filters, pagination);
+
+    return ok(res, "Orders fetched successfully", {
+      pagination: {
+        currentPage: page,
+        itemsPerPage: limit,
+        totalItems: total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+      stats,
+      data,
+    });
+  } catch (err) {
+    console.error("getAdminOrdersPaginated error:", err);
+    return serverError(res, "Failed to fetch orders");
+  }
+};
+
+/**
+ * GET /api/order/admin/orders/:id
+ *
+ * Admin endpoint: Returns a single order with full user info, shipping
+ * address, order items, and payment history. Used by the order detail modal.
+ */
+export const getAdminOrderDetail = async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.id);
+    if (!orderId || orderId <= 0) {
+      return badRequest(res, "Invalid order ID");
+    }
+
+    const order = await modelGetOrderDetail(orderId);
+    if (!order) {
+      return notFound(res, "Order not found");
+    }
+
+    return ok(res, "Order detail fetched successfully", order);
+  } catch (err) {
+    console.error("getAdminOrderDetail error:", err);
+    return serverError(res, "Failed to fetch order detail");
+  }
+};
+
+/**
+ * PATCH /api/order/admin/orders/:id/payment-status
+ *
+ * Admin endpoint: Manually update the payment_status on an order.
+ * Validates against allowed enum values before writing to the database.
+ *
+ * Body: { paymentStatus: "pending"|"processing"|"completed"|"failed"|"refunded" }
+ */
+export const updatePaymentStatusByAdmin = async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.id);
+    const { paymentStatus } = req.body;
+
+    const validStatuses = ["pending", "processing", "completed", "failed", "refunded"];
+    if (!paymentStatus || !validStatuses.includes(paymentStatus)) {
+      return badRequest(res, `Invalid payment status. Use: ${validStatuses.join(", ")}`);
+    }
+
+    const result = await modelUpdatePaymentStatus(orderId, paymentStatus);
+    if (result.affectedRows === 0) {
+      return notFound(res, "Order not found");
+    }
+
+    return ok(res, "Payment status updated successfully", { order_id: orderId, payment_status: paymentStatus });
+  } catch (err) {
+    console.error("updatePaymentStatusByAdmin error:", err);
+    return serverError(res, "Failed to update payment status");
   }
 };

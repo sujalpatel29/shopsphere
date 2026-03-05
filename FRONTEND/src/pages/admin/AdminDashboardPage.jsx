@@ -1,20 +1,43 @@
-import { useEffect, useMemo, useState } from "react";
+/**
+ * @component AdminDashboardPage
+ * @description Main admin dashboard with collapsible sidebar navigation
+ * and lazy-loaded tab content.
+ *
+ * Architecture:
+ *  - Sidebar: Renders `adminNav` config with collapsible "Products" submenu.
+ *             Persists open/closed state in localStorage.
+ *  - Tabs:   Hash-based routing (#products-list, #orders, etc.) enables
+ *            browser back/forward and deep-linking.
+ *  - Content: Each tab is React.lazy() code-split; wrapped in <Suspense>
+ *             with a skeleton fallback.
+ *
+ * UI libraries: PrimeReact (Button, Card, Skeleton), lucide-react icons
+ * State: Redux (auth/currentUser), ThemeContext (dark mode)
+ *
+ * Consumed by: AdminLayout → <Outlet /> renders this page
+ */
+import { useMemo, useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Skeleton } from "primereact/skeleton";
 import {
   BarChart3,
   CreditCard,
   Gift,
+  LogOut,
+  Moon,
   Package,
   Settings,
   Star,
-  User,
+  Sun,
   Users,
   ChevronDown,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { useDispatch, useSelector } from "react-redux";
-import UserTable from "./UserTable";
-import { fetchAllUsers } from "../../redux/slices/userSlice";
+import { useSelector } from "react-redux";
 
 const adminNav = [
   { key: "users", label: "Users", icon: Users },
@@ -29,26 +52,48 @@ const adminNav = [
       { key: "products-modifiers", label: "Modifiers" },
     ],
   },
-  { key: "orders", label: "Orders", icon: Package },
-  { key: "payments", label: "Payments", icon: CreditCard },
+  { key: "orders", label: "Orders & Payments", icon: CreditCard },
   { key: "offers", label: "Offers", icon: Gift },
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "reports", label: "Reports", icon: BarChart3 },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
+const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
+const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
+const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
+const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
+
+// Collect all valid tab keys for hash validation
+const validTabKeys = new Set(
+  adminNav.flatMap((item) =>
+    item.children ? item.children.map((c) => c.key) : [item.key]
+  )
+);
+
+const DEFAULT_TAB = "users";
+
+/** Read tab key from URL hash, fallback to default */
+function getTabFromHash() {
+  const hash = window.location.hash.replace("#", "");
+  return validTabKeys.has(hash) ? hash : DEFAULT_TAB;
+}
+
+// We can create a unified loading fallback
+const TabLoader = () => (
+  <div className="space-y-4">
+    <div className="flex gap-4">
+      <Skeleton width="10rem" height="2rem" />
+      <Skeleton width="10rem" height="2rem" />
+    </div>
+    <Skeleton width="100%" height="20rem" />
+  </div>
+);
+
 function AdminDashboardPage() {
-  const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.auth);
-  const { users, pagination } = useSelector((state) => state.users);
   const [activeTab, setActiveTab] = useState("users");
   const [productsOpen, setProductsOpen] = useState(true);
-
-  useEffect(() => {
-    if (!users.length) {
-      dispatch(fetchAllUsers({ page: 1, limit: 100 }));
-    }
-  }, [dispatch, users.length]);
 
   const activeLabel = useMemo(() => {
     for (const item of adminNav) {
@@ -108,22 +153,22 @@ function AdminDashboardPage() {
   }, [users, pagination]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[290px_1fr]">
-      <Card
-        className="h-fit rounded-3xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22]"
-        pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+    <div className={`admin-dashboard-grid grid items-start gap-6 p-6 ${sidebarOpen ? "lg:grid-cols-[290px_1fr]" : "lg:grid-cols-1"}`}>
+      <div
+        className={`rounded-3xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22] max-h-[calc(100vh-3rem)] sticky top-6 overflow-hidden flex-col transition-all duration-300 hidden lg:flex ${sidebarOpen ? "opacity-100" : "lg:hidden"}`}
       >
-        <div className="relative overflow-hidden rounded-2xl bg-[#163332] px-6 py-8 text-white">
+        <div className="flex-shrink-0 relative overflow-hidden rounded-2xl bg-[#163332] px-6 py-8 text-white">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.06),transparent_70%)]" />
           <div className="relative z-10 flex flex-col items-center text-center">
-            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-[#c9b88a]/30 bg-[#c9b88a]/10 shadow-sm">
-              <User className="h-10 w-10 text-[#c9b88a]" />
+            <div className="mb-3 flex items-center gap-2">
+              <img src="/logo.svg" alt="ShopSphere" className="h-10 w-10" />
+              <span className="font-serif text-2xl font-semibold tracking-tight text-white">ShopSphere</span>
             </div>
             <p className="font-serif text-xs font-medium tracking-[0.2em] text-[#c9b88a]">
               ADMIN PANEL
             </p>
             <h1
-              className="mt-2 w-full truncate font-sans text-xl font-semibold tracking-tight text-white antialiased"
+              className="mt-2 w-full truncate font-sans text-lg font-medium tracking-tight text-white/80 antialiased"
               title={currentUser?.email}
             >
               {currentUser?.email}
@@ -131,7 +176,7 @@ function AdminDashboardPage() {
           </div>
         </div>
 
-        <nav className="mt-4 space-y-1">
+        <nav className="admin-sidebar-nav mt-4 space-y-1 flex-1 overflow-y-auto min-h-0">
           {adminNav.map((item) => {
             const Icon = item.icon;
             const isActive = item.key === activeTab;
@@ -202,29 +247,18 @@ function AdminDashboardPage() {
           <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
             Manage platform operations and modules from the sidebar.
           </p>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {dashboardStats.map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-xl border border-amber-100 bg-[#fff8ee] px-4 py-3 shadow-sm dark:border-[#2a3945] dark:bg-[#182329]"
-              >
-                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                  {stat.label}
-                </p>
-                <p className={`mt-1 font-accent text-2xl font-semibold ${stat.tone}`}>
-                  {stat.value}
-                </p>
-              </div>
-            ))}
-          </div>
         </Card>
 
         <Card
-          className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]"
-          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+          className="rounded-2xl border border-gray-100 bg-white pt-6 px-6 pb-1 dark:border-[#1f2933] dark:bg-[#151e22] shadow-sm h-full overflow-hidden"
+          pt={{ body: { className: "p-0 h-full flex flex-col" }, content: { className: "p-0 flex-1 flex flex-col min-h-0" } }}
         >
-          {renderActiveContent()}
+          <h3 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
+            {activeLabel}
+          </h3>
+          <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
+            This section is ready for backend/API integration.
+          </p>
         </Card>
       </section>
     </div>

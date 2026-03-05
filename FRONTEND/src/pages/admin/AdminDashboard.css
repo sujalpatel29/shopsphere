@@ -1,0 +1,48 @@
+/**
+ * AdminDashboard.css
+ * Supplementary styles for AdminDashboardPage sidebar.
+ *
+ * - Custom scrollbar theming for the sidebar navigation (Webkit + Firefox)
+ * - Smooth CSS grid transition for sidebar collapse/expand animation
+ *
+ * Imported by: AdminDashboardPage.jsx
+ */
+
+/* ===== Sidebar nav scrollbar — themed ===== */
+
+/* Webkit (Chrome, Edge, Safari) */
+.admin-sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+.admin-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(201, 184, 138, 0.3);
+  border-radius: 3px;
+}
+.admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 184, 138, 0.5);
+}
+
+/* Dark mode */
+.dark .admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(201, 184, 138, 0.15);
+}
+.dark .admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 184, 138, 0.3);
+}
+
+/* Firefox */
+.admin-sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 184, 138, 0.3) transparent;
+}
+.dark .admin-sidebar-nav {
+  scrollbar-color: rgba(201, 184, 138, 0.15) transparent;
+}
+
+/* Smooth grid transition for sidebar collapse */
+.admin-dashboard-grid {
+  transition: grid-template-columns 300ms ease-in-out;
+}
