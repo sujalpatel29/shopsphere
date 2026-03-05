@@ -1,0 +1,174 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../../../api/api";
+
+// ===============================
+// FETCH ALL USERS
+// ===============================
+export const fetchAllUsers = createAsyncThunk(
+  "users/fetchAllUsers",
+  async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
+    try {
+      const response = await api.get("/users/view-users", {
+        params: { page, limit },
+      });
+
+      return {
+        users: response.data?.data || [],
+        pagination: response.data?.pagination || null,
+      };
+
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Server error"
+      );
+    }
+  }
+);
+
+export const fetchUserProfileById = createAsyncThunk(
+  "users/fetchUserProfileById",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/users/view-user/${userId}`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Server error");
+    }
+  },
+);
+
+export const blockUserByAdmin = createAsyncThunk(
+  "users/blockUserByAdmin",
+  async (userId, { rejectWithValue }) => {
+    try {
+      await api.patch(`/users/block/${userId}`);
+      return userId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Server error");
+    }
+  },
+);
+
+export const unblockUserByAdmin = createAsyncThunk(
+  "users/unblockUserByAdmin",
+  async (userId, { rejectWithValue }) => {
+    try {
+      await api.patch(`/users/unblock/${userId}`);
+      return userId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Server error");
+    }
+  },
+);
+
+export const deleteUserByAdmin = createAsyncThunk(
+  "users/deleteUserByAdmin",
+  async (userId, { rejectWithValue }) => {
+    try {
+      await api.delete(`/users/delete/${userId}`);
+      return userId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Server error");
+    }
+  },
+);
+
+const userSlice = createSlice({
+  name: "users",
+  initialState: {
+    users: [],
+    pagination: {
+      currentPage: 1,
+      itemsPerPage: 10,
+      totalItems: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+    },
+    selectedProfile: null,
+    loading: false,
+    profileLoading: false,
+    actionLoading: false,
+    error: null,
+  },
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAllUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload.users;
+        state.pagination =
+          action.payload.pagination || state.pagination;
+      })
+      .addCase(fetchAllUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchUserProfileById.pending, (state) => {
+        state.profileLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserProfileById.fulfilled, (state, action) => {
+        state.profileLoading = false;
+        state.selectedProfile = action.payload;
+      })
+      .addCase(fetchUserProfileById.rejected, (state, action) => {
+        state.profileLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(blockUserByAdmin.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(blockUserByAdmin.fulfilled, (state, action) => {
+        state.actionLoading = false;
+        state.users = state.users.map((user) =>
+          user.user_id === action.payload ? { ...user, is_blocked: 1 } : user,
+        );
+      })
+      .addCase(blockUserByAdmin.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(unblockUserByAdmin.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(unblockUserByAdmin.fulfilled, (state, action) => {
+        state.actionLoading = false;
+        state.users = state.users.map((user) =>
+          user.user_id === action.payload ? { ...user, is_blocked: 0 } : user,
+        );
+      })
+      .addCase(unblockUserByAdmin.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(deleteUserByAdmin.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteUserByAdmin.fulfilled, (state, action) => {
+        state.actionLoading = false;
+        state.users = state.users.filter((user) => user.user_id !== action.payload);
+        if (state.selectedProfile?.user_id === action.payload) {
+          state.selectedProfile = null;
+        }
+      })
+      .addCase(deleteUserByAdmin.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload;
+      });
+  },
+});
+
+export const { clearError } = userSlice.actions;
+export default userSlice.reducer;

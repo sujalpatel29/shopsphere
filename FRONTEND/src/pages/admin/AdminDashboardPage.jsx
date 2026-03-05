@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   CreditCard,
@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import UserTable from "./UserTable";
+import { fetchAllUsers } from "../../redux/slices/userSlice";
 
 const adminNav = [
   { key: "users", label: "Users", icon: Users },
@@ -36,9 +38,17 @@ const adminNav = [
 ];
 
 function AdminDashboardPage() {
+  const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.auth);
+  const { users, pagination } = useSelector((state) => state.users);
   const [activeTab, setActiveTab] = useState("users");
   const [productsOpen, setProductsOpen] = useState(true);
+
+  useEffect(() => {
+    if (!users.length) {
+      dispatch(fetchAllUsers({ page: 1, limit: 100 }));
+    }
+  }, [dispatch, users.length]);
 
   const activeLabel = useMemo(() => {
     for (const item of adminNav) {
@@ -49,6 +59,53 @@ function AdminDashboardPage() {
     }
     return "Dashboard";
   }, [activeTab]);
+
+  const renderActiveContent = () => {
+    if (activeTab === "users") {
+      return <UserTable />;
+    }
+
+    return (
+      <>
+        <h3 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
+          {activeLabel}
+        </h3>
+        <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
+          This section is ready for backend/API integration.
+        </p>
+      </>
+    );
+  };
+
+  const dashboardStats = useMemo(() => {
+    const totalUsers = pagination?.total ?? users.length;
+    const blockedUsers = users.filter((user) => Number(user.is_blocked) === 1).length;
+    const activeUsers = users.length - blockedUsers;
+    const adminUsers = users.filter((user) => user.role === "admin").length;
+
+    return [
+      {
+        label: "Total Users",
+        value: totalUsers,
+        tone: "text-cyan-700 dark:text-cyan-300",
+      },
+      {
+        label: "Active Users",
+        value: activeUsers,
+        tone: "text-emerald-700 dark:text-emerald-300",
+      },
+      {
+        label: "Blocked Users",
+        value: blockedUsers,
+        tone: "text-rose-700 dark:text-rose-300",
+      },
+      {
+        label: "Admin Users",
+        value: adminUsers,
+        tone: "text-amber-700 dark:text-amber-300",
+      },
+    ];
+  }, [users, pagination]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[290px_1fr]">
@@ -94,7 +151,9 @@ function AdminDashboardPage() {
               );
             }
 
-            const childActive = item.children.some((child) => child.key === activeTab);
+            const childActive = item.children.some(
+              (child) => child.key === activeTab,
+            );
 
             return (
               <div key={item.key} className="space-y-1">
@@ -143,18 +202,29 @@ function AdminDashboardPage() {
           <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
             Manage platform operations and modules from the sidebar.
           </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {dashboardStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-xl border border-amber-100 bg-[#fff8ee] px-4 py-3 shadow-sm dark:border-[#2a3945] dark:bg-[#182329]"
+              >
+                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                  {stat.label}
+                </p>
+                <p className={`mt-1 font-accent text-2xl font-semibold ${stat.tone}`}>
+                  {stat.value}
+                </p>
+              </div>
+            ))}
+          </div>
         </Card>
 
         <Card
           className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]"
           pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
         >
-          <h3 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
-            {activeLabel}
-          </h3>
-          <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
-            This section is ready for backend/API integration.
-          </p>
+          {renderActiveContent()}
         </Card>
       </section>
     </div>

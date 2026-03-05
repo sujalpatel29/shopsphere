@@ -32,13 +32,15 @@ export const loginUser = createAsyncThunk(
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("currentUser", JSON.stringify(mappedUser));
 
-      return mappedUser;
+      return {
+        user: mappedUser,
+        token: token || null,
+        refreshToken: refreshToken || null,
+      };
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Server error"
-      );
+      return rejectWithValue(error.response?.data?.message || "Server error");
     }
-  }
+  },
 );
 
 //  REGISTER
@@ -54,11 +56,52 @@ export const registerUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Server error"
-      );
+      return rejectWithValue(error.response?.data?.message || "Server error");
     }
-  }
+  },
+);
+
+export const logoutUser = createAsyncThunk(
+  "auth/logoutUser",
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await api.post("/users/logout");
+      dispatch(clearAuth());
+      return response.data;
+    } catch (error) {
+      dispatch(clearAuth());
+      return rejectWithValue(error.response?.data?.message || "Server error");
+    }
+  },
+);
+
+export const refreshAccessToken = createAsyncThunk(
+  "auth/refreshAccessToken",
+  async (_, { rejectWithValue }) => {
+    try {
+      const storedRefreshToken = localStorage.getItem("refreshToken");
+
+      if (!storedRefreshToken) {
+        return rejectWithValue("No refresh token available");
+      }
+
+      const response = await api.post("/users/refresh-token", {
+        refreshToken: storedRefreshToken,
+      });
+
+      const newAccessToken = response.data?.data?.accessToken;
+
+      if (!newAccessToken) {
+        return rejectWithValue("Refresh endpoint did not return access token");
+      }
+
+      localStorage.setItem("token", newAccessToken);
+
+      return newAccessToken;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Server error");
+    }
+  },
 );
 
 const authSlice = createSlice({
@@ -71,13 +114,18 @@ const authSlice = createSlice({
     error: null,
   },
   reducers: {
-    logout: (state) => {
+    clearAuth: (state) => {
       state.currentUser = null;
       state.token = null;
       state.refreshToken = null;
+      state.error = null; //  clear error also
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("currentUser");
+    },
+
+    clearError: (state) => {
+      state.error = null; // only clears error
     },
   },
   extraReducers: (builder) => {
@@ -89,7 +137,9 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentUser = action.payload;
+        state.currentUser = action.payload.user;
+        state.token = action.payload.token;
+        state.refreshToken = action.payload.refreshToken;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -106,9 +156,38 @@ const authSlice = createSlice({
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(refreshAccessToken.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(refreshAccessToken.fulfilled, (state, action) => {
+        state.loading = false;
+        state.token = action.payload;
+        state.error = null;
+      })
+      .addCase(refreshAccessToken.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.currentUser = null;
+        state.token = null;
+        state.refreshToken = null;
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("currentUser");
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { clearAuth, clearError } = authSlice.actions;
 export default authSlice.reducer;

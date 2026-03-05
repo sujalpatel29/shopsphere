@@ -16,7 +16,7 @@ import { InputText } from "primereact/inputtext";
 import { Sidebar } from "primereact/sidebar";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../../redux/slices/authSlice";
+import { logoutUser } from "../../redux/slices/authSlice";
 import { useTheme } from "../../context/ThemeContext";
 
 const menuSections = [
@@ -81,9 +81,9 @@ function Navbar() {
     }));
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setMenuOpen(false);
-    dispatch(logout());
+    await dispatch(logoutUser());
     navigate("/");
   };
 
