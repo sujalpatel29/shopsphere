@@ -23,7 +23,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-   origin: "http://localhost:5173",
+  origin: "http://localhost:5173",
   credentials: true
 }));
 const port = process.env.PORT || 3000;
@@ -79,7 +79,7 @@ app.use("/api/users", userRoute);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
 app.use("/api/review", reviewRouter);
-app.use("/api/cart",cartRouter);
+app.use("/api/cart", cartRouter);
 
 
 // app.use("/api/offer", offerRoute);
