@@ -6,6 +6,7 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import HomePage from "../pages/customer/HomePage";
 import DashboardPage from "../pages/customer/DashboardPage";
+import ProductDetailsPage from "../pages/customer/ProductDetailsPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import CheckoutPage from "../pages/customer/CheckoutPage";
 import PaymentPage from "../pages/customer/PaymentPage";
@@ -44,6 +45,7 @@ function AppRoutes() {
       <Route element={<RedirectIfAdmin />}>
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/products/:productId" element={<ProductDetailsPage />} />
         </Route>
       </Route>
 
