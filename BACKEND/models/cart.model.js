@@ -51,6 +51,32 @@ async function getCartItemsWithProduct(cartId) {
   return rows;
 }
 
+async function getCartScopeDetails(cartId) {
+  const [rows] = await pool.query(
+    `SELECT DISTINCT
+            ci.product_id,
+            COALESCE(pc.category_id, pm.category_id) AS category_id
+       FROM cart_items ci
+       JOIN product_master pm ON pm.product_id = ci.product_id
+       LEFT JOIN product_categories pc ON pc.product_id = ci.product_id
+      WHERE ci.cart_id = ? AND ci.is_deleted = 0`,
+    [cartId],
+  );
+
+  const productIds = [...new Set(rows.map((row) => Number(row.product_id)))];
+  const categoryIds = [
+    ...new Set(
+      rows
+        .map((row) =>
+          row.category_id === null ? null : Number(row.category_id),
+        )
+        .filter((id) => id !== null),
+    ),
+  ];
+
+  return { productIds, categoryIds };
+}
+
 async function findCartItem(
   cartId,
   productId,
@@ -265,6 +291,7 @@ async function getFirstAvailablePortion(productId) {
 export {
   getOrCreateCartByUserId,
   getCartItemsWithProduct,
+  getCartScopeDetails,
   findCartItem,
   insertCartItem,
   updateCartItemQuantity,
