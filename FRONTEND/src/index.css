@@ -34,7 +34,6 @@
   html:not(.dark) .bg-gray-50 {
     background-color: #f5ecde !important;
   }
-
 }
 
 /* ─── PrimeReact Slider theming ─── */
@@ -146,6 +145,27 @@
 }
 
 /* ─── PrimeReact DataTable theming ─── */
+/* Force Light Mode Transparent Backgrounds */
+html:not(.dark) .p-datatable .p-datatable-header,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th.p-highlight,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th:hover,
+html:not(.dark) .p-datatable .p-datatable-tbody > tr > td,
+html:not(.dark) .p-datatable .p-datatable-tbody > tr > td.p-highlight,
+html:not(.dark) .p-datatable .p-datatable-tfoot > tr > td {
+  background: transparent !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark)
+  .p-datatable
+  .p-datatable-tbody
+  > tr:not(.p-highlight):hover
+  > td {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Dark Mode Overrides */
 .dark .p-datatable .p-datatable-header {
   background: #151e22 !important;
   color: #e2e8f0 !important;

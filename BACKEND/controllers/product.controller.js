@@ -7,9 +7,8 @@ import {
   notFound,
   serverError,
   paginated,
-  validationError
+  validationError,
 } from "../utils/apiResponse.js";
-
 
 export const createProduct = async (req, res) => {
   const conn = await db.getConnection();
@@ -62,7 +61,7 @@ export const createProduct = async (req, res) => {
     await conn.commit();
 
     return created(res, "Product created successfully", {
-      product_id: productId
+      product_id: productId,
     });
   } catch (err) {
     await conn.rollback();
@@ -93,38 +92,49 @@ export const deleteProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
   try {
     const filters = {
-      category_id: req.query.category_id ? Number(req.query.category_id) : undefined,
+      category_id: req.query.category_id
+        ? Number(req.query.category_id)
+        : undefined,
       min_price: req.query.min_price ? Number(req.query.min_price) : undefined,
       max_price: req.query.max_price ? Number(req.query.max_price) : undefined,
       search: req.query.search,
-      is_active: req.query.is_active !== undefined ? Number(req.query.is_active) : undefined
+      is_active:
+        req.query.is_active !== undefined
+          ? Number(req.query.is_active)
+          : undefined,
     };
 
     // Pagination parsing
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(50, parseInt(req.query.limit) || 10);
-
     const offset = (page - 1) * limit;
 
+    // Sorting
+    const sortField = req.query.sortField || null;
+    const sortOrder = req.query.sortOrder || "asc";
 
-    const { total, data } = await Product.findAll(
+    const { total, data, totalAll, totalActive } = await Product.findAll(
       filters,
-      { limit, offset }
+      { limit, offset, sortField, sortOrder }
     );
 
-    return paginated(
-      res,
-      "Products fetched successfully",
+    return res.status(200).json({
+      success: true,
+      message: "Products fetched successfully",
+      pagination: {
+        currentPage: page,
+        itemsPerPage: limit,
+        totalItems: total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+      stats: {
+        totalAll: Number(totalAll),
+        totalActive: Number(totalActive),
+      },
       data,
-      {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    );
-
-
+    });
   } catch (err) {
     return serverError(res, err.message);
   }
@@ -158,16 +168,14 @@ export const updateProduct = async (req, res) => {
     const existingProduct = existingRows[0];
 
     // If category_id not provided or unchanged, do a simple update
-    if (!Object.prototype.hasOwnProperty.call(req.body, "category_id") ||
+    if (
+      !Object.prototype.hasOwnProperty.call(req.body, "category_id") ||
       Number(req.body.category_id) === Number(existingProduct.category_id)
     ) {
-      const [result] = await Product.update(
-        req.params.id,
-        {
-          ...req.body,
-          updated_by: req.user.id,
-        },
-      );
+      const [result] = await Product.update(req.params.id, {
+        ...req.body,
+        updated_by: req.user.id,
+      });
 
       if (!result || result.affectedRows === 0) {
         return notFound(res, "Product not found or already deleted");
@@ -184,7 +192,10 @@ export const updateProduct = async (req, res) => {
 
       // Validate new category exists
       const newCategoryId = req.body.category_id;
-      const categoryExists = await Product.checkCategoryExists(newCategoryId, conn);
+      const categoryExists = await Product.checkCategoryExists(
+        newCategoryId,
+        conn,
+      );
 
       if (!categoryExists) {
         await conn.rollback();
@@ -216,7 +227,12 @@ export const updateProduct = async (req, res) => {
       const [rows] = await Product.getCategoryWithParents(newCategoryId, conn);
       const categoryIds = rows.map((r) => r.category_id);
 
-      await Product.insertProductCategories(req.params.id, categoryIds, req.user.id, conn);
+      await Product.insertProductCategories(
+        req.params.id,
+        categoryIds,
+        req.user.id,
+        conn,
+      );
 
       await conn.commit();
 
@@ -236,7 +252,11 @@ export const updateProduct = async (req, res) => {
 
 export const updateProductStatus = async (req, res) => {
   try {
-    const [result] = await Product.updateStatus(req.params.id, req.body.is_active, req.user.id);
+    const [result] = await Product.updateStatus(
+      req.params.id,
+      req.body.is_active,
+      req.user.id,
+    );
     if (result.affectedRows === 0) {
       return notFound(res, "Product not found or already deleted");
     }
@@ -244,6 +264,5 @@ export const updateProductStatus = async (req, res) => {
     return ok(res, "Product updated successfully");
   } catch (err) {
     return serverError(res, err.message);
-
   }
 };
