@@ -26,7 +26,7 @@ router.post(
   validate(createProductSchema),
   createProduct
 );
-// Delete produt
+// Delete product
 router.delete("/:id", auth, adminOnly, deleteProduct);
 // Update Product
 router.put(

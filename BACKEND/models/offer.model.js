@@ -28,23 +28,32 @@ export const checkOfferExist = async (offerData) => {
 
        -- TIME OVERLAP (handles both normal and midnight-crossing ranges)
        AND (
-         CASE 
-           WHEN start_time <= end_time THEN
-             -- Normal range: stored start <= stored end
-             -- Overlap if: incoming_start < stored_end AND incoming_end > stored_start
-             ? < end_time AND ? > start_time
-           WHEN start_time > end_time THEN
-             -- Midnight-crossing range: stored start > stored end
-             -- Overlap if: incoming_start > stored_start OR incoming_end < stored_end
-             ? > start_time OR ? < end_time
-           ELSE 0
-         END
+         -- If either side has no time window, treat it as whole-day overlap.
+         start_time IS NULL
+         OR end_time IS NULL
+         OR ? IS NULL
+         OR ? IS NULL
+         OR (
+           CASE 
+             WHEN start_time <= end_time THEN
+               -- Normal range: stored start <= stored end
+               -- Overlap if: incoming_start < stored_end AND incoming_end > stored_start
+               ? < end_time AND ? > start_time
+             WHEN start_time > end_time THEN
+               -- Midnight-crossing range: stored start > stored end
+               -- Overlap if: incoming_start > stored_start OR incoming_end < stored_end
+               ? > start_time OR ? < end_time
+             ELSE 0
+           END
+         )
        )`,
     [
       offer_name,
       offer_type,
       end_date,
       start_date,
+      start_time,
+      end_time,
       end_time,
       start_time,
       end_time,
@@ -245,8 +254,8 @@ export const getValidateOfferByName = async (offerName) => {
     WHERE offer_name = ?
       AND is_active = 1
       AND is_deleted = 0
-      AND start_date <= CURDATE()
-      AND end_date >= CURDATE()
+      AND start_date <= NOW()
+      AND end_date >= NOW()
       AND (
         start_time IS NULL OR end_time IS NULL
         OR (
@@ -428,6 +437,23 @@ export const isOfferExistsById = async (offerId) => {
 };
 
 /**
+ * Fetch offer type by id without checking active status.
+ * @param {number|string} offerId - Offer identifier
+ * @returns {Promise<object|null>} Offer row with offer_type or null
+ */
+export const getOfferTypeByIdWithoutActiveCheck = async (offerId) => {
+  const [result] = await pool.query(
+    `SELECT offer_id, offer_type
+     FROM offer_master
+     WHERE offer_id = ? AND is_deleted = 0
+     LIMIT 1`,
+    [offerId],
+  );
+
+  return result[0] ?? null;
+};
+
+/**
  * Check whether offer-product/category mapping already exists.
  * @param {object} mappingData - Mapping payload
  * @returns {Promise<boolean>} True when mapping exists
@@ -441,11 +467,21 @@ export const isOfferProductCategoryMappingExists = async (mappingData) => {
      WHERE offer_id = ?
        AND is_deleted = 0
        AND (
+         (? IS NULL AND ? IS NULL AND product_id IS NULL AND category_id IS NULL)
+         OR
          (? IS NOT NULL AND product_id = ?)
          OR (? IS NOT NULL AND category_id = ?)
        )
      LIMIT 1`,
-    [offer_id, product_id, product_id, category_id, category_id],
+    [
+      offer_id,
+      product_id,
+      category_id,
+      product_id,
+      product_id,
+      category_id,
+      category_id,
+    ],
   );
 
   return result.length > 0;
@@ -587,10 +623,21 @@ export const isOfferProductCategoryDuplicateOnUpdate = async (
        AND offer_product_category_id <> ?
        AND is_deleted = 0
        AND (
+         (? IS NULL AND ? IS NULL AND product_id IS NULL AND category_id IS NULL)
+         OR
          (? IS NOT NULL AND product_id = ?)
          OR (? IS NOT NULL AND category_id = ?)
        )`,
-    [offerId, excludeMappingId, productId, productId, categoryId, categoryId],
+    [
+      offerId,
+      excludeMappingId,
+      productId,
+      categoryId,
+      productId,
+      productId,
+      categoryId,
+      categoryId,
+    ],
   );
 
   return result.length > 0;
@@ -802,7 +849,8 @@ export const getCartItemsWithOffer = async (cartId) => {
 export const getApplicableOffersForProduct = async (productId) => {
   const [rows] = await pool.query(
     `SELECT om.*,
-            opc.offer_product_category_id
+            opc.offer_product_category_id,
+            opc.product_id
      FROM offer_master om
      INNER JOIN offer_product_category opc ON opc.offer_id = om.offer_id
      WHERE om.is_active = 1

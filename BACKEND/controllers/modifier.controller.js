@@ -14,6 +14,7 @@ import {
   getModifierPortionById,
   getModifierPortionByIdForAdmin,
   getModifiersByProductPortion,
+  getModifiersByProduct,
   checkProductPortionExists,
   createModifierPortion,
   updateModifierPortion,
@@ -275,22 +276,40 @@ export const getModifiersByProductPortionController = async (req, res) => {
   }
 };
 
+export const getModifiersByProductController = async (req, res) => {
+  try {
+    const { product_id } = req.params;
+    const modifiers = await getModifiersByProduct(product_id);
+    return ok(res, "Modifiers retrieved successfully", modifiers);
+  } catch (err) {
+    console.error("Get Modifiers By Product error", err);
+    return serverError(res, "Internal server error");
+  }
+};
+
 export const createModifierPortionController = async (req, res) => {
   try {
     //get data from body
-    const { modifier_id, product_portion_id, additional_price, stock } =
+    const { modifier_id, product_portion_id, product_id, additional_price, stock } =
       req.body;
 
-    // Check if duplicate exists
-    const exists = await checkModifierPortionExists(
-      modifier_id,
-      product_portion_id,
-    );
-    if (exists) {
-      return conflict(
-        res,
-        `Modifier portion already exists for this modifier and product portion combination`,
-      );
+    // Check if modifier exists
+    const modifierExists = await getModifierByIdForAdmin(modifier_id);
+    if (!modifierExists) {
+      return notFound(res, "Modifier not found");
+    }
+
+    // Validate: need either product_portion_id or product_id
+    if (!product_portion_id && !product_id) {
+      return badRequest(res, "Either product_portion_id or product_id is required");
+    }
+
+    if (product_portion_id) {
+      // Check if product portion exists
+      const portionExists = await checkProductPortionExists(product_portion_id);
+      if (!portionExists) {
+        return notFound(res, "Product portion not found");
+      }
     }
 
     // set default created_by
@@ -300,6 +319,7 @@ export const createModifierPortionController = async (req, res) => {
     const modifier_portion_id = await createModifierPortion({
       modifier_id,
       product_portion_id,
+      product_id,
       additional_price,
       stock,
       created_by,
@@ -335,7 +355,13 @@ export const updateModifierPortionController = async (req, res) => {
     // Set default updatedBy
     const updated_by = req.user.id;
 
-    // Call model function (no need to check if exists, model will handle it)
+    // Check if modifier portion exists
+    const existingPortion = await getModifierPortionById(id);
+    if (!existingPortion) {
+      return notFound(res, "Modifier portion not found");
+    }
+
+    // Call model function
     await updateModifierPortion(id, {
       additional_price,
       stock,
@@ -359,7 +385,13 @@ export const deleteModifierPortionController = async (req, res) => {
     // Set default deletedBy
     const deleted_by = req.user.id;
 
-    // Call model function (no need to check if exists, model will handle it)
+    // Check if modifier portion exists
+    const existingPortion = await getModifierPortionById(id);
+    if (!existingPortion) {
+      return notFound(res, "Modifier portion not found");
+    }
+
+    // Call model function
     await deleteModifierPortion(id, deleted_by);
 
     // Send success response
