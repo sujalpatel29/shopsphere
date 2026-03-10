@@ -7,7 +7,7 @@ import {
   notFound,
   serverError,
   paginated,
-  validationError
+  validationError,
 } from "../utils/apiResponse.js";
 
 export const createProduct = async (req, res) => {
@@ -61,7 +61,7 @@ export const createProduct = async (req, res) => {
     await conn.commit();
 
     return created(res, "Product created successfully", {
-      product_id: productId
+      product_id: productId,
     });
   } catch (err) {
     await conn.rollback();
@@ -106,21 +106,39 @@ export const getAllProducts = async (req, res) => {
 
     // Pagination parsing
     const page = Math.max(1, parseInt(req.query.page) || 1);
+<<<<<<< HEAD
     const limit = Math.min(50, parseInt(req.query.limit) || 5);
 
+=======
+    const limit = Math.min(50, parseInt(req.query.limit) || 10);
+>>>>>>> 4a177b41b3db1e45014a0d94b9dad3a581de7d4e
     const offset = (page - 1) * limit;
 
+    // Sorting
+    const sortField = req.query.sortField || null;
+    const sortOrder = req.query.sortOrder || "asc";
 
-    const { total, data } = await Product.findAll(
+    const { total, data, totalAll, totalActive } = await Product.findAll(
       filters,
-      { limit, offset }
+      { limit, offset, sortField, sortOrder }
     );
 
-    return paginated(res, "Products fetched successfully", data, {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
+    return res.status(200).json({
+      success: true,
+      message: "Products fetched successfully",
+      pagination: {
+        currentPage: page,
+        itemsPerPage: limit,
+        totalItems: total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+      stats: {
+        totalAll: Number(totalAll),
+        totalActive: Number(totalActive),
+      },
+      data,
     });
   } catch (err) {
     return serverError(res, err.message);
@@ -179,7 +197,10 @@ export const updateProduct = async (req, res) => {
 
       // Validate new category exists
       const newCategoryId = req.body.category_id;
-      const categoryExists = await Product.checkCategoryExists(newCategoryId, conn);
+      const categoryExists = await Product.checkCategoryExists(
+        newCategoryId,
+        conn,
+      );
 
       if (!categoryExists) {
         await conn.rollback();

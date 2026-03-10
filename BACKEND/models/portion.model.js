@@ -109,27 +109,51 @@ export const deletePortion = async (portion_id, updated_by) => {
 // Assign portion the product
 export const AssignPortionTOProduct = {
   create: async (portionData) => {
+    const price = portionData.price;
+    const discountedPrice = portionData.discounted_price ?? null;
+    const stock = portionData.stock;
+    const isActive = portionData.is_active !== undefined ? portionData.is_active : 1;
+    const createdBy = portionData.created_by;
+
+    // Use ON DUPLICATE KEY UPDATE to restore soft-deleted records
+    const query = `
+      INSERT INTO product_portion
+        (product_id, portion_id, price, discounted_price, stock, is_active, is_deleted, created_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, 0, ?, NOW())
+      ON DUPLICATE KEY UPDATE
+        price = VALUES(price),
+        discounted_price = VALUES(discounted_price),
+        stock = VALUES(stock),
+        is_active = VALUES(is_active),
+        is_deleted = 0,
+        updated_by = VALUES(created_by),
+        updated_at = NOW()
+    `;
+
     const values = [
       portionData.product_id,
       portionData.portion_id,
-      portionData.price,
-      portionData.discounted_price ?? null,
-      portionData.stock,
-      portionData.is_active !== undefined ? portionData.is_active : 1,
-      portionData.created_by,
+      price,
+      discountedPrice,
+      stock,
+      isActive,
+      createdBy,
     ];
-
-    const query = `
-      INSERT INTO product_portion 
-        (product_id, portion_id, price, discounted_price, stock, is_active, is_deleted, created_by, created_at) 
-      VALUES (?, ?, ?, ?, ?, ?, 0, ?, NOW())
-    `;
 
     const [result] = await pool.query(query, values);
 
-    // Return the created record with joined data
+    // insertId works for both INSERT and ON DUPLICATE KEY UPDATE
+    // For updates, we need to look up by product_id + portion_id
+    const lookupId = result.insertId || null;
+    const lookupQuery = lookupId
+      ? `WHERE pp.product_portion_id = ?`
+      : `WHERE pp.product_id = ? AND pp.portion_id = ? AND pp.is_deleted = 0`;
+    const lookupValues = lookupId
+      ? [lookupId]
+      : [portionData.product_id, portionData.portion_id];
+
     const [rows] = await pool.query(
-      `SELECT 
+      `SELECT
       pp.product_portion_id,
       pp.product_id,
       pm.name AS product_name,
@@ -143,8 +167,8 @@ export const AssignPortionTOProduct = {
       FROM product_portion pp
       JOIN product_master pm ON pm.product_id = pp.product_id
       JOIN portion_master po ON po.portion_id = pp.portion_id
-      WHERE pp.product_portion_id = ?`,
-      [result.insertId],
+      ${lookupQuery}`,
+      lookupValues,
     );
 
     return rows[0];

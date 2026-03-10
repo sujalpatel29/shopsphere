@@ -278,6 +278,28 @@ async function getModifiersByProductPortion(product_portion_id) {
   return rows;
 }
 
+// Get modifiers assigned directly to a product (no portion)
+async function getModifiersByProduct(product_id) {
+  const [rows] = await pool.query(
+    `SELECT mm.modifier_id,
+            mm.modifier_name,
+            mm.modifier_value,
+            mp.additional_price,
+            mp.stock,
+            mp.is_active,
+            mp.modifier_portion_id
+       FROM modifier_portion mp
+       JOIN modifier_master mm ON mm.modifier_id = mp.modifier_id
+      WHERE mp.product_id = ?
+        AND mp.product_portion_id IS NULL
+        AND mp.is_deleted = 0
+        AND mm.is_deleted = 0
+      ORDER BY mm.modifier_name`,
+    [product_id],
+  );
+  return rows;
+}
+
 // Check if product portion exists
 async function checkProductPortionExists(product_portion_id) {
   const [rows] = await pool.query(
@@ -303,10 +325,12 @@ async function checkModifierPortionExists(modifier_id, product_portion_id) {
   return rows.length > 0;
 }
 
-// Create a new modifier-portion link
+// Create a new modifier-portion link (restores soft-deleted records on duplicate)
+// Supports both portion-level (product_portion_id) and product-level (product_id) links
 async function createModifierPortion({
   modifier_id,
   product_portion_id,
+  product_id,
   additional_price,
   stock,
   created_by,
@@ -315,19 +339,45 @@ async function createModifierPortion({
     `INSERT INTO modifier_portion (
             modifier_id,
             product_portion_id,
+            product_id,
             additional_price,
             stock,
             created_by
-        ) VALUES (?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            additional_price = VALUES(additional_price),
+            stock = VALUES(stock),
+            is_active = 1,
+            is_deleted = 0,
+            updated_by = VALUES(created_by),
+            updated_at = NOW()`,
     [
       modifier_id,
-      product_portion_id,
+      product_portion_id || null,
+      product_id || null,
       additional_price || 0.0,
       stock || 0,
       created_by,
     ],
   );
-  return result.insertId;
+
+  // For ON DUPLICATE KEY UPDATE, insertId may be 0; look up by unique key
+  if (result.insertId) return result.insertId;
+
+  if (product_portion_id) {
+    const [rows] = await pool.query(
+      `SELECT modifier_portion_id FROM modifier_portion
+       WHERE modifier_id = ? AND product_portion_id = ? AND is_deleted = 0`,
+      [modifier_id, product_portion_id],
+    );
+    return rows[0]?.modifier_portion_id;
+  }
+  const [rows] = await pool.query(
+    `SELECT modifier_portion_id FROM modifier_portion
+     WHERE modifier_id = ? AND product_id = ? AND is_deleted = 0`,
+    [modifier_id, product_id],
+  );
+  return rows[0]?.modifier_portion_id;
 }
 
 // Update an existing modifier portion
@@ -422,6 +472,7 @@ export {
   getModifierPortionById,
   getModifierPortionByIdForAdmin,
   getModifiersByProductPortion,
+  getModifiersByProduct,
   checkProductPortionExists,
   checkModifierPortionExists,
   createModifierPortion,

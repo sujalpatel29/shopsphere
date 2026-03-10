@@ -196,8 +196,31 @@
 }
 
 /* ─── PrimeReact DataTable theming ─── */
-.p-datatable .p-datatable-thead > tr > th {
-  @apply font-serif text-sm uppercase tracking-wider text-brand-700 bg-gray-50/50 dark:bg-gray-800/50 dark:text-brand-400 py-4 border-gray-100 dark:border-gray-800;
+/* Force Light Mode Transparent Backgrounds */
+html:not(.dark) .p-datatable .p-datatable-header,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th.p-highlight,
+html:not(.dark) .p-datatable .p-datatable-thead > tr > th:hover,
+html:not(.dark) .p-datatable .p-datatable-tbody > tr > td,
+html:not(.dark) .p-datatable .p-datatable-tbody > tr > td.p-highlight,
+html:not(.dark) .p-datatable .p-datatable-tfoot > tr > td {
+  background: transparent !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark)
+  .p-datatable
+  .p-datatable-tbody
+  > tr:not(.p-highlight):hover
+  > td {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Dark Mode Overrides */
+.dark .p-datatable .p-datatable-header {
+  background: #151e22 !important;
+  color: #e2e8f0 !important;
+  border-color: #1f2933 !important;
 }
 
 .dark .p-datatable .p-datatable-header {

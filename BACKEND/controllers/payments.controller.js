@@ -53,7 +53,16 @@ const PaymentController = {
   //    */
   async initiatePayment(req, res) {
     try {
-      const { order_id, amount, payment_method, currency = "INR" } = req.body;
+      const {
+        order_id,
+        amount,
+        payment_method,
+        currency = "INR",
+        success_url,
+        cancel_url,
+      } = req.body;
+      const parsedOrderId = Number.parseInt(order_id, 10);
+      const parsedAmount = Number(amount);
 
       //       // Validate required fields
       if (!order_id || !amount || !payment_method) {
@@ -71,17 +80,29 @@ const PaymentController = {
         );
       }
 
+      // Validate order id for MySQL INT range
+      if (
+        !Number.isInteger(parsedOrderId) ||
+        parsedOrderId <= 0 ||
+        parsedOrderId > 2147483647
+      ) {
+        return badRequest(
+          res,
+          "Invalid order_id. It must be a positive integer within MySQL INT range.",
+        );
+      }
+
       // //       // Validate amount
-      if (amount <= 0) {
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
         return badRequest(res, "Amount must be greater than 0");
       }
 
       // //       // --- COD ---
       if (payment_method === "cash_on_delivery") {
         const result = await PaymentModel.create({
-          order_id,
+          order_id: parsedOrderId,
           payment_method: "cash_on_delivery",
-          amount,
+          amount: parsedAmount,
           currency,
           status: "pending",
         });
@@ -100,42 +121,58 @@ const PaymentController = {
         return badRequest(res, stripeError);
       }
 
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Stripe expects smallest currency unit (paise for INR)
-        currency: currency.toLowerCase(), // Stripe requires lowercase currency codes
+      if (!success_url || !cancel_url) {
+        return badRequest(
+          res,
+          "success_url and cancel_url are required for Stripe checkout",
+        );
+      }
+
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: "payment",
+        success_url,
+        cancel_url,
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: currency.toLowerCase(),
+              product_data: {
+                name: `Order #${parsedOrderId}`,
+              },
+              unit_amount: Math.round(parsedAmount * 100),
+            },
+          },
+        ],
         metadata: {
-          order_id: order_id.toString(),
-        },
-        automatic_payment_methods: {
-          enabled: true,
+          order_id: parsedOrderId.toString(),
         },
       });
 
       const result = await PaymentModel.create({
-        order_id,
+        order_id: parsedOrderId,
         payment_method: "stripe",
-        amount,
+        amount: parsedAmount,
         currency,
-        transaction_id: paymentIntent.id,
+        transaction_id: checkoutSession.id,
         status: "processing",
-        payment_details: { stripe_payment_intent_id: paymentIntent.id },
+        payment_details: {
+          stripe_checkout_session_id: checkoutSession.id,
+        },
       });
 
       await PaymentModel.updateStatus(result.insertId, "processing");
       const payment = await PaymentModel.findById(result.insertId);
 
-      return created(
-        res,
-        "Stripe PaymentIntent created. Complete payment on frontend.",
-        {
-          payment,
-          payment_type: "stripe",
-          client_secret: paymentIntent.client_secret,
-          stripe_publishable_key: process.env.STRIPE_PUBLISHABLE_KEY,
-          amount: paymentIntent.amount,
-          currency: paymentIntent.currency,
-        },
-      );
+      return created(res, "Stripe checkout session created.", {
+        payment,
+        payment_type: "stripe",
+        checkout_url: checkoutSession.url,
+        stripe_session_id: checkoutSession.id,
+        stripe_publishable_key: process.env.STRIPE_PUBLISHABLE_KEY,
+        amount: Math.round(parsedAmount * 100),
+        currency: currency.toLowerCase(),
+      });
     } catch (error) {
       console.error("Initiate payment error:", error);
       return serverError(res, "Failed to initiate payment");
