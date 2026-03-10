@@ -21,17 +21,18 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-app.use(cors({
-   origin: "http://localhost:5173",
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 const port = process.env.PORT || 3000;
 
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
 // Enable CORS for frontend requests
-app.use(cors());
 
 // Parse JSON request bodies (skip for Stripe webhook - it needs raw body)
 app.use((req, res, next) => {
@@ -81,8 +82,7 @@ app.use("/api/users", userRoute);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
 app.use("/api/review", reviewRouter);
-app.use("/api/cart",cartRouter);
-
+app.use("/api/cart", cartRouter);
 
 // app.use("/api/offer", offerRoute);
 app.use("/api/modifiers", modifierRoute);

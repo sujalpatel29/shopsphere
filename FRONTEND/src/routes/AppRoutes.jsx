@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+﻿import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useSelector } from "react-redux";
 import AppLayout from "../components/layout/AppLayout";
 import AdminLayout from "../components/layout/AdminLayout";
@@ -9,8 +9,9 @@ import DashboardPage from "../pages/customer/DashboardPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import CheckoutPage from "../pages/customer/CheckoutPage";
 import PaymentPage from "../pages/customer/PaymentPage";
+import CategoryPage from "../pages/customer/categoryPage";
 
-/** Redirect admin users to their dashboard — prevents admins from browsing customer pages */
+/** Redirect admin users to their dashboard â€” prevents admins from browsing customer pages */
 function RedirectIfAdmin({ children }) {
   const { currentUser } = useSelector((state) => state.auth);
   if (currentUser?.role === "admin") {
@@ -36,14 +37,16 @@ function AdminRoute() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Login / Register — redirect admin to dashboard if already logged in */}
+      {/* Login / Register â€” redirect admin to dashboard if already logged in */}
       <Route path="/login" element={<RedirectIfAdmin><LoginPage /></RedirectIfAdmin>} />
       <Route path="/register" element={<RedirectIfAdmin><RegisterPage /></RedirectIfAdmin>} />
 
-      {/* Public Routes with Layout — admin gets redirected to dashboard */}
+      {/* Public Routes with Layout â€” admin gets redirected to dashboard */}
       <Route element={<RedirectIfAdmin />}>
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/categories" element={<CategoryPage />} />
+          <Route path="/products" element={<HomePage />} />
         </Route>
       </Route>
 
@@ -56,7 +59,7 @@ function AppRoutes() {
           <Route path="/checkout/payment" element={<PaymentPage />} />
         </Route>
 
-        {/* Admin routes — full-screen, no Navbar/Footer */}
+        {/* Admin routes â€” full-screen, no Navbar/Footer */}
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -64,11 +67,13 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      {/* Fallback — admin goes to admin dashboard, others go to home */}
+      {/* Fallback â€” admin goes to admin dashboard, others go to home */}
       <Route path="*" element={<RedirectIfAdmin><Navigate to="/" replace /></RedirectIfAdmin>} />
     </Routes>
   );
 }
 
 export default AppRoutes;
+
+
 

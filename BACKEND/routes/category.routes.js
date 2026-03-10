@@ -9,6 +9,7 @@ import {
   idParamSchema,
   searchQuerySchema,
   multiCategoryQuerySchema,
+  multiCategoryProductsQuerySchema,
   createCategorySchema,
   updateCategorySchema,
 } from "../validations/category.validation.js";
@@ -28,6 +29,15 @@ router.get(
   validate(multiCategoryQuerySchema, "query"),
   categoryController.getCategoriesByIds,
 );
+
+router.get(
+  "/bulk/products",
+  validate(multiCategoryProductsQuerySchema, "query"),
+  categoryController.getProductsByCategories,
+);
+
+router.get("/tree", categoryController.getCategoryTree);
+
 
 router.get(
   "/:id",

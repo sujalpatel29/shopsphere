@@ -4,6 +4,24 @@ export const getAll = () => {
   return pool.query(`SELECT * FROM category_master WHERE is_deleted = 0`);
 };
 
+export const getAllForTree = () => {
+  return pool.query(`
+    SELECT
+      category_id,
+      category_name,
+      parent_id,
+      is_deleted,
+      created_by,
+      updated_by,
+      created_at,
+      updated_at
+    FROM category_master
+    WHERE is_deleted = 0
+    ORDER BY parent_id IS NOT NULL, parent_id, category_name
+  `);
+};
+
+
 export const getById = (categoryId) => {
   const query = `
 WITH RECURSIVE subcategories AS (
@@ -84,6 +102,88 @@ AND pm.is_deleted = 0;
 `;
 
   return pool.query(query, [categoryId]);
+};
+
+export const countProductsByCategoryIds = (categoryIds) => {
+  const placeholders = categoryIds.map(() => "?").join(", ");
+  const query = `
+WITH RECURSIVE subcategories AS (
+    SELECT category_id
+    FROM category_master
+    WHERE category_id IN (${placeholders})
+      AND is_deleted = 0
+    UNION ALL
+    SELECT cm.category_id
+    FROM category_master cm
+    JOIN subcategories s
+      ON cm.parent_id = s.category_id
+    WHERE cm.is_deleted = 0
+)
+SELECT COUNT(DISTINCT pm.product_id) AS total
+FROM product_master pm
+JOIN product_categories pc
+  ON pm.product_id = pc.product_id
+WHERE pc.category_id IN (SELECT category_id FROM subcategories)
+  AND pm.is_deleted = 0;
+`;
+
+  return pool.query(query, categoryIds);
+};
+
+export const getProductsByCategoryIdsPaginated = (categoryIds, limit, offset) => {
+  const placeholders = categoryIds.map(() => "?").join(", ");
+  const query = `
+WITH RECURSIVE subcategories AS (
+    SELECT category_id
+    FROM category_master
+    WHERE category_id IN (${placeholders})
+      AND is_deleted = 0
+    UNION ALL
+    SELECT cm.category_id
+    FROM category_master cm
+    JOIN subcategories s
+      ON cm.parent_id = s.category_id
+    WHERE cm.is_deleted = 0
+)
+SELECT DISTINCT pm.*
+FROM product_master pm
+JOIN product_categories pc
+  ON pm.product_id = pc.product_id
+WHERE pc.category_id IN (SELECT category_id FROM subcategories)
+  AND pm.is_deleted = 0
+ORDER BY pm.product_id DESC
+LIMIT ?
+OFFSET ?;
+`;
+
+  return pool.query(query, [...categoryIds, Number(limit), Number(offset)]);
+};
+
+export const getProductsByCategoryIds = (categoryIds) => {
+  const placeholders = categoryIds.map(() => "?").join(", ");
+  const query = `
+WITH RECURSIVE subcategories AS (
+    SELECT category_id
+    FROM category_master
+    WHERE category_id IN (${placeholders})
+      AND is_deleted = 0
+    UNION ALL
+    SELECT cm.category_id
+    FROM category_master cm
+    JOIN subcategories s
+      ON cm.parent_id = s.category_id
+    WHERE cm.is_deleted = 0
+)
+SELECT DISTINCT pm.*
+FROM product_master pm
+JOIN product_categories pc
+  ON pm.product_id = pc.product_id
+WHERE pc.category_id IN (SELECT category_id FROM subcategories)
+  AND pm.is_deleted = 0
+ORDER BY pm.product_id DESC;
+`;
+
+  return pool.query(query, categoryIds);
 };
 
 export const searchByName = (categoryName, limit, offset) => {

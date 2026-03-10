@@ -85,6 +85,25 @@ export const multiCategoryQuerySchema = z.object({
   ),
 });
 
+export const multiCategoryProductsQuerySchema = z.object({
+  ids: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      return value
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+    },
+    z
+      .array(z.coerce.number().int().positive("Each category id must be > 0"))
+      .min(1, "At least one category id is required")
+      .max(100, "Maximum 100 category ids are allowed")
+      .transform((ids) => [...new Set(ids)]),
+  ),
+  page: z.coerce.number().int().min(1, "Page must be >= 1").optional(),
+  limit: z.coerce.number().int().min(1).max(50, "Limit max 50").optional(),
+});
+
 /*
 ========================================
 CREATE

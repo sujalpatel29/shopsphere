@@ -481,6 +481,29 @@ export const getAllcategory = async (req, res) => {
   }
 };
 
+export const getCategoryTree = async (req, res) => {
+  try {
+    const [rows] = await Category.getAllForTree();
+
+    if (!rows.length) {
+      return ok(res, "Category tree fetched successfully", {
+        count: 0,
+        items: [],
+      });
+    }
+
+    const tree = buildCategoryTree(rows);
+
+    return ok(res, "Category tree fetched successfully", {
+      count: countTreeNodes(tree),
+      items: tree,
+    });
+  } catch (error) {
+    return serverError(res, error.message);
+  }
+};
+
+
 /*
 =====================================
 GET BY ID (TREE)
@@ -611,6 +634,61 @@ export const getProductsByCategory = async (req, res) => {
         totalPages: Math.ceil(total / perPage),
       },
       paginatedData,
+    );
+  } catch (error) {
+    return serverError(res, error.message);
+  }
+};
+
+export const getProductsByCategories = async (req, res) => {
+  try {
+    const { ids, page, limit } = req.validated.query;
+    const hasPaging = page !== undefined || limit !== undefined;
+    const currentPage = Number(page) || 1;
+    const perPage = Number(limit) || 8;
+    const offset = (currentPage - 1) * perPage;
+
+    if (!hasPaging) {
+      const [products] = await Category.getProductsByCategoryIds(ids);
+      return ok(res, "Products fetched successfully", {
+        count: products.length,
+        items: products,
+      });
+    }
+
+    const [countRows] = await Category.countProductsByCategoryIds(ids);
+    const total = Number(countRows?.[0]?.total ?? 0);
+
+    if (total === 0) {
+      return paginated(
+        res,
+        "Products fetched successfully",
+        {
+          page: currentPage,
+          limit: perPage,
+          total: 0,
+          totalPages: 0,
+        },
+        [],
+      );
+    }
+
+    const [products] = await Category.getProductsByCategoryIdsPaginated(
+      ids,
+      perPage,
+      offset,
+    );
+
+    return paginated(
+      res,
+      "Products fetched successfully",
+      {
+        page: currentPage,
+        limit: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+      products,
     );
   } catch (error) {
     return serverError(res, error.message);
@@ -819,7 +897,9 @@ const categoryController = {
   getAllcategory,
   getCategoriesByIds,
   getCategoryById,
+  getCategoryTree,
   getProductsByCategory,
+  getProductsByCategories,
   searchCategory,
   createCategory,
   updateCategory,

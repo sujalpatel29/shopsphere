@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -38,7 +38,7 @@ const menuSections = [
 ];
 
 const topNavLinks = [
-  { label: "Categories", href: "/products" },
+  { label: "Categories", href: "/categories" },
   { label: "Today's Deals", href: "/products" },
   { label: "New Releases", href: "/products" },
   { label: "Electronics", href: "/products" },
@@ -371,3 +371,5 @@ function Navbar() {
 }
 
 export default Navbar;
+
+
