@@ -43,9 +43,9 @@ export const countRoot = () => {
     `SELECT COUNT(*) as total
      FROM category_master
      WHERE parent_id IS NULL
-     AND is_deleted = 0`
+     AND is_deleted = 0`,
   );
-}
+};
 
 export const getRootPaginated = (limit, offset) => {
   return pool.query(
@@ -54,10 +54,9 @@ export const getRootPaginated = (limit, offset) => {
      WHERE parent_id IS NULL
      AND is_deleted = 0
      LIMIT ? OFFSET ?`,
-    [limit, offset]
+    [limit, offset],
   );
-}
-
+};
 
 export const getByCategory = (categoryId) => {
   const query = `
@@ -267,4 +266,51 @@ AND is_deleted = 1;
   `;
 
   return pool.query(query, [categoryId, userId]);
+};
+
+/**
+ * Toggle active status for a category and its entire subtree.
+ * When deactivating (isActive=0), all child categories are also deactivated.
+ * When activating (isActive=1), only the specified category is activated (children remain unchanged).
+ */
+export const toggleStatusSubtree = (categoryId, isActive, userId) => {
+  // When activating, only update the specific category, not its children
+  if (isActive === 1) {
+    const query = `
+      UPDATE category_master
+      SET
+        is_active = ?,
+        updated_by = ?,
+        updated_at = NOW()
+      WHERE category_id = ?
+        AND is_deleted = 0
+    `;
+    return pool.query(query, [isActive, userId, categoryId]);
+  }
+
+  // When deactivating, cascade to all descendants
+  const query = `
+    WITH RECURSIVE subtree AS (
+      SELECT category_id
+      FROM category_master
+      WHERE category_id = ?
+        AND is_deleted = 0
+
+      UNION ALL
+
+      SELECT cm.category_id
+      FROM category_master cm
+      JOIN subtree s ON cm.parent_id = s.category_id
+      WHERE cm.is_deleted = 0
+    )
+    UPDATE category_master
+    SET
+      is_active = ?,
+      updated_by = ?,
+      updated_at = NOW()
+    WHERE category_id IN (SELECT category_id FROM subtree)
+      AND is_deleted = 0
+  `;
+
+  return pool.query(query, [categoryId, isActive, userId]);
 };

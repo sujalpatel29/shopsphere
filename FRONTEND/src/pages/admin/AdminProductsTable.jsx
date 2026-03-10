@@ -464,7 +464,7 @@ function AdminProductsTable({
       <DataTable
         value={loading ? skeletonData : tableData}
         lazy
-        paginator
+        paginator={totalRecords > 5}
         first={lazyParams.first}
         rows={lazyParams.rows}
         totalRecords={totalRecords}

@@ -69,6 +69,7 @@ const adminNav = [
 ];
 
 const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
+const AdminCategoriesTab = lazy(() => import("./AdminCategoriesTab"));
 const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
 const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
 const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
@@ -184,6 +185,8 @@ function AdminDashboardPage() {
       switch (tabKey) {
         case "products-list":
           return <AdminProductsTab />;
+        case "products-categories":
+          return <AdminCategoriesTab />;
         case "products-portions":
           return <AdminPortionsTab />;
         case "products-modifiers":

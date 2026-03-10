@@ -21,7 +21,11 @@ PUBLIC
 ==============================
 */
 
-router.get("/", validate(searchQuerySchema, "query"),categoryController.getAllcategory);
+router.get(
+  "/",
+  validate(searchQuerySchema, "query"),
+  categoryController.getAllcategory,
+);
 
 router.get(
   "/bulk",
@@ -78,6 +82,14 @@ router.patch(
   adminOnly,
   validate(idParamSchema, "params"),
   categoryController.restoreCategory,
+);
+
+router.patch(
+  "/:id/status",
+  auth,
+  adminOnly,
+  validate(idParamSchema, "params"),
+  categoryController.updateCategoryStatus,
 );
 
 export default router;

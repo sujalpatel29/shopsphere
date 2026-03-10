@@ -476,13 +476,10 @@ export const getAllcategory = async (req, res) => {
       },
       categories,
     );
-
   } catch (error) {
     return serverError(res, error.message);
   }
 };
-
-
 
 /*
 =====================================
@@ -529,7 +526,9 @@ export const getCategoriesByIds = async (req, res) => {
         (positionById.get(Number(b.category_id)) ?? Number.MAX_SAFE_INTEGER),
     );
 
-    const foundIds = new Set(sortedCategories.map((item) => Number(item.category_id)));
+    const foundIds = new Set(
+      sortedCategories.map((item) => Number(item.category_id)),
+    );
     const missingIds = ids.filter((id) => !foundIds.has(id));
 
     return ok(res, "Categories fetched successfully", {
@@ -761,6 +760,52 @@ export const restoreCategory = async (req, res) => {
   }
 };
 
+/*
+=====================================
+UPDATE STATUS (with cascading)
+=====================================
+*/
+export const updateCategoryStatus = async (req, res) => {
+  try {
+    const categoryId = Number(req.params.id);
+    const { is_active } = req.body;
+    const userId = req.user.id;
+
+    // Validate is_active value
+    if (is_active !== 0 && is_active !== 1) {
+      return badRequest(res, "is_active must be 0 or 1");
+    }
+
+    // Check if category exists
+    const [exists] = await Category.findById(categoryId);
+    if (!exists.length) {
+      return notFound(res, "Category not found");
+    }
+
+    // Toggle status with cascading for child categories when deactivating
+    const [result] = await Category.toggleStatusSubtree(
+      categoryId,
+      is_active,
+      userId,
+    );
+
+    if (!result.affectedRows) {
+      return ok(res, "No changes made");
+    }
+
+    const message =
+      is_active === 1
+        ? "Category activated successfully"
+        : "Category and all subcategories deactivated successfully";
+
+    return ok(res, message, {
+      affected: result.affectedRows,
+    });
+  } catch (error) {
+    return serverError(res, error.message);
+  }
+};
+
 const categoryController = {
   getAllcategory,
   getCategoriesByIds,
@@ -771,5 +816,6 @@ const categoryController = {
   updateCategory,
   deleteCategory,
   restoreCategory,
+  updateCategoryStatus,
 };
 export default categoryController;
