@@ -568,8 +568,6 @@ CREATE TABLE `offer_master` (
   `maximum_discount_amount` decimal(10,2) NOT NULL,
   `min_purchase_amount` decimal(10,2) DEFAULT '0.00',
   `usage_limit_per_user` int DEFAULT '1',
-  `category_id` int DEFAULT NULL,
-  `product_id` int DEFAULT NULL,
   `start_date` timestamp NOT NULL,
   `end_date` timestamp NOT NULL,
   `start_time` time DEFAULT NULL,
@@ -583,11 +581,7 @@ CREATE TABLE `offer_master` (
   PRIMARY KEY (`offer_id`),
   KEY `fk_offers_created_by` (`created_by`),
   KEY `fk_offers_updated_by` (`updated_by`),
-  KEY `fk_offers_category` (`category_id`),
-  KEY `fk_offers_product` (`product_id`),
-  CONSTRAINT `fk_offers_category` FOREIGN KEY (`category_id`) REFERENCES `category_master` (`category_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_offers_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
-  CONSTRAINT `fk_offers_product` FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_offers_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
