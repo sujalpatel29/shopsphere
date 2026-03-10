@@ -5,6 +5,7 @@ import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUser } from "../redux/slices/authSlice";
+import SmartImage from "../components/common/SmartImage";
 
 function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -35,10 +36,14 @@ function RegisterPage() {
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-slate-950 md:p-8">
       <div className="mx-auto grid min-h-[88vh] w-full max-w-6xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 md:grid-cols-2">
         <div className="relative hidden md:block">
-          <img
+          <SmartImage
             src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=80"
             alt="Minimal scenic background"
+            wrapperClassName="h-full w-full"
             className="h-full w-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            sizes="(min-width: 768px) 50vw, 100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/65 via-transparent to-amber-600/25" />
           <div className="absolute bottom-10 left-10 max-w-sm text-white">
@@ -47,6 +52,15 @@ function RegisterPage() {
             </h1>
             <p className="mt-4 text-sm text-slate-100">
               Create your account and begin your journey.
+            </p>
+            <Link
+              to="/"
+              className="mt-8 inline-flex items-center justify-center rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 shadow-2xl shadow-slate-950/30 transition hover:-translate-y-0.5 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-white/70"
+            >
+              Explore Shop
+            </Link>
+            <p className="mt-3 text-sm font-medium text-white/90">
+              Browse products first. Create an account only when you&apos;re ready.
             </p>
           </div>
         </div>

@@ -118,18 +118,40 @@ const Product = {
         GROUP BY pp.product_id
       ) ptc ON p.product_id = ptc.product_id
       LEFT JOIN (
-        SELECT pp2.product_id,
+        SELECT COALESCE(mp.product_id, pp2.product_id) AS product_id,
                COUNT(DISTINCT mp.modifier_id) AS modifier_count,
                GROUP_CONCAT(DISTINCT CONCAT(mm.modifier_name, ': ', mm.modifier_value) ORDER BY mm.modifier_name SEPARATOR ', ') AS modifier_values,
                GROUP_CONCAT(
-                 CONCAT(pp2.product_portion_id, '@@', mm.modifier_name, ': ', mm.modifier_value, '||', COALESCE(mp.additional_price, 0), '||', mp.stock)
-                 ORDER BY pp2.product_portion_id, mm.modifier_name SEPARATOR ';;'
+                 CONCAT(
+                   COALESCE(pp2.product_portion_id, 0),
+                   '@@',
+                   mp.modifier_portion_id,
+                   '@@',
+                   mm.modifier_name,
+                   ': ',
+                   mm.modifier_value,
+                   '||',
+                   COALESCE(mp.additional_price, 0),
+                   '||',
+                   mp.stock,
+                   '||',
+                   COALESCE((
+                     SELECT pi.image_url
+                     FROM product_images pi
+                     WHERE pi.modifier_portion_id = mp.modifier_portion_id
+                       AND pi.image_level = 'MODIFIER'
+                       AND pi.is_deleted = 0
+                     ORDER BY pi.is_primary DESC, pi.image_id DESC
+                     LIMIT 1
+                   ), '')
+                 )
+                 ORDER BY COALESCE(pp2.product_portion_id, 0), mm.modifier_name SEPARATOR ';;'
                ) AS modifier_details
-        FROM product_portion pp2
-        JOIN modifier_portion mp ON mp.product_portion_id = pp2.product_portion_id AND mp.is_deleted = 0
+        FROM modifier_portion mp
+        LEFT JOIN product_portion pp2 ON pp2.product_portion_id = mp.product_portion_id AND pp2.is_deleted = 0
         JOIN modifier_master mm ON mm.modifier_id = mp.modifier_id AND mm.is_deleted = 0
-        WHERE pp2.is_deleted = 0
-        GROUP BY pp2.product_id
+        WHERE mp.is_deleted = 0
+        GROUP BY COALESCE(mp.product_id, pp2.product_id)
       ) mc ON p.product_id = mc.product_id
     `;
 

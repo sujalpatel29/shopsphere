@@ -1,6 +1,7 @@
 // src/redux/authSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../../api/api";
+import getApiErrorMessage from "../../utils/apiError";
 
 //  Get user from localStorage
 const storedUser = localStorage.getItem("currentUser");
@@ -34,9 +35,7 @@ export const loginUser = createAsyncThunk(
 
       return mappedUser;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Server error"
-      );
+      return rejectWithValue(getApiErrorMessage(error, "Login failed."));
     }
   }
 );
@@ -54,9 +53,7 @@ export const registerUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Server error"
-      );
+      return rejectWithValue(getApiErrorMessage(error, "Registration failed."));
     }
   }
 );

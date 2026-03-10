@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Carousel } from "primereact/carousel";
+import SmartImage from "../../components/common/SmartImage";
 
 function HomePage() {
   const newArrivals = [];
@@ -42,10 +43,14 @@ function HomePage() {
               </Link>
             </div>
           </div>
-          <img
+          <SmartImage
             src="https://images.unsplash.com/photo-1607082350899-7e105aa886ae?auto=format&fit=crop&w=1200&q=80"
             alt="Ecommerce hero"
+            wrapperClassName="h-80 w-full rounded-2xl md:h-[420px]"
             className="h-80 w-full rounded-2xl object-cover md:h-[420px]"
+            loading="eager"
+            fetchPriority="high"
+            sizes="(min-width: 768px) 50vw, 100vw"
           />
         </div>
       </section>

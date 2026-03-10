@@ -13,8 +13,8 @@
  * API: adminModifiersApi (fetchModifiers, createModifier, updateModifier,
  *      toggleModifierStatus, deleteModifier)
  */
-import { useState, useCallback, useRef } from "react";
-import { Toast } from "primereact/toast";
+import { useState, useCallback, useEffect } from "react";
+import { useToast } from "../../context/ToastContext";
 import { Button } from "primereact/button";
 import { Plus } from "lucide-react";
 import AdminModifiersTable from "./AdminModifiersTable";
@@ -27,10 +27,11 @@ import {
   toggleModifierStatus,
   deleteModifier,
 } from "../../../api/adminModifiersApi";
+import getApiErrorMessage from "../../utils/apiError";
 import "./AdminProducts.css";
 
 function AdminModifiersTab() {
-  const toast = useRef(null);
+  const showToast = useToast();
 
   const [modifiers, setModifiers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,12 +43,8 @@ function AdminModifiersTab() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const showToast = useCallback((severity, summary, detail) => {
-    toast.current?.show({ severity, summary, detail, life: 3000 });
-  }, []);
-
   const getErrorMessage = (error) =>
-    error.response?.data?.message || error.message || "An unexpected error occurred.";
+    getApiErrorMessage(error, "An unexpected error occurred.");
 
   // Load modifiers
   const loadModifiers = useCallback(async () => {
@@ -65,9 +62,9 @@ function AdminModifiersTab() {
   }, [showToast]);
 
   // Load on mount
-  useState(() => {
+  useEffect(() => {
     loadModifiers();
-  });
+  }, [loadModifiers]);
 
   // CRUD handlers
   const handleAdd = useCallback(() => {
@@ -105,7 +102,7 @@ function AdminModifiersTab() {
         setSaving(false);
       }
     },
-    [selectedModifier, loadModifiers, handleCloseForm, showToast]
+    [selectedModifier, loadModifiers, handleCloseForm, showToast],
   );
 
   const handleDeleteClick = useCallback((modifier) => {
@@ -134,7 +131,7 @@ function AdminModifiersTab() {
         setDeleting(false);
       }
     },
-    [loadModifiers, handleCloseDelete, showToast]
+    [loadModifiers, handleCloseDelete, showToast],
   );
 
   const handleToggleStatus = useCallback(
@@ -144,31 +141,33 @@ function AdminModifiersTab() {
         prev.map((m) =>
           m.modifier_id === modifier.modifier_id
             ? { ...m, is_active: !m.is_active }
-            : m
-        )
+            : m,
+        ),
       );
       try {
         await toggleModifierStatus(modifier.modifier_id);
-        showToast("success", "Success", `Modifier ${modifier.is_active ? "deactivated" : "activated"} successfully`);
+        showToast(
+          "success",
+          "Success",
+          `Modifier ${modifier.is_active ? "deactivated" : "activated"} successfully`,
+        );
       } catch (error) {
         // Revert
         setModifiers((prev) =>
           prev.map((m) =>
             m.modifier_id === modifier.modifier_id
               ? { ...m, is_active: modifier.is_active }
-              : m
-          )
+              : m,
+          ),
         );
         showToast("error", "Error", getErrorMessage(error));
       }
     },
-    [showToast]
+    [showToast],
   );
 
   return (
     <div className="admin-products-container animate-fade-in flex-1 flex flex-col min-h-0">
-      <Toast ref={toast} position="top-right" />
-
       <div className="admin-products-card flex-1 flex flex-col min-h-0">
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-6">

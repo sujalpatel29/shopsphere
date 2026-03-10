@@ -17,7 +17,7 @@
  *      fetchModifiersByProduct, createModifierPortion, updateModifierPortion,
  *      deleteModifierPortion), adminPortionsApi (fetchProductPortions)
  *
- * Props: product, showToast, onCountChange
+ * Props: product, onCountChange, onMutate
  * Consumed by: ProductFormModal (Modifiers tab)
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -27,6 +27,7 @@ import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { Button } from "primereact/button";
 import { Plus, Save, Pencil, Trash2, X } from "lucide-react";
+import { useToast } from "../../context/ToastContext";
 import { fetchProductPortions } from "../../../api/adminPortionsApi";
 import {
   fetchModifiers,
@@ -36,11 +37,19 @@ import {
   updateModifierPortion,
   deleteModifierPortion,
 } from "../../../api/adminModifiersApi";
+import getApiErrorMessage from "../../utils/apiError";
 
 const currencyFormat = (val) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(Number(val) || 0);
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(
+    Number(val) || 0,
+  );
 
-function ProductModifiersPanel({ product, showToast, onCountChange }) {
+function ProductModifiersPanel({
+  product,
+  onCountChange,
+  onMutate,
+}) {
+  const showToast = useToast();
   // Product-portions for the first dropdown
   const [productPortions, setProductPortions] = useState([]);
   const [selectedPPId, setSelectedPPId] = useState(null);
@@ -77,7 +86,7 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
         setProductPortions(pPortions);
         setAllModifiers(mods);
       } catch (error) {
-        showToast("error", "Error", error.response?.data?.message || error.message);
+        showToast("error", "Error", getApiErrorMessage(error));
       } finally {
         setLoading(false);
       }
@@ -103,13 +112,13 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
         const data = await fetchModifiersByProductPortion(ppId);
         setPortionModifiers(data);
       } catch (error) {
-        showToast("error", "Error", error.response?.data?.message || error.message);
+        showToast("error", "Error", getApiErrorMessage(error));
         setPortionModifiers([]);
       } finally {
         setLoadingModifiers(false);
       }
     },
-    [showToast]
+    [showToast],
   );
 
   // ── Load modifiers directly for product (no portions) ──
@@ -119,7 +128,7 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
       const data = await fetchModifiersByProduct(product.product_id);
       setPortionModifiers(data);
     } catch (error) {
-      showToast("error", "Error", error.response?.data?.message || error.message);
+      showToast("error", "Error", getApiErrorMessage(error));
       setPortionModifiers([]);
     } finally {
       setLoadingModifiers(false);
@@ -143,14 +152,15 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
   }, [portionModifiers.length, onCountChange]);
 
   // Enrich data with editing state so DataTable re-renders when edit state changes
-  const tableData = useMemo(() =>
-    portionModifiers.map((pm) => ({
-      ...pm,
-      _editing: editingRows[pm.modifier_portion_id] || null,
-      _saving: savingRows[pm.modifier_portion_id] || false,
-      _deleting: deletingRows[pm.modifier_portion_id] || false,
-    })),
-    [portionModifiers, editingRows, savingRows, deletingRows]
+  const tableData = useMemo(
+    () =>
+      portionModifiers.map((pm) => ({
+        ...pm,
+        _editing: editingRows[pm.modifier_portion_id] || null,
+        _saving: savingRows[pm.modifier_portion_id] || false,
+        _deleting: deletingRows[pm.modifier_portion_id] || false,
+      })),
+    [portionModifiers, editingRows, savingRows, deletingRows],
   );
 
   // ── Dropdown options ──
@@ -160,7 +170,7 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
   }));
 
   const availableModifiers = allModifiers.filter(
-    (m) => !portionModifiers.some((pm) => pm.modifier_id === m.modifier_id)
+    (m) => !portionModifiers.some((pm) => pm.modifier_id === m.modifier_id),
   );
 
   const modifierOptions = availableModifiers.map((m) => ({
@@ -169,11 +179,16 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
   }));
 
   // Stock accounting: total modifier stock vs portion stock (or product stock if no portions)
-  const selectedPortion = productPortions.find((pp) => pp.product_portion_id === selectedPPId);
+  const selectedPortion = productPortions.find(
+    (pp) => pp.product_portion_id === selectedPPId,
+  );
   const baseStock = noPortions
-    ? (Number(product?.stock) || 0)
-    : (Number(selectedPortion?.stock) || 0);
-  const assignedModifierStock = portionModifiers.reduce((sum, pm) => sum + (Number(pm.stock) || 0), 0);
+    ? Number(product?.stock) || 0
+    : Number(selectedPortion?.stock) || 0;
+  const assignedModifierStock = portionModifiers.reduce(
+    (sum, pm) => sum + (Number(pm.stock) || 0),
+    0,
+  );
   const remainingModifierStock = baseStock - assignedModifierStock;
 
   // ── Add handler ──
@@ -188,7 +203,11 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
     }
     const stockToAdd = newStock || 0;
     if (stockToAdd > remainingModifierStock) {
-      showToast("warn", "Stock Exceeded", `Only ${remainingModifierStock} units remaining out of ${baseStock} ${noPortions ? "product" : "portion"} stock`);
+      showToast(
+        "warn",
+        "Stock Exceeded",
+        `Only ${remainingModifierStock} units remaining out of ${baseStock} ${noPortions ? "product" : "portion"} stock`,
+      );
       return;
     }
     setAdding(true);
@@ -204,6 +223,7 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
         payload.product_portion_id = selectedPPId;
       }
       await createModifierPortion(payload);
+      onMutate?.();
       showToast("success", "Success", "Modifier assigned successfully");
       setNewModifierId(null);
       setNewAdditionalPrice(null);
@@ -214,7 +234,7 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
         await loadPortionModifiers(selectedPPId);
       }
     } catch (error) {
-      showToast("error", "Error", error.response?.data?.message || error.message);
+      showToast("error", "Error", getApiErrorMessage(error));
     } finally {
       setAdding(false);
     }
@@ -254,45 +274,64 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
     const originalRowStock = Number(rowData.stock) || 0;
     const maxAllowed = remainingModifierStock + originalRowStock;
     if ((edited.stock || 0) > maxAllowed) {
-      showToast("warn", "Stock Exceeded", `Max ${maxAllowed} units allowed for this modifier (${baseStock} ${noPortions ? "product" : "portion"} stock)`);
+      showToast(
+        "warn",
+        "Stock Exceeded",
+        `Max ${maxAllowed} units allowed for this modifier (${baseStock} ${noPortions ? "product" : "portion"} stock)`,
+      );
       return;
     }
 
     setSavingRows((prev) => ({ ...prev, [rowData.modifier_portion_id]: true }));
     try {
       await updateModifierPortion(rowData.modifier_portion_id, edited);
+      onMutate?.();
       showToast("success", "Success", "Modifier updated successfully");
       cancelEdit(rowData.modifier_portion_id);
       if (noPortions) await loadProductModifiers();
       else await loadPortionModifiers(selectedPPId);
     } catch (error) {
-      showToast("error", "Error", error.response?.data?.message || error.message);
+      showToast("error", "Error", getApiErrorMessage(error));
     } finally {
-      setSavingRows((prev) => ({ ...prev, [rowData.modifier_portion_id]: false }));
+      setSavingRows((prev) => ({
+        ...prev,
+        [rowData.modifier_portion_id]: false,
+      }));
     }
   };
 
   const handleRowDelete = async (rowData) => {
-    setDeletingRows((prev) => ({ ...prev, [rowData.modifier_portion_id]: true }));
+    setDeletingRows((prev) => ({
+      ...prev,
+      [rowData.modifier_portion_id]: true,
+    }));
     try {
       await deleteModifierPortion(rowData.modifier_portion_id);
+      onMutate?.();
       showToast("success", "Success", "Modifier removed successfully");
       if (noPortions) await loadProductModifiers();
       else await loadPortionModifiers(selectedPPId);
     } catch (error) {
-      showToast("error", "Error", error.response?.data?.message || error.message);
+      showToast("error", "Error", getApiErrorMessage(error));
     } finally {
-      setDeletingRows((prev) => ({ ...prev, [rowData.modifier_portion_id]: false }));
+      setDeletingRows((prev) => ({
+        ...prev,
+        [rowData.modifier_portion_id]: false,
+      }));
     }
   };
 
   // ── Column templates (read from enriched rowData._editing etc.) ──
   const nameBodyTemplate = (rowData) => (
-    <span className="font-medium text-gray-900 dark:text-gray-100">{rowData.modifier_name}</span>
+    <span className="font-medium text-gray-900 dark:text-gray-100">
+      {rowData.modifier_name}
+    </span>
   );
 
   const valueBodyTemplate = (rowData) => (
-    <span className="text-gray-700 dark:text-gray-300">{rowData.modifier_value}</span>
+    <span className="text-gray-700 dark:text-gray-300">
+      {rowData.modifier_value}
+    </span>
   );
 
   const additionalPriceBodyTemplate = (rowData) => {
@@ -302,16 +341,29 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
       return (
         <InputNumber
           value={edited.additional_price}
-          onValueChange={(e) => updateEditField(id, "additional_price", e.value)}
-          mode="currency" currency="INR" locale="en-IN"
+          onValueChange={(e) =>
+            updateEditField(id, "additional_price", e.value)
+          }
+          mode="currency"
+          currency="INR"
+          locale="en-IN"
           className="admin-inputnumber-wrap w-full"
-          pt={{ input: { className: "admin-input w-full rounded-lg h-8 px-2 text-xs", autoComplete: "off" } }}
+          pt={{
+            input: {
+              className: "admin-input w-full rounded-lg h-8 px-2 text-xs",
+              autoComplete: "off",
+            },
+          }}
         />
       );
     }
     const val = Number(rowData.additional_price) || 0;
     if (val === 0) return <span className="text-gray-400">—</span>;
-    return <span className="font-medium text-green-600 dark:text-green-400">{currencyFormat(val)}</span>;
+    return (
+      <span className="font-medium text-green-600 dark:text-green-400">
+        {currencyFormat(val)}
+      </span>
+    );
   };
 
   const stockBodyTemplate = (rowData) => {
@@ -324,11 +376,20 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
           onValueChange={(e) => updateEditField(id, "stock", e.value)}
           min={0}
           className="admin-inputnumber-wrap w-full"
-          pt={{ input: { className: "admin-input w-full rounded-lg h-8 px-2 text-xs", autoComplete: "off" } }}
+          pt={{
+            input: {
+              className: "admin-input w-full rounded-lg h-8 px-2 text-xs",
+              autoComplete: "off",
+            },
+          }}
         />
       );
     }
-    return <span className="text-gray-700 dark:text-gray-300">{rowData.stock ?? 0}</span>;
+    return (
+      <span className="text-gray-700 dark:text-gray-300">
+        {rowData.stock ?? 0}
+      </span>
+    );
   };
 
   const actionBodyTemplate = (rowData) => {
@@ -338,13 +399,20 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
     const isDeleting = rowData._deleting;
 
     return (
-      <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        className="flex gap-1.5"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {edited ? (
           <>
             <button
               type="button"
               className="h-8 w-8 rounded-full flex items-center justify-center text-green-600 hover:bg-green-50 dark:hover:bg-green-500/15 transition-colors disabled:opacity-40"
-              onClick={(e) => { e.stopPropagation(); handleRowSave(rowData); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRowSave(rowData);
+              }}
               disabled={isSaving}
               title="Save"
             >
@@ -353,7 +421,10 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
             <button
               type="button"
               className="h-8 w-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40"
-              onClick={(e) => { e.stopPropagation(); cancelEdit(id); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                cancelEdit(id);
+              }}
               disabled={isSaving}
               title="Cancel"
             >
@@ -364,7 +435,10 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
           <button
             type="button"
             className="h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/15 transition-colors"
-            onClick={(e) => { e.stopPropagation(); startEdit(rowData); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              startEdit(rowData);
+            }}
             title="Edit"
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -373,7 +447,10 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
         <button
           type="button"
           className="h-8 w-8 rounded-full flex items-center justify-center text-red-600 hover:bg-red-50 dark:hover:bg-red-500/15 transition-colors disabled:opacity-40"
-          onClick={(e) => { e.stopPropagation(); handleRowDelete(rowData); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRowDelete(rowData);
+          }}
           disabled={isDeleting || Boolean(edited)}
           title="Remove"
         >
@@ -403,10 +480,15 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
             loading={loading}
             className="admin-dropdown w-full max-w-md"
             pt={{
-              root: { className: "admin-dropdown-root rounded-lg h-10 flex items-center shadow-none" },
+              root: {
+                className:
+                  "admin-dropdown-root rounded-lg h-10 flex items-center shadow-none",
+              },
               input: { className: "px-3 text-sm" },
               trigger: { className: "w-10" },
-              panel: { className: "admin-dropdown-panel rounded-lg shadow-xl mt-1" },
+              panel: {
+                className: "admin-dropdown-panel rounded-lg shadow-xl mt-1",
+              },
             }}
           />
         </div>
@@ -417,12 +499,26 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
           {/* ── Stock info ── */}
           <div className="flex items-center gap-4 text-xs font-medium px-1">
             <span className="text-gray-500 dark:text-gray-400">
-              {noPortions ? "Product" : "Portion"} Stock: <span className="text-gray-800 dark:text-gray-200">{baseStock}</span>
+              {noPortions ? "Product" : "Portion"} Stock:{" "}
+              <span className="text-gray-800 dark:text-gray-200">
+                {baseStock}
+              </span>
             </span>
             <span className="text-gray-500 dark:text-gray-400">
-              Assigned: <span className="text-gray-800 dark:text-gray-200">{assignedModifierStock}</span>
+              Assigned:{" "}
+              <span className="text-gray-800 dark:text-gray-200">
+                {assignedModifierStock}
+              </span>
             </span>
-            <span className={remainingModifierStock < 0 ? "text-red-600 dark:text-red-400" : remainingModifierStock === 0 ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}>
+            <span
+              className={
+                remainingModifierStock < 0
+                  ? "text-red-600 dark:text-red-400"
+                  : remainingModifierStock === 0
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-green-600 dark:text-green-400"
+              }
+            >
               Remaining: {remainingModifierStock}
             </span>
           </div>
@@ -430,7 +526,9 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
           {/* ── Add modifier form ── */}
           <div className="flex flex-wrap items-end gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
             <div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
-              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Modifier</label>
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                Modifier
+              </label>
               <Dropdown
                 value={newModifierId}
                 onChange={(e) => setNewModifierId(e.value)}
@@ -438,33 +536,55 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
                 placeholder="Select modifier…"
                 className="admin-dropdown w-full"
                 pt={{
-                  root: { className: "admin-dropdown-root rounded-lg h-9 flex items-center shadow-none" },
+                  root: {
+                    className:
+                      "admin-dropdown-root rounded-lg h-9 flex items-center shadow-none",
+                  },
                   input: { className: "px-3 text-sm" },
                   trigger: { className: "w-10" },
-                  panel: { className: "admin-dropdown-panel rounded-lg shadow-xl mt-1" },
+                  panel: {
+                    className: "admin-dropdown-panel rounded-lg shadow-xl mt-1",
+                  },
                 }}
               />
             </div>
             <div className="flex flex-col gap-1 min-w-[8rem]">
-              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Add. Price</label>
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                Add. Price
+              </label>
               <InputNumber
                 value={newAdditionalPrice}
                 onValueChange={(e) => setNewAdditionalPrice(e.value)}
-                mode="currency" currency="INR" locale="en-IN"
+                mode="currency"
+                currency="INR"
+                locale="en-IN"
                 className="admin-inputnumber-wrap w-full"
-                pt={{ input: { className: "admin-input w-full rounded-lg h-9 px-3 text-sm", autoComplete: "off" } }}
+                pt={{
+                  input: {
+                    className: "admin-input w-full rounded-lg h-9 px-3 text-sm",
+                    autoComplete: "off",
+                  },
+                }}
               />
             </div>
             <div className="flex flex-col gap-1 min-w-[5rem]">
               <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-                Stock <span className="text-gray-400 font-normal">(max {Math.max(remainingModifierStock, 0)})</span>
+                Stock{" "}
+                <span className="text-gray-400 font-normal">
+                  (max {Math.max(remainingModifierStock, 0)})
+                </span>
               </label>
               <InputNumber
                 value={newStock}
                 onValueChange={(e) => setNewStock(e.value)}
                 min={0}
                 className="admin-inputnumber-wrap w-full"
-                pt={{ input: { className: "admin-input w-full rounded-lg h-9 px-3 text-sm", autoComplete: "off" } }}
+                pt={{
+                  input: {
+                    className: "admin-input w-full rounded-lg h-9 px-3 text-sm",
+                    autoComplete: "off",
+                  },
+                }}
               />
             </div>
             <Button
@@ -480,20 +600,49 @@ function ProductModifiersPanel({ product, showToast, onCountChange }) {
 
           {/* ── Assigned modifiers table ── */}
           <div style={{ maxHeight: "220px", overflowY: "auto" }}>
-          <DataTable
-            value={tableData}
-            dataKey="modifier_portion_id"
-            loading={loadingModifiers}
-            emptyMessage={noPortions ? "No modifiers assigned to this product yet." : "No modifiers assigned to this portion yet."}
-            className="admin-products-table"
-            tableStyle={{ minWidth: "36rem" }}
-          >
-            <Column field="modifier_name" header="Name" body={nameBodyTemplate} style={{ minWidth: "8rem" }} />
-            <Column field="modifier_value" header="Value" body={valueBodyTemplate} style={{ minWidth: "8rem" }} />
-            <Column field="additional_price" header="Add. Price" body={additionalPriceBodyTemplate} style={{ minWidth: "9rem" }} />
-            <Column field="stock" header="Stock" body={stockBodyTemplate} style={{ minWidth: "5rem" }} />
-            <Column header="Actions" body={actionBodyTemplate} exportable={false} style={{ minWidth: "7rem" }} />
-          </DataTable>
+            <DataTable
+              value={tableData}
+              dataKey="modifier_portion_id"
+              loading={loadingModifiers}
+              emptyMessage={
+                noPortions
+                  ? "No modifiers assigned to this product yet."
+                  : "No modifiers assigned to this portion yet."
+              }
+              className="admin-products-table"
+              tableStyle={{ minWidth: "36rem" }}
+            >
+              <Column
+                field="modifier_name"
+                header="Name"
+                body={nameBodyTemplate}
+                style={{ minWidth: "8rem" }}
+              />
+              <Column
+                field="modifier_value"
+                header="Value"
+                body={valueBodyTemplate}
+                style={{ minWidth: "8rem" }}
+              />
+              <Column
+                field="additional_price"
+                header="Add. Price"
+                body={additionalPriceBodyTemplate}
+                style={{ minWidth: "9rem" }}
+              />
+              <Column
+                field="stock"
+                header="Stock"
+                body={stockBodyTemplate}
+                style={{ minWidth: "5rem" }}
+              />
+              <Column
+                header="Actions"
+                body={actionBodyTemplate}
+                exportable={false}
+                style={{ minWidth: "7rem" }}
+              />
+            </DataTable>
           </div>
         </>
       )}

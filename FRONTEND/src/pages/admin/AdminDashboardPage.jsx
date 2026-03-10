@@ -16,7 +16,14 @@
  *
  * Consumed by: AdminLayout → <Outlet /> renders this page
  */
-import { useMemo, useState, useEffect, useCallback, lazy, Suspense } from "react";
+import {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Skeleton } from "primereact/skeleton";
@@ -69,8 +76,8 @@ const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
 // Collect all valid tab keys for hash validation
 const validTabKeys = new Set(
   adminNav.flatMap((item) =>
-    item.children ? item.children.map((c) => c.key) : [item.key]
-  )
+    item.children ? item.children.map((c) => c.key) : [item.key],
+  ),
 );
 
 const DEFAULT_TAB = "users";
@@ -98,12 +105,15 @@ function AdminDashboardPage() {
   const { currentUser } = useSelector((state) => state.auth);
   const { darkMode, toggleDarkMode } = useTheme();
   const [activeTab, setActiveTabState] = useState(getTabFromHash);
+  const [mountedTabs, setMountedTabs] = useState(() => [getTabFromHash()]);
   const [productsOpen, setProductsOpen] = useState(() => {
     // Auto-expand products section if a product child tab is active
     const tab = getTabFromHash();
-    return adminNav
-      .find((item) => item.children)
-      ?.children.some((c) => c.key === tab) ?? true;
+    return (
+      adminNav
+        .find((item) => item.children)
+        ?.children.some((c) => c.key === tab) ?? true
+    );
   });
 
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -118,7 +128,11 @@ function AdminDashboardPage() {
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => {
       const next = !prev;
-      try { localStorage.setItem("admin-sidebar-open", String(next)); } catch { /* noop */ }
+      try {
+        localStorage.setItem("admin-sidebar-open", String(next));
+      } catch {
+        /* noop */
+      }
       return next;
     });
   }, []);
@@ -149,6 +163,12 @@ function AdminDashboardPage() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
+  useEffect(() => {
+    setMountedTabs((prev) =>
+      prev.includes(activeTab) ? prev : [...prev, activeTab],
+    );
+  }, [activeTab]);
+
   const activeLabel = useMemo(() => {
     for (const item of adminNav) {
       if (item.key === activeTab) return item.label;
@@ -159,8 +179,34 @@ function AdminDashboardPage() {
     return "Dashboard";
   }, [activeTab]);
 
+  const renderTabContent = useCallback(
+    (tabKey) => {
+      switch (tabKey) {
+        case "products-list":
+          return <AdminProductsTab />;
+        case "products-portions":
+          return <AdminPortionsTab />;
+        case "products-modifiers":
+          return <AdminModifiersTab />;
+        case "orders":
+          return <AdminOrdersTab />;
+        default:
+          return (
+            <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {activeLabel} view is ready for backend/API integration.
+              </p>
+            </div>
+          );
+      }
+    },
+    [activeLabel],
+  );
+
   return (
-    <div className={`admin-dashboard-grid grid items-start gap-6 p-6 ${sidebarOpen ? "lg:grid-cols-[290px_1fr]" : "lg:grid-cols-1"}`}>
+    <div
+      className={`admin-dashboard-grid grid items-stretch gap-6 p-6 ${sidebarOpen ? "lg:grid-cols-[290px_1fr]" : "lg:grid-cols-1"}`}
+    >
       <div
         className={`rounded-3xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22] max-h-[calc(100vh-3rem)] sticky top-6 overflow-hidden flex-col transition-all duration-300 hidden lg:flex ${sidebarOpen ? "opacity-100" : "lg:hidden"}`}
       >
@@ -169,7 +215,9 @@ function AdminDashboardPage() {
           <div className="relative z-10 flex flex-col items-center text-center">
             <div className="mb-3 flex items-center gap-2">
               <img src="/logo.svg" alt="ShopSphere" className="h-10 w-10" />
-              <span className="font-serif text-2xl font-semibold tracking-tight text-white">ShopSphere</span>
+              <span className="font-serif text-2xl font-semibold tracking-tight text-white">
+                ShopSphere
+              </span>
             </div>
             <p className="font-serif text-xs font-medium tracking-[0.2em] text-[#c9b88a]">
               ADMIN PANEL
@@ -248,7 +296,11 @@ function AdminDashboardPage() {
             onClick={toggleDarkMode}
             className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"
           >
-            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {darkMode ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
             {darkMode ? "Light Mode" : "Dark Mode"}
           </Button>
           <Button
@@ -265,7 +317,10 @@ function AdminDashboardPage() {
       <section className="min-w-[0] min-h-0 h-full">
         <Card
           className="rounded-2xl border border-gray-100 bg-white pt-6 px-6 pb-1 dark:border-[#1f2933] dark:bg-[#151e22] shadow-sm h-full overflow-hidden"
-          pt={{ body: { className: "p-0 h-full flex flex-col" }, content: { className: "p-0 flex-1 flex flex-col min-h-0" } }}
+          pt={{
+            body: { className: "p-0 h-full flex flex-col" },
+            content: { className: "p-0 flex-1 flex flex-col min-h-0" },
+          }}
         >
           <div className="mb-4 flex items-center gap-3">
             <Button
@@ -292,21 +347,15 @@ function AdminDashboardPage() {
           </div>
 
           <Suspense fallback={<TabLoader />}>
-            {activeTab === "products-list" ? (
-              <AdminProductsTab />
-            ) : activeTab === "products-portions" ? (
-              <AdminPortionsTab />
-            ) : activeTab === "products-modifiers" ? (
-              <AdminModifiersTab />
-            ) : activeTab === "orders" ? (
-              <AdminOrdersTab />
-            ) : (
-              <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {activeLabel} view is ready for backend/API integration.
-                </p>
+            {mountedTabs.map((tabKey) => (
+              <div
+                key={tabKey}
+                className={tabKey === activeTab ? "flex-1 min-h-0" : "hidden"}
+              >
+                {renderTabContent(tabKey)}
               </div>
-            )}
+            ))}
+            {!mountedTabs.includes(activeTab) && renderTabContent(activeTab)}
           </Suspense>
         </Card>
       </section>
