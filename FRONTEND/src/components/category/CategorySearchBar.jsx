@@ -11,7 +11,7 @@ function CategorySearchBar({ isLoading, searchText = "", onSearchChange }) {
 
   return (
     <div
-      className={`w-full rounded-xl border p-3 ${
+      className={`category-search-bar w-full rounded-xl border p-3 ${
         darkMode
           ? "border-[#1f2933] bg-[#151e22]"
           : "border-gray-200 bg-white"
@@ -27,7 +27,7 @@ function CategorySearchBar({ isLoading, searchText = "", onSearchChange }) {
           value={searchText}
           onChange={(e) => onSearchChange?.(e.target.value)}
           placeholder="Search products..."
-          className={`w-full !pl-10 !pr-3 !py-2.5 !rounded-lg !border !shadow-none focus:!ring-0 ${
+          className={`category-search-input w-full !pl-10 !pr-3 !py-2.5 !rounded-lg !border !shadow-none focus:!ring-0 ${
             darkMode
               ? "!bg-[#0f161a] !border-[#223038] !text-slate-100 placeholder:!text-slate-500 focus:!border-[#2f7a6f]"
               : "!bg-white !border-gray-300 !text-gray-800 placeholder:!text-gray-400 focus:!border-[#2f7a6f]"

@@ -786,8 +786,9 @@ function CategoryPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
+    <div className="category-page">
+      <div className="container mx-auto px-4 py-8">
+        <div className="category-page-layout flex flex-col lg:flex-row gap-8">
         <CategoryFilterSidebar
           isLoading={isTreeLoading}
           categoryTree={categoryTree}
@@ -803,7 +804,7 @@ function CategoryPage() {
         />
 
 
-        <div className="flex-1 space-y-6">
+        <div className="category-results flex-1 space-y-6">
           <CategorySearchBar
             isLoading={isTreeLoading}
             searchText={searchText}
@@ -832,6 +833,7 @@ function CategoryPage() {
               setPager({ first: event.first, rows: event.rows })
             }
           />
+        </div>
         </div>
       </div>
     </div>

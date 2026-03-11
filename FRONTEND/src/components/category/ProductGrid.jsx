@@ -32,12 +32,12 @@ function ProductGrid({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
+    <div className="category-product-grid space-y-6">
+      <div className="category-product-grid-list grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
         {products.map((product) => (
           <div className="trace-card" key={product.product_id || product.id}>
             <Card
-              className="trace-card-inner product-card !h-full !rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300"
+              className="category-product-card trace-card-inner product-card !h-full !rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300"
               onClick={() => {
                 const id = product.product_id || product.id;
                 if (!id) return;
@@ -45,7 +45,7 @@ function ProductGrid({
               }}
             >
               <div className="flex h-full min-h-[280px] flex-col">
-                <div className="product-image-wrap h-32 w-full bg-red-200">
+                <div className="category-product-media product-image-wrap h-32 w-full bg-red-200">
                   {product.image_url ? (
                     <img
                       src={product.image_url}

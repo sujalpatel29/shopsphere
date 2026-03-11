@@ -177,22 +177,16 @@ function CategoryFilterSidebar({
   onPriceRangeChange,
 }) {
   const { darkMode } = useTheme();
-  const maxCategoryDepth = 2;
 
   const rangeMax = Math.max(minPrice, maxPrice);
 
-  const mapTreeForPrime = (nodes = [], depth = 1) =>
-    nodes
-      .filter(Boolean)
-      .map((n) => {
-        const isAtLimit = depth >= maxCategoryDepth;
-        return {
-          key: String(n.category_id),
-          label: n.category_name,
-          data: n,
-          children: isAtLimit ? [] : mapTreeForPrime(n.children || [], depth + 1),
-        };
-      });
+  const mapTreeForPrime = (nodes = []) =>
+    nodes.map((n) => ({
+      key: String(n.category_id),
+      label: n.category_name,
+      data: n,
+      children: mapTreeForPrime(n.children || []),
+    }));
 
   const treeNodes = useMemo(
     () => mapTreeForPrime(categoryTree),
@@ -201,7 +195,7 @@ function CategoryFilterSidebar({
 
   return (
     <div
-      className={`w-full lg:w-72 rounded-2xl border p-5 ${
+      className={`category-filter-panel w-full lg:w-72 rounded-2xl border p-5 ${
         darkMode
           ? "border-[#1f2933] bg-[#151e22] text-slate-200"
           : "border-gray-200 bg-white text-gray-800"
