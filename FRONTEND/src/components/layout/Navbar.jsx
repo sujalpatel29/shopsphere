@@ -151,7 +151,7 @@ function Navbar() {
               Shop
             </Link>
             <Link
-              to="/"
+              to="/cart"
               className={`relative transition ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
               aria-label="Cart"
             >
@@ -245,7 +245,9 @@ function Navbar() {
         showCloseIcon={false}
         blockScroll
         className={`shopsphere-sidebar ${darkMode ? "bg-[#151e22] text-slate-100" : "bg-[#fff8ee] text-gray-900"} !w-[86vw] !max-w-[380px]`}
-        contentClassName="flex h-full flex-col p-0"
+        pt={{
+          content: { className: "flex h-full flex-col p-0" }
+        }}
       >
         <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2927] to-[#163b36] px-4 py-4 text-white">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(201,184,138,0.08),transparent_60%)]" />

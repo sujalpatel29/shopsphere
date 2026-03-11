@@ -38,6 +38,8 @@ import {
 
 } from "../models/offer.model.js";
 
+import { getRootCategoryId } from "../models/Order_master.model.js";
+
 import {
 
   ok,
@@ -79,6 +81,69 @@ function parsePositiveInt(value) {
   return num;
 
 }
+
+// Find root category ID for tax calculation
+const findRootCategory = async (categoryId) => {
+  const rows = await getRootCategoryId(categoryId);
+  return rows[0]?.category_id;
+};
+
+// Get tax percentage based on root category
+const getTaxPercent = (rootCategoryId) => {
+  const TAX_RULES = {
+    1: 18,   // Category 1: 18% tax
+    27: 5    // Category 27: 5% tax
+  };
+  return TAX_RULES[rootCategoryId] || 0;
+};
+
+// Calculate tax for cart items
+const calculateCartTax = async (items) => {
+  // Get unique product IDs with their categories
+  const productIds = [...new Set(items.map(item => item.product_id))];
+  
+  // Fetch categories for products
+  const [products] = await pool.query(
+    `SELECT product_id, category_id FROM product_master WHERE product_id IN (?)`,
+    [productIds]
+  );
+  
+  const productCategoryMap = {};
+  products.forEach(p => {
+    productCategoryMap[p.product_id] = p.category_id;
+  });
+  
+  // Get root categories for tax calculation
+  const rootCategoryEntries = await Promise.all(
+    productIds.map(async (productId) => {
+      const categoryId = productCategoryMap[productId];
+      const rootId = await findRootCategory(categoryId);
+      return [productId, rootId];
+    })
+  );
+  const rootCategoryMap = Object.fromEntries(rootCategoryEntries);
+  
+  // Calculate tax for each item
+  let totalTax = 0;
+  const itemsWithTax = items.map(item => {
+    const categoryId = rootCategoryMap[item.product_id];
+    const taxPercent = getTaxPercent(categoryId);
+    const itemPrice = Number(item.effective_price) * item.quantity;
+    const taxAmount = (itemPrice * taxPercent) / 100;
+    totalTax += taxAmount;
+    
+    return {
+      ...item,
+      tax_percent: taxPercent,
+      tax_amount: Math.round(taxAmount * 100) / 100
+    };
+  });
+  
+  return {
+    items: itemsWithTax,
+    totalTax: Math.round(totalTax * 100) / 100
+  };
+};
 
 
 
@@ -140,13 +205,16 @@ function calculateDiscount(offer, subtotal) {
 
 async function buildCartResponse(cartId, items, cartOffer = null) {
 
-  // Calculate item-level discounts first
+  // Calculate tax for items first
+  const { items: itemsWithTax, totalTax } = await calculateCartTax(items);
+
+  // Calculate item-level discounts
 
   let subtotal = 0;
 
   let totalItemDiscount = 0;
 
-  const itemsWithDiscount = items.map((item) => {
+  const itemsWithDiscount = itemsWithTax.map((item) => {
 
     const itemPrice = Number(item.effective_price);
 
@@ -226,7 +294,11 @@ async function buildCartResponse(cartId, items, cartOffer = null) {
 
       appliedOffer: appliedItemOffer,
 
-      discountedLineTotal: lineTotal - itemDiscount
+      discountedLineTotal: lineTotal - itemDiscount,
+
+      taxPercent: item.tax_percent,
+
+      taxAmount: item.tax_amount
 
     };
 
@@ -268,7 +340,7 @@ async function buildCartResponse(cartId, items, cartOffer = null) {
 
   const totalDiscount = totalItemDiscount + cartDiscount;
 
-  const total = Math.max(0, subtotal - totalDiscount);
+  const total = Math.max(0, subtotal + totalTax - totalDiscount);
 
   return {
 
@@ -277,6 +349,8 @@ async function buildCartResponse(cartId, items, cartOffer = null) {
     items: itemsWithDiscount,
 
     subtotal: Math.round(subtotal * 100) / 100,
+
+    tax: totalTax,
 
     itemDiscount: Math.round(totalItemDiscount * 100) / 100,
 
@@ -1008,13 +1082,22 @@ async function getApplicableOffers(req, res) {
 
     );
 
-    const allProductOffers = productOffers.flat();
+    // Add type field to product offers for frontend identification
+    const allProductOffers = productOffers.flat().map(offer => ({
+      ...offer,
+      type: 'product'
+    }));
 
 
 
     // Get applicable cart-level offers
 
-    const cartOffers = await getApplicableCartOffers();
+    const cartOffersRaw = await getApplicableCartOffers();
+    // Add type field to cart offers for frontend identification
+    const cartOffers = cartOffersRaw.map(offer => ({
+      ...offer,
+      type: 'cart'
+    }));
 
 
 

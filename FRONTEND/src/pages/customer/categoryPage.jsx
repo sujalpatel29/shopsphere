@@ -350,6 +350,9 @@
 // export default CategoryPage;
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { Toast } from "primereact/toast";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
 import SelectedFilters from "../../components/category/SelectedFilters";
@@ -360,6 +363,7 @@ import {
   getProductsByCategoryFilters,
   getCategoryProductsPriceRange,
 } from "../../services/categoryApi";
+import api from "../../../api/api";
 
 const extractProducts = (res) => {
   const data = res?.data;
@@ -454,6 +458,10 @@ const useDebouncedValue = (value, delayMs = 300) => {
 };
 
 function CategoryPage() {
+  const navigate = useNavigate();
+  const toast = useRef(null);
+  const { currentUser } = useSelector((state) => state.auth);
+  
   const [isTreeLoading, setIsTreeLoading] = useState(true);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [products, setProducts] = useState([]);
@@ -785,6 +793,52 @@ function CategoryPage() {
     setPriceRange([priceBounds.min, priceBounds.max]);
   };
 
+  // Add to cart handler
+  const handleAddToCart = async (product) => {
+    if (!currentUser) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Login Required",
+        detail: "Please login to add items to cart",
+        life: 3000,
+      });
+      navigate("/login", { state: { from: "/categories" } });
+      return;
+    }
+
+    const productId = product.product_id || product.id;
+    if (!productId) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Invalid product",
+        life: 3000,
+      });
+      return;
+    }
+
+    try {
+      await api.post("/cart/items", {
+        productId,
+        quantity: 1,
+      });
+      toast.current?.show({
+        severity: "success",
+        summary: "Added to Cart",
+        detail: `${product.display_name || product.name} added to cart`,
+        life: 3000,
+      });
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: error.response?.data?.message || "Failed to add to cart",
+        life: 3000,
+      });
+    }
+  };
+
   return (
     <div className="category-page">
       <div className="container mx-auto px-4 py-8">
@@ -822,6 +876,7 @@ function CategoryPage() {
           <ProductGrid
             isLoading={isProductsLoading}
             products={pagedProducts}
+            onAddToCart={handleAddToCart}
             paginator={{
               enabled: true,
               first: pager.first,

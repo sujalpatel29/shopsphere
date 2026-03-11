@@ -65,6 +65,8 @@ const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
 const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
 const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
 const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
+const AdminReportsTab = lazy(() => import("./AdminReportsTab"));
+const AdminSettingsTab = lazy(() => import("./AdminSettingsTab"));
 
 // Collect all valid tab keys for hash validation
 const validTabKeys = new Set(
@@ -265,7 +267,7 @@ function AdminDashboardPage() {
       <section className="min-w-[0] min-h-0 h-full">
         <Card
           className="rounded-2xl border border-gray-100 bg-white pt-6 px-6 pb-1 dark:border-[#1f2933] dark:bg-[#151e22] shadow-sm h-full overflow-hidden"
-          pt={{ body: { className: "p-0 h-full flex flex-col" }, content: { className: "p-0 flex-1 flex flex-col min-h-0" } }}
+          pt={{ body: { className: "p-0 h-full flex flex-col" }, content: { className: "admin-tab-content p-0 flex-1 flex flex-col min-h-0 overflow-y-auto" } }}
         >
           <div className="mb-4 flex items-center gap-3">
             <Button
@@ -292,6 +294,7 @@ function AdminDashboardPage() {
           </div>
 
           <Suspense fallback={<TabLoader />}>
+            <div className="admin-tab-content flex-1 overflow-y-auto min-h-0">
             {activeTab === "products-list" ? (
               <AdminProductsTab />
             ) : activeTab === "products-portions" ? (
@@ -300,6 +303,10 @@ function AdminDashboardPage() {
               <AdminModifiersTab />
             ) : activeTab === "orders" ? (
               <AdminOrdersTab />
+            ) : activeTab === "reports" ? (
+              <AdminReportsTab />
+            ) : activeTab === "settings" ? (
+              <AdminSettingsTab />
             ) : (
               <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -307,6 +314,7 @@ function AdminDashboardPage() {
                 </p>
               </div>
             )}
+            </div>
           </Suspense>
         </Card>
       </section>

@@ -14,6 +14,8 @@ import reviewRouter from "./routes/review.routes.js";
 import modifierRoute from "./routes/modifier.route.js";
 import productRoutes from "./routes/product.route.js";
 import productImageRoutes from "./routes/productImage.route.js";
+import analyticsRoutes from "./routes/analytics.route.js";
+import settingsRoutes from "./routes/settings.route.js";
 
 // Load environment variables
 dotenv.config();
@@ -21,12 +23,16 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  }),
-);
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174"
+  ],
+  credentials: true
+}));
 const port = process.env.PORT || 3000;
 
 // ============================================================================
@@ -91,6 +97,8 @@ app.use("/api/offer", offerRoute);
 // Add more routes here as you create them:
 app.use("/api/products", productRoutes);
 app.use("/api/productImages", productImageRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/settings", settingsRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/orders", orderRoutes);
 

@@ -568,8 +568,6 @@ CREATE TABLE `offer_master` (
   `maximum_discount_amount` decimal(10,2) NOT NULL,
   `min_purchase_amount` decimal(10,2) DEFAULT '0.00',
   `usage_limit_per_user` int DEFAULT '1',
-  `category_id` int DEFAULT NULL,
-  `product_id` int DEFAULT NULL,
   `start_date` timestamp NOT NULL,
   `end_date` timestamp NOT NULL,
   `start_time` time DEFAULT NULL,
@@ -583,11 +581,7 @@ CREATE TABLE `offer_master` (
   PRIMARY KEY (`offer_id`),
   KEY `fk_offers_created_by` (`created_by`),
   KEY `fk_offers_updated_by` (`updated_by`),
-  KEY `fk_offers_category` (`category_id`),
-  KEY `fk_offers_product` (`product_id`),
-  CONSTRAINT `fk_offers_category` FOREIGN KEY (`category_id`) REFERENCES `category_master` (`category_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_offers_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`),
-  CONSTRAINT `fk_offers_product` FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_offers_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1040,3 +1034,44 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-02-19
+
+-- App Settings Table
+CREATE TABLE IF NOT EXISTS `app_settings` (
+  `setting_id` INT NOT NULL AUTO_INCREMENT,
+  `setting_key` VARCHAR(100) NOT NULL,
+  `setting_value` TEXT,
+  `setting_type` ENUM('string', 'number', 'boolean', 'password', 'currency', 'timezone') DEFAULT 'string',
+  `category` VARCHAR(50) DEFAULT 'general',
+  `description` VARCHAR(255),
+  `is_deleted` TINYINT(1) DEFAULT 0,
+  `created_by` INT,
+  `updated_by` INT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`),        
+  UNIQUE KEY `uk_setting_key` (`setting_key`),
+  KEY `idx_category` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-- Activity Logs Table
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+  `log_id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT,
+  `action` VARCHAR(50) NOT NULL,
+  `entity_type` VARCHAR(50),
+  `entity_id` VARCHAR(100),
+  `details` JSON,
+  `ip_address` VARCHAR(45),
+  `user_agent` VARCHAR(255),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_action` (`action`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Insert default settings
+INSERT INTO `app_settings` (`setting_key`, `setting_value`, `setting_type`, `category`, `description`, `created_by`, `updated_by`) VALUES
+('site_name', 'ShopSphere', 'string', 'general', 'Website name', 1, 1),
+('default_currency', 'INR', 'currency', 'store', 'Default currency', 1, 1),
+('tax_rate', '18', 'number', 'store', 'Tax rate percentage', 1, 1)
+ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP;

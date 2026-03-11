@@ -6,6 +6,7 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import HomePage from "../pages/customer/HomePage";
 import DashboardPage from "../pages/customer/DashboardPage";
+import CartPage from "../pages/customer/CartPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import CheckoutPage from "../pages/customer/CheckoutPage";
 import PaymentPage from "../pages/customer/PaymentPage";
@@ -47,6 +48,7 @@ function AppRoutes() {
       <Route element={<RedirectIfAdmin />}>
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/categories" element={<CategoryPage />} />
           <Route path="/products" element={<HomePage />} />
           <Route path="/products/:id" element={<ProductDetailsPlaceholder />} />
@@ -59,8 +61,6 @@ function AppRoutes() {
         {/* Customer routes with Navbar/Footer */}
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/checkout/payment" element={<PaymentPage />} />
         </Route>
 
         {/* Admin routes â€” full-screen, no Navbar/Footer */}
