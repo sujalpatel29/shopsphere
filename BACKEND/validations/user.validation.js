@@ -45,6 +45,10 @@ export const idParamSchema = z.object({
   id: z.string().regex(/^\d+$/, "Invalid ID"),
 });
 
+export const addressIdParamSchema = z.object({
+  addressId: z.string().regex(/^\d+$/, "Invalid address ID"),
+});
+
 /* ================= ADDRESS VALIDATION ================= */
 
 export const addressSchema = z.object({

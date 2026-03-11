@@ -16,6 +16,7 @@ import {
 import { auth, adminOnly } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/Validations.middleware.js";
 import {
+  addressIdParamSchema,
   addressSchema,
   updateAddressSchema,
   updateProfileSchema,
@@ -79,6 +80,12 @@ userRoute.patch(
   validate(idParamSchema, "params"),
   setDefaultAddress,
 );
+userRoute.post(
+  "/setDefault/:id",
+  auth,
+  validate(idParamSchema, "params"),
+  setDefaultAddress,
+);
 
 //get default address
 userRoute.get("/getDefault", auth, getDefaultAddress);
@@ -98,7 +105,7 @@ userRoute.get(
 userRoute.delete(
   "/delete-address/:addressId",
   auth,
-  validate(idParamSchema, "params"),
+  validate(addressIdParamSchema, "params"),
   deleteAddress,
 );
 
@@ -106,7 +113,7 @@ userRoute.delete(
 userRoute.patch(
   "/update-address/:addressId",
   auth,
-  validate(idParamSchema, "params"),
+  validate(addressIdParamSchema, "params"),
   validate(updateAddressSchema),
   updateAddress,
 );

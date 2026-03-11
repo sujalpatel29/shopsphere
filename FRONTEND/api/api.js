@@ -32,12 +32,22 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const res = await api.post("/users/refresh-token");
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (!refreshToken) {
+          throw new Error("Refresh token missing");
+        }
 
-        const newAccessToken = res.data.accessToken;
+        const res = await api.post("/users/refresh-token", { refreshToken });
+
+        const newAccessToken =
+          res?.data?.data?.accessToken || res?.data?.accessToken;
+        if (!newAccessToken) {
+          throw new Error("Access token refresh failed");
+        }
 
         localStorage.setItem("token", newAccessToken);
 
+        originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization =
           "Bearer " + newAccessToken;
 

@@ -5,8 +5,11 @@ dotenv.config();
 export const auth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    return res.status(401).send("No token");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      success: false,
+      message: "No token",
+    });
   }
 
   const token = authHeader.split(" ")[1];
@@ -14,11 +17,12 @@ export const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    console.log("Decoded JWT:", decoded);
     next();
   } catch (err) {
-    console.log(err);
-    res.status(401).send("Invalid token");
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
   }
 };
 

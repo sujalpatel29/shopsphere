@@ -151,10 +151,16 @@ export const refreshToken = async (req, res) => {
     }
 
     // 4️ Generate new access token
+    const accessTokenPayload = {
+      id: decoded.id,
+      email: decoded.email,
+      name: decoded.name,
+      role: decoded.role,
+    };
     const newAccessToken = jwt.sign(
-      { id: decoded.id },
+      accessTokenPayload,
       process.env.JWT_SECRET,
-      { expiresIn: "30s" },
+      { expiresIn: process.env.JWT_EXPIRES_IN || "1h" },
     );
 
     return ok(res, "Access token refreshed", {
@@ -173,13 +179,13 @@ export const viewProfile = async (req, res) => {
 
     const userId = req.user.id;
 
-    const [result] = await viewUserModel(userId);
+    const result = await viewUserModel(userId);
 
     if (!result || result.length === 0) {
       return notFound(res, "User not found");
     }
 
-    return ok(res, "Profile fetched successfully", result);
+    return ok(res, "Profile fetched successfully", result[0]);
   } catch (error) {
     console.error("View Profile Error:", error);
     return serverError(res, "Failed to fetch profile");

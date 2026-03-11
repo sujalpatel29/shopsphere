@@ -46,10 +46,35 @@ export const insertQuery = async (values,cart_id) => {
 
 // Retrieve a specific order item by order ID and item ID
 export const Orders = async (order_Id,item_Id) => {
-  const [rows] = await pool.query("select * from order_items where order_id =  ?  ",[order_Id])
+  const [rows] = await pool.query(
+    `SELECT oi.*, pi.image_url
+     FROM order_items oi
+     LEFT JOIN product_images pi
+       ON pi.product_id = oi.product_id
+      AND pi.is_primary = 1
+      AND pi.image_level = 'PRODUCT'
+      AND pi.is_deleted = 0
+     WHERE oi.order_id = ?
+       AND oi.is_deleted = 0
+     ORDER BY oi.order_item_id DESC`,
+    [order_Id],
+  );
   return rows;
 }
 export const OrdersItems = async (order_Id,item_Id) => {
-  const [rows] = await pool.query("select * from order_items where order_id =  ? and order_item_id= ?  ",[order_Id,item_Id])
+  const [rows] = await pool.query(
+    `SELECT oi.*, pi.image_url
+     FROM order_items oi
+     LEFT JOIN product_images pi
+       ON pi.product_id = oi.product_id
+      AND pi.is_primary = 1
+      AND pi.image_level = 'PRODUCT'
+      AND pi.is_deleted = 0
+     WHERE oi.order_id = ?
+       AND oi.order_item_id = ?
+       AND oi.is_deleted = 0
+     LIMIT 1`,
+    [order_Id, item_Id],
+  );
   return rows;
 }

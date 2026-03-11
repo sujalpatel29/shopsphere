@@ -22,10 +22,38 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true
-}));
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+]);
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow non-browser tools like Postman/cURL (no origin header)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("CORS origin not allowed"));
+  },
+  credentials: true,
+  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
+};
+
+app.use(
+  cors(corsOptions),
+);
+
+// Ensure all routes respond properly to preflight requests.
+app.options(/.*/, cors(corsOptions));
 const port = process.env.PORT || 3000;
 
 // ============================================================================

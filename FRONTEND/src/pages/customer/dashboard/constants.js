@@ -1,0 +1,73 @@
+import {
+  CreditCard,
+  HelpCircle,
+  Heart,
+  LayoutDashboard,
+  MapPin,
+  Package,
+  Star,
+  Shield,
+  User,
+  WalletCards,
+} from "lucide-react";
+
+export const cardPt = {
+  body: { className: "p-0" },
+  content: { className: "p-0" },
+};
+
+export const panelCardClassName =
+  "rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
+
+export const metricCardClassName =
+  "rounded-2xl border border-gray-100 bg-gray-50 p-5 dark:border-[#1f2933] dark:bg-[#151e22]";
+
+export const sidebarCardClassName =
+  "h-fit rounded-3xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22]";
+
+export const pageHeaderCardClassName =
+  "rounded-3xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
+
+export const profileNav = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "profile", label: "Profile", icon: User },
+  { key: "orders", label: "Orders", icon: Package },
+  { key: "payments", label: "Payment Methods", icon: CreditCard },
+  { key: "addresses", label: "Addresses", icon: MapPin },
+  { key: "wallet", label: "Wallet & Offers", icon: WalletCards },
+  { key: "reviews", label: "Reviews", icon: Star },
+  { key: "wishlist", label: "Wishlist", icon: Heart },
+  { key: "security", label: "Login & Security", icon: Shield },
+  { key: "support", label: "Help & Support", icon: HelpCircle },
+];
+
+export const dashboardPlaceholderContent = {
+  wallet: {
+    title: "Wallet & Offers",
+    text: "Offer usage and wallet history will appear here as soon as those APIs are integrated in the frontend.",
+  },
+  wishlist: {
+    title: "Wishlist",
+    text: "Wishlist UI is ready. Next step is wiring product save/remove endpoints.",
+  },
+  security: {
+    title: "Login & Security",
+    text: "Password update endpoint already exists; this section can be wired next for account security actions.",
+  },
+  support: {
+    title: "Help & Support",
+    text: "Support tickets and FAQ integration can be added in this section.",
+  },
+};
+
+export const initialAddressForm = {
+  full_name: "",
+  phone: "",
+  address_line1: "",
+  address_line2: "",
+  city: "",
+  state: "",
+  postal_code: "",
+  country: "India",
+  is_default: false,
+};
