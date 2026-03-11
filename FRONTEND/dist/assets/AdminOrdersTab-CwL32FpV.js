@@ -1,0 +1,1 @@
+import{j as r}from"./index-DpOkVqYE.js";function a(){return r.jsx("div",{className:"flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50",children:r.jsx("p",{className:"text-sm text-gray-500 dark:text-gray-400",children:"Orders view is ready for backend/API integration."})})}export{a as default};
