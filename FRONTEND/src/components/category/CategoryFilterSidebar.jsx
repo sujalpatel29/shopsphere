@@ -177,16 +177,22 @@ function CategoryFilterSidebar({
   onPriceRangeChange,
 }) {
   const { darkMode } = useTheme();
+  const maxCategoryDepth = 2;
 
   const rangeMax = Math.max(minPrice, maxPrice);
 
-  const mapTreeForPrime = (nodes = []) =>
-    nodes.map((n) => ({
-      key: String(n.category_id),
-      label: n.category_name,
-      data: n,
-      children: mapTreeForPrime(n.children || []),
-    }));
+  const mapTreeForPrime = (nodes = [], depth = 1) =>
+    nodes
+      .filter(Boolean)
+      .map((n) => {
+        const isAtLimit = depth >= maxCategoryDepth;
+        return {
+          key: String(n.category_id),
+          label: n.category_name,
+          data: n,
+          children: isAtLimit ? [] : mapTreeForPrime(n.children || [], depth + 1),
+        };
+      });
 
   const treeNodes = useMemo(
     () => mapTreeForPrime(categoryTree),

@@ -357,9 +357,8 @@ import ProductGrid from "../../components/category/ProductGrid";
 import {
   getAllCategories,
   getAllProducts,
-  getProductsByCategory,
-  getProductsByCategories,
-  searchCategoriesByName,
+  getProductsByCategoryFilters,
+  getCategoryProductsPriceRange,
 } from "../../services/categoryApi";
 
 const extractProducts = (res) => {
@@ -413,37 +412,8 @@ const isDescendantOf = (childId, ancestorId, parentMap) => {
   return false;
 };
 
-const getEffectiveCategoryIds = (selectedIds) => [...new Set(selectedIds)];
-
-const extractCategoryIdsFromSearch = (res) => {
-  const rows = Array.isArray(res?.data?.data)
-    ? res.data.data
-    : Array.isArray(res?.data?.items)
-      ? res.data.items
-      : [];
-
-  return rows
-    .map((row) => Number(row?.category_id))
-    .filter(Number.isFinite);
-};
-
 const extractTotalRecords = (res, fallback = 0) =>
   Number(res?.data?.pagination?.totalItems ?? res?.data?.data?.count ?? fallback);
-
-const extractTotalPages = (res) =>
-  Number(res?.data?.pagination?.totalPages ?? 1);
-
-const getBoundsFromProducts = (items = []) => {
-  if (!items.length) return { min: 0, max: 0 };
-  const values = items
-    .map(getEffectivePrice)
-    .filter((value) => Number.isFinite(value));
-  if (!values.length) return { min: 0, max: 0 };
-  return {
-    min: Math.floor(Math.min(...values)),
-    max: Math.ceil(Math.max(...values)),
-  };
-};
 
 const buildCategoryLabelMap = (nodes = [], map = new Map()) => {
   nodes.forEach((node) => {
@@ -451,6 +421,38 @@ const buildCategoryLabelMap = (nodes = [], map = new Map()) => {
     buildCategoryLabelMap(node.children || [], map);
   });
   return map;
+};
+
+const buildParentIdSet = (nodes = [], set = new Set()) => {
+  nodes.forEach((node) => {
+    if (node?.children?.length) {
+      set.add(node.category_id);
+      buildParentIdSet(node.children, set);
+    }
+  });
+  return set;
+};
+
+const isDescendantOfAny = (childId, ancestorSet, parentMap) => {
+  let current = parentMap.get(childId);
+  while (current !== undefined) {
+    if (ancestorSet.has(current)) return true;
+    current = parentMap.get(current);
+  }
+  return false;
+};
+
+const useDebouncedValue = (value, delayMs = 300) => {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebounced(value);
+    }, delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return debounced;
 };
 
 function CategoryPage() {
@@ -468,6 +470,9 @@ function CategoryPage() {
   const [priceBounds, setPriceBounds] = useState({ min: 0, max: 0 });
   const prevFilterSignatureRef = useRef("");
   const productsRequestIdRef = useRef(0);
+  const priceRangeRequestIdRef = useRef(0);
+  const hasUserPriceSelectionRef = useRef(false);
+  const debouncedPriceRange = useDebouncedValue(priceRange, 300);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -506,9 +511,37 @@ function CategoryPage() {
 
   const parentMap = useMemo(() => buildParentMap(categoryTree), [categoryTree]);
 
-  const effectiveCategoryIds = useMemo(
-    () => getEffectiveCategoryIds(selectedCategoryIds, parentMap),
-    [selectedCategoryIds, parentMap],
+  const parentIdSet = useMemo(
+    () => buildParentIdSet(categoryTree),
+    [categoryTree],
+  );
+
+  const parentSelectionIds = useMemo(
+    () => selectedCategoryIds.filter((id) => parentIdSet.has(id)),
+    [selectedCategoryIds, parentIdSet],
+  );
+
+  const parentSelectionSet = useMemo(
+    () => new Set(parentSelectionIds),
+    [parentSelectionIds],
+  );
+
+  const childSelectionIds = useMemo(
+    () =>
+      selectedCategoryIds.filter(
+        (id) =>
+          !parentIdSet.has(id) &&
+          !isDescendantOfAny(id, parentSelectionSet, parentMap),
+      ),
+    [selectedCategoryIds, parentIdSet, parentSelectionSet, parentMap],
+  );
+
+  const categoryIdGroups = useMemo(
+    () => ({
+      parent: parentSelectionIds,
+      child: childSelectionIds,
+    }),
+    [parentSelectionIds, childSelectionIds],
   );
 
   const usesBackendPagination = true;
@@ -523,15 +556,40 @@ function CategoryPage() {
     [backendPage, pager.rows],
   );
 
-  const filterSignature = useMemo(
-    () => `${debouncedSearchText}|${effectiveCategoryIds.join(",")}`,
-    [debouncedSearchText, effectiveCategoryIds],
-  );
+  const filterSignature = useMemo(() => {
+    const parentKey = parentSelectionIds.join(",");
+    const childKey = childSelectionIds.join(",");
+    const priceKey = hasUserPriceSelectionRef.current
+      ? `${debouncedPriceRange[0]}-${debouncedPriceRange[1]}`
+      : "";
+    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}`;
+  }, [
+    debouncedSearchText,
+    parentSelectionIds,
+    childSelectionIds,
+    debouncedPriceRange,
+  ]);
+
+  const boundsSignature = useMemo(() => {
+    const parentKey = parentSelectionIds.join(",");
+    const childKey = childSelectionIds.join(",");
+    return `${debouncedSearchText}|${parentKey}|${childKey}`;
+  }, [debouncedSearchText, parentSelectionIds, childSelectionIds]);
+
+  const priceFilterParams = useMemo(() => {
+    const hasPriceFilter =
+      hasUserPriceSelectionRef.current &&
+      (debouncedPriceRange[0] !== priceBounds.min ||
+        debouncedPriceRange[1] !== priceBounds.max);
+    return hasPriceFilter
+      ? { min_price: debouncedPriceRange[0], max_price: debouncedPriceRange[1] }
+      : {};
+  }, [debouncedPriceRange, priceBounds.min, priceBounds.max]);
 
   useEffect(() => {
     if (!treeLoaded) return;
     setPager((prev) => (prev.first === 0 ? prev : { ...prev, first: 0 }));
-  }, [treeLoaded, filterSignature]);
+  }, [treeLoaded, boundsSignature]);
 
   useEffect(() => {
     if (!treeLoaded) return;
@@ -556,53 +614,37 @@ function CategoryPage() {
         let items = [];
 
         const hasSearch = debouncedSearchText.length > 0;
-        let targetCategoryIds = null;
-
+        const hasCategoryFilter =
+          categoryIdGroups.parent.length > 0 ||
+          categoryIdGroups.child.length > 0;
         console.log("Category selection debug:", {
           selectedKeys,
           selectedCategoryIds,
-          effectiveCategoryIds,
+          categoryIdGroups,
           hasSearch,
         });
 
-        if (hasSearch) {
-          const searchRes = await searchCategoriesByName({
-            name: debouncedSearchText,
-            page: 1,
-            limit: 100,
-          });
-          const searchedIds = extractCategoryIdsFromSearch(searchRes);
-          targetCategoryIds = getEffectiveCategoryIds(searchedIds, parentMap);
-        } else if (effectiveCategoryIds.length) {
-          targetCategoryIds = effectiveCategoryIds;
-        }
-
-        if (targetCategoryIds === null) {
+        if (!hasCategoryFilter) {
           const productRes = await getAllProducts({
             page: backendPage,
             limit: pager.rows,
+            ...(hasSearch ? { search: debouncedSearchText } : {}),
+            ...priceFilterParams,
           });
           items = extractProducts(productRes);
           if (requestId === productsRequestIdRef.current) {
             setTotalRecords(extractTotalRecords(productRes, items.length));
           }
-        } else if (!targetCategoryIds.length) {
-          items = [];
-          if (requestId === productsRequestIdRef.current) {
-            setTotalRecords(0);
-          }
-        } else if (targetCategoryIds.length === 1) {
-          const productRes = await getProductsByCategory(targetCategoryIds[0], {
-            page: backendPage,
-            limit: pager.rows,
-          });
-          items = extractProducts(productRes);
-          if (requestId === productsRequestIdRef.current) {
-            setTotalRecords(extractTotalRecords(productRes, items.length));
-          }
-        } else if (targetCategoryIds.length > 1) {
-          const productRes = await getProductsByCategories({
-            ids: targetCategoryIds.join(","),
+        } else {
+          const productRes = await getProductsByCategoryFilters({
+            ...(categoryIdGroups.parent.length
+              ? { parent_ids: categoryIdGroups.parent.join(",") }
+              : {}),
+            ...(categoryIdGroups.child.length
+              ? { child_ids: categoryIdGroups.child.join(",") }
+              : {}),
+            ...(hasSearch ? { search: debouncedSearchText } : {}),
+            ...priceFilterParams,
             page: backendPage,
             limit: pager.rows,
           });
@@ -636,12 +678,8 @@ function CategoryPage() {
     loadProductsBySelection();
   }, [
     treeLoaded,
-    effectiveCategoryIds,
-    debouncedSearchText,
-    parentMap,
     paginationFetchKey,
-    backendPage,
-    pager.rows,
+    filterSignature,
   ]);
 
   useEffect(() => {
@@ -649,63 +687,33 @@ function CategoryPage() {
 
     let ignore = false;
 
-    const fetchAllPages = async (fetchPage) => {
-      const merged = [];
-      let page = 1;
-      const limit = 50;
-
-      while (true) {
-        const res = await fetchPage(page, limit);
-        merged.push(...extractProducts(res));
-        const totalPages = extractTotalPages(res);
-        if (page >= totalPages) break;
-        page += 1;
-      }
-
-      return merged;
-    };
-
     const loadPriceBounds = async () => {
+      const requestId = ++priceRangeRequestIdRef.current;
       try {
         const hasSearch = debouncedSearchText.length > 0;
-        let targetCategoryIds = null;
+        const hasCategoryFilter =
+          categoryIdGroups.parent.length > 0 ||
+          categoryIdGroups.child.length > 0;
 
-        if (hasSearch) {
-          const searchRes = await searchCategoriesByName({
-            name: debouncedSearchText,
-            page: 1,
-            limit: 100,
-          });
-          const searchedIds = extractCategoryIdsFromSearch(searchRes);
-          targetCategoryIds = getEffectiveCategoryIds(searchedIds, parentMap);
-        } else if (effectiveCategoryIds.length) {
-          targetCategoryIds = effectiveCategoryIds;
-        }
+        const priceRes = await getCategoryProductsPriceRange({
+          ...(categoryIdGroups.parent.length
+            ? { parent_ids: categoryIdGroups.parent.join(",") }
+            : {}),
+          ...(categoryIdGroups.child.length
+            ? { child_ids: categoryIdGroups.child.join(",") }
+            : {}),
+          ...(hasSearch ? { search: debouncedSearchText } : {}),
+          ...(hasCategoryFilter ? {} : {}),
+        });
 
-        let allItems = [];
-        if (targetCategoryIds === null) {
-          allItems = await fetchAllPages((page, limit) =>
-            getAllProducts({ page, limit }),
-          );
-        } else if (!targetCategoryIds.length) {
-          allItems = [];
-        } else if (targetCategoryIds.length === 1) {
-          allItems = await fetchAllPages((page, limit) =>
-            getProductsByCategory(targetCategoryIds[0], { page, limit }),
-          );
-        } else {
-          allItems = await fetchAllPages((page, limit) =>
-            getProductsByCategories({
-              ids: targetCategoryIds.join(","),
-              page,
-              limit,
-            }),
-          );
-        }
-
-        if (!ignore) setPriceBounds(getBoundsFromProducts(allItems));
+        if (ignore || requestId !== priceRangeRequestIdRef.current) return;
+        const min = Number(priceRes?.data?.data?.min ?? 0);
+        const max = Number(priceRes?.data?.data?.max ?? 0);
+        setPriceBounds({ min, max });
       } catch (error) {
-        if (!ignore) setPriceBounds({ min: 0, max: 0 });
+        if (!ignore && requestId === priceRangeRequestIdRef.current) {
+          setPriceBounds({ min: 0, max: 0 });
+        }
       }
     };
 
@@ -713,22 +721,14 @@ function CategoryPage() {
     return () => {
       ignore = true;
     };
-  }, [treeLoaded, filterSignature, debouncedSearchText, effectiveCategoryIds, parentMap]);
+  }, [treeLoaded, boundsSignature]);
 
   useEffect(() => {
-    setPriceRange([priceBounds.min, priceBounds.max]);
-  }, [priceBounds.min, priceBounds.max]);
-
-  const filteredProducts = useMemo(() => {
-    const [minPrice, maxPrice] = priceRange;
-    return products.filter((product) => {
-      const price = getEffectivePrice(product);
-      return price >= minPrice && price <= maxPrice;
+    setPriceRange((prev) => {
+      if (prev[0] === priceBounds.min && prev[1] === priceBounds.max) return prev;
+      return [priceBounds.min, priceBounds.max];
     });
-  }, [
-    products,
-    priceRange,
-  ]);
+  }, [priceBounds.min, priceBounds.max]);
 
   useEffect(() => {
     setPager((prev) => {
@@ -737,23 +737,28 @@ function CategoryPage() {
       return { ...prev, first: 0 };
     });
   }, [
-    filteredProducts.length,
+    products.length,
     totalRecords,
   ]);
 
   const pagedProducts = useMemo(
-    () => filteredProducts,
-    [filteredProducts],
+    () => products,
+    [products],
   );
 
   const paginatorTotalRecords = totalRecords;
 
+  const combinedCategoryIds = useMemo(
+    () => [...new Set([...parentSelectionIds, ...childSelectionIds])],
+    [parentSelectionIds, childSelectionIds],
+  );
+
   const categoryTags = useMemo(() => {
-    return selectedCategoryIds.map((id) => ({
+    return combinedCategoryIds.map((id) => ({
       id,
       label: categoryLabelMap.get(id) || `Category ${id}`,
     }));
-  }, [selectedCategoryIds, categoryLabelMap]);
+  }, [combinedCategoryIds, categoryLabelMap]);
 
   const priceTag = useMemo(() => {
     const isFullRange =
@@ -778,6 +783,7 @@ function CategoryPage() {
   };
 
   const handleClearPrice = () => {
+    hasUserPriceSelectionRef.current = false;
     setPriceRange([priceBounds.min, priceBounds.max]);
   };
 
@@ -792,7 +798,10 @@ function CategoryPage() {
           priceRange={priceRange}
           minPrice={priceBounds.min}
           maxPrice={priceBounds.max}
-          onPriceRangeChange={setPriceRange}
+          onPriceRangeChange={(nextRange) => {
+            hasUserPriceSelectionRef.current = true;
+            setPriceRange(nextRange);
+          }}
         />
 
 

@@ -10,6 +10,7 @@ import {
   searchQuerySchema,
   multiCategoryQuerySchema,
   multiCategoryProductsQuerySchema,
+  categoryProductFilterQuerySchema,
   createCategorySchema,
   updateCategorySchema,
 } from "../validations/category.validation.js";
@@ -34,6 +35,18 @@ router.get(
   "/bulk/products",
   validate(multiCategoryProductsQuerySchema, "query"),
   categoryController.getProductsByCategories,
+);
+
+router.get(
+  "/filter/products",
+  validate(categoryProductFilterQuerySchema, "query"),
+  categoryController.getProductsByCategoryFilters,
+);
+
+router.get(
+  "/filter/products/price-range",
+  validate(categoryProductFilterQuerySchema, "query"),
+  categoryController.getProductsPriceRangeByFilters,
 );
 
 router.get("/tree", categoryController.getCategoryTree);

@@ -2,6 +2,7 @@ import { Skeleton } from "primereact/skeleton";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Paginator } from "primereact/paginator";
+import { useNavigate } from "react-router-dom";
 
 function ProductGrid({
   isLoading,
@@ -10,6 +11,8 @@ function ProductGrid({
   paginator = null,
   onPageChange,
 }) {
+  const navigate = useNavigate();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
@@ -33,7 +36,14 @@ function ProductGrid({
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
         {products.map((product) => (
           <div className="trace-card" key={product.product_id || product.id}>
-            <Card className="trace-card-inner product-card !h-full !rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300">
+            <Card
+              className="trace-card-inner product-card !h-full !rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300"
+              onClick={() => {
+                const id = product.product_id || product.id;
+                if (!id) return;
+                navigate(`/products/${id}`);
+              }}
+            >
               <div className="flex h-full min-h-[280px] flex-col">
                 <div className="product-image-wrap h-32 w-full bg-red-200">
                   {product.image_url ? (
@@ -60,7 +70,11 @@ function ProductGrid({
                     <Button
                       label="Add to Cart"
                       icon="pi pi-shopping-cart"
-                      onClick={() => onAddToCart?.(product)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddToCart?.(product);
+                        navigate("/items");
+                      }}
                       className="outline-none !w-full !px-4 !py-2.5 !bg-transparent !border !border-[var(--primary-color)] !text-[var(--primary-color)]"
                     />
                   </div>

@@ -186,6 +186,236 @@ ORDER BY pm.product_id DESC;
   return pool.query(query, categoryIds);
 };
 
+const buildProductSearchClause = (search) => {
+  if (!search) return { clause: "", params: [] };
+  const normalizedSearch = String(search)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, "");
+  if (!normalizedSearch) return { clause: "", params: [] };
+  const like = `%${normalizedSearch}%`;
+  return {
+    clause: `(
+      LOWER(REPLACE(COALESCE(pm.name, ''), ' ', '')) LIKE ?
+      OR LOWER(REPLACE(COALESCE(pm.display_name, ''), ' ', '')) LIKE ?
+      OR LOWER(REPLACE(COALESCE(pm.description, ''), ' ', '')) LIKE ?
+      OR LOWER(REPLACE(COALESCE(pm.short_description, ''), ' ', '')) LIKE ?
+    )`,
+    params: [like, like, like, like],
+  };
+};
+
+const buildCategoryFilterClause = (parentIds = [], childIds = []) => {
+  const values = [];
+  const clauses = [];
+
+  if (parentIds.length) {
+    const placeholders = parentIds.map(() => "?").join(", ");
+    clauses.push(`pc.category_id IN (${placeholders})`);
+    values.push(...parentIds);
+  }
+
+  if (childIds.length) {
+    const placeholders = childIds.map(() => "?").join(", ");
+    clauses.push(`pm.category_id IN (${placeholders})`);
+    values.push(...childIds);
+  }
+
+  return {
+    clause: clauses.length ? `(${clauses.join(" OR ")})` : "",
+    params: values,
+    requiresCategoryJoin: parentIds.length > 0,
+  };
+};
+
+const buildPriceFilterClause = (minPrice, maxPrice) => {
+  const conditions = [];
+  const params = [];
+
+  if (Number.isFinite(minPrice)) {
+    conditions.push("COALESCE(pm.discounted_price, pm.price) >= ?");
+    params.push(Number(minPrice));
+  }
+
+  if (Number.isFinite(maxPrice)) {
+    conditions.push("COALESCE(pm.discounted_price, pm.price) <= ?");
+    params.push(Number(maxPrice));
+  }
+
+  return {
+    clause: conditions.length ? `(${conditions.join(" AND ")})` : "",
+    params,
+  };
+};
+
+export const countProductsByCategoryFilter = (
+  parentIds = [],
+  childIds = [],
+  search = "",
+  minPrice,
+  maxPrice,
+) => {
+  const conditions = ["pm.is_deleted = 0"];
+  const values = [];
+
+  const categoryFilter = buildCategoryFilterClause(parentIds, childIds);
+  if (categoryFilter.clause) {
+    conditions.push(categoryFilter.clause);
+    values.push(...categoryFilter.params);
+  }
+
+  const searchFilter = buildProductSearchClause(search);
+  if (searchFilter.clause) {
+    conditions.push(searchFilter.clause);
+    values.push(...searchFilter.params);
+  }
+
+  const priceFilter = buildPriceFilterClause(minPrice, maxPrice);
+  if (priceFilter.clause) {
+    conditions.push(priceFilter.clause);
+    values.push(...priceFilter.params);
+  }
+
+  const joinClause = categoryFilter.requiresCategoryJoin
+    ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
+    : "";
+
+  const query = `
+    SELECT COUNT(DISTINCT pm.product_id) AS total
+    FROM product_master pm
+    ${joinClause}
+    WHERE ${conditions.join(" AND ")}
+  `;
+
+  return pool.query(query, values);
+};
+
+export const getProductsByCategoryFilterPaginated = (
+  parentIds = [],
+  childIds = [],
+  search = "",
+  minPrice,
+  maxPrice,
+  limit,
+  offset,
+) => {
+  const conditions = ["pm.is_deleted = 0"];
+  const values = [];
+
+  const categoryFilter = buildCategoryFilterClause(parentIds, childIds);
+  if (categoryFilter.clause) {
+    conditions.push(categoryFilter.clause);
+    values.push(...categoryFilter.params);
+  }
+
+  const searchFilter = buildProductSearchClause(search);
+  if (searchFilter.clause) {
+    conditions.push(searchFilter.clause);
+    values.push(...searchFilter.params);
+  }
+
+  const priceFilter = buildPriceFilterClause(minPrice, maxPrice);
+  if (priceFilter.clause) {
+    conditions.push(priceFilter.clause);
+    values.push(...priceFilter.params);
+  }
+
+  const joinClause = categoryFilter.requiresCategoryJoin
+    ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
+    : "";
+
+  const query = `
+    SELECT DISTINCT pm.*
+    FROM product_master pm
+    ${joinClause}
+    WHERE ${conditions.join(" AND ")}
+    ORDER BY pm.product_id DESC
+    LIMIT ?
+    OFFSET ?
+  `;
+
+  return pool.query(query, [...values, Number(limit), Number(offset)]);
+};
+
+export const getProductsByCategoryFilter = (
+  parentIds = [],
+  childIds = [],
+  search = "",
+  minPrice,
+  maxPrice,
+) => {
+  const conditions = ["pm.is_deleted = 0"];
+  const values = [];
+
+  const categoryFilter = buildCategoryFilterClause(parentIds, childIds);
+  if (categoryFilter.clause) {
+    conditions.push(categoryFilter.clause);
+    values.push(...categoryFilter.params);
+  }
+
+  const searchFilter = buildProductSearchClause(search);
+  if (searchFilter.clause) {
+    conditions.push(searchFilter.clause);
+    values.push(...searchFilter.params);
+  }
+
+  const priceFilter = buildPriceFilterClause(minPrice, maxPrice);
+  if (priceFilter.clause) {
+    conditions.push(priceFilter.clause);
+    values.push(...priceFilter.params);
+  }
+
+  const joinClause = categoryFilter.requiresCategoryJoin
+    ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
+    : "";
+
+  const query = `
+    SELECT DISTINCT pm.*
+    FROM product_master pm
+    ${joinClause}
+    WHERE ${conditions.join(" AND ")}
+    ORDER BY pm.product_id DESC
+  `;
+
+  return pool.query(query, values);
+};
+
+export const getProductsPriceRangeByCategoryFilter = (
+  parentIds = [],
+  childIds = [],
+  search = "",
+) => {
+  const conditions = ["pm.is_deleted = 0"];
+  const values = [];
+
+  const categoryFilter = buildCategoryFilterClause(parentIds, childIds);
+  if (categoryFilter.clause) {
+    conditions.push(categoryFilter.clause);
+    values.push(...categoryFilter.params);
+  }
+
+  const searchFilter = buildProductSearchClause(search);
+  if (searchFilter.clause) {
+    conditions.push(searchFilter.clause);
+    values.push(...searchFilter.params);
+  }
+
+  const joinClause = categoryFilter.requiresCategoryJoin
+    ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
+    : "";
+
+  const query = `
+    SELECT
+      MIN(COALESCE(pm.discounted_price, pm.price)) AS min_price,
+      MAX(COALESCE(pm.discounted_price, pm.price)) AS max_price
+    FROM product_master pm
+    ${joinClause}
+    WHERE ${conditions.join(" AND ")}
+  `;
+
+  return pool.query(query, values);
+};
+
 export const searchByName = (categoryName, limit, offset) => {
   const query = `SELECT *
      FROM category_master

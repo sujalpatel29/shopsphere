@@ -695,6 +695,117 @@ export const getProductsByCategories = async (req, res) => {
   }
 };
 
+const resolveCategoryFilters = (query = {}) => {
+  let parentIds = Array.isArray(query.parent_ids) ? query.parent_ids : [];
+  let childIds = Array.isArray(query.child_ids) ? query.child_ids : [];
+
+  if (!parentIds.length && !childIds.length && Array.isArray(query.ids)) {
+    parentIds = query.ids;
+  }
+
+  return { parentIds, childIds };
+};
+
+export const getProductsByCategoryFilters = async (req, res) => {
+  try {
+    const { page, limit, search, min_price, max_price } = req.validated.query;
+    const { parentIds, childIds } = resolveCategoryFilters(
+      req.validated.query,
+    );
+
+    const hasPaging = page !== undefined || limit !== undefined;
+    const currentPage = Number(page) || 1;
+    const perPage = Number(limit) || 8;
+    const offset = (currentPage - 1) * perPage;
+
+    if (!hasPaging) {
+      const [products] = await Category.getProductsByCategoryFilter(
+        parentIds,
+        childIds,
+        search,
+        min_price,
+        max_price,
+      );
+      return ok(res, "Products fetched successfully", {
+        count: products.length,
+        items: products,
+      });
+    }
+
+    const [countRows] = await Category.countProductsByCategoryFilter(
+      parentIds,
+      childIds,
+      search,
+      min_price,
+      max_price,
+    );
+    const total = Number(countRows?.[0]?.total ?? 0);
+
+    if (total === 0) {
+      return paginated(
+        res,
+        "Products fetched successfully",
+        {
+          page: currentPage,
+          limit: perPage,
+          total: 0,
+          totalPages: 0,
+        },
+        [],
+      );
+    }
+
+    const [products] = await Category.getProductsByCategoryFilterPaginated(
+      parentIds,
+      childIds,
+      search,
+      min_price,
+      max_price,
+      perPage,
+      offset,
+    );
+
+    return paginated(
+      res,
+      "Products fetched successfully",
+      {
+        page: currentPage,
+        limit: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+      products,
+    );
+  } catch (error) {
+    return serverError(res, error.message);
+  }
+};
+
+export const getProductsPriceRangeByFilters = async (req, res) => {
+  try {
+    const { search } = req.validated.query;
+    const { parentIds, childIds } = resolveCategoryFilters(
+      req.validated.query,
+    );
+
+    const [rows] = await Category.getProductsPriceRangeByCategoryFilter(
+      parentIds,
+      childIds,
+      search,
+    );
+
+    const minPrice = Number(rows?.[0]?.min_price ?? 0);
+    const maxPrice = Number(rows?.[0]?.max_price ?? 0);
+
+    return ok(res, "Price range fetched successfully", {
+      min: Number.isFinite(minPrice) ? minPrice : 0,
+      max: Number.isFinite(maxPrice) ? maxPrice : 0,
+    });
+  } catch (error) {
+    return serverError(res, error.message);
+  }
+};
+
 /*
 =====================================
 SEARCH (PAGINATED)
@@ -900,6 +1011,8 @@ const categoryController = {
   getCategoryTree,
   getProductsByCategory,
   getProductsByCategories,
+  getProductsByCategoryFilters,
+  getProductsPriceRangeByFilters,
   searchCategory,
   createCategory,
   updateCategory,

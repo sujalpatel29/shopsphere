@@ -10,6 +10,8 @@ import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import CheckoutPage from "../pages/customer/CheckoutPage";
 import PaymentPage from "../pages/customer/PaymentPage";
 import CategoryPage from "../pages/customer/categoryPage";
+import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPlaceholder";
+import ItemsPage from "../pages/customer/ItemsPage";
 
 /** Redirect admin users to their dashboard â€” prevents admins from browsing customer pages */
 function RedirectIfAdmin({ children }) {
@@ -47,6 +49,8 @@ function AppRoutes() {
           <Route path="/" element={<HomePage />} />
           <Route path="/categories" element={<CategoryPage />} />
           <Route path="/products" element={<HomePage />} />
+          <Route path="/products/:id" element={<ProductDetailsPlaceholder />} />
+          <Route path="/items" element={<ItemsPage />} />
         </Route>
       </Route>
 
