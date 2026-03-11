@@ -28,9 +28,19 @@ import {
 import { insertQuery } from "../models/Order_items.model.js";
 
 import {
-  insertQuery
-} from "../models/Order_items.model.js";
-import { badRequest, notFound, ok, serverError, created } from "../utils/apiResponse.js";
+  badRequest,
+  notFound,
+  ok,
+  serverError,
+  created,
+  paginated,
+} from "../utils/apiResponse.js";
+
+const DEFAULT_ORDER_PAGE = 1;
+const DEFAULT_ORDER_LIMIT = 5;
+const MAX_ORDER_LIMIT = 50;
+const DEFAULT_ORDER_SORT_FIELD = "created_at";
+const DEFAULT_ORDER_SORT_ORDER = "DESC";
 
 // Create a new order from user's cart with tax, discounts, and shipping calculations
 export const Order_master = async (req, res) => {
@@ -80,8 +90,7 @@ export const getOrderSummery = async (req, res) => {
     const user_id = req.user.id;
 
     const summary = await calculateOrderValues(user_id);
-
-    return success(res, "Order summary", {
+    return ok(res, "Order summary", {
       total_price: summary.totalPrice,
       tax: summary.totalTax,
       discount: summary.totalDisCount,
@@ -180,12 +189,30 @@ export const AllOrder = async (req, res) => {
     const userId = req.user.id;
 
     // Pagination parsing
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, parseInt(req.query.limit) || 5);
+    const page = Math.max(
+      DEFAULT_ORDER_PAGE,
+      parseInt(req.query.page) || DEFAULT_ORDER_PAGE,
+    );
+    const limit = Math.min(
+      MAX_ORDER_LIMIT,
+      parseInt(req.query.limit) || DEFAULT_ORDER_LIMIT,
+    );
     const offset = (page - 1) * limit;
+    const sortField = req.query.sortField || DEFAULT_ORDER_SORT_FIELD;
+    const sortOrder =
+      String(req.query.sortOrder || DEFAULT_ORDER_SORT_ORDER).toUpperCase() ===
+      "ASC"
+        ? "ASC"
+        : DEFAULT_ORDER_SORT_ORDER;
 
     const total = await countAllOrder(userId);
-    const orders = await getAllOrder(userId, limit, offset);
+    const orders = await getAllOrder(
+      userId,
+      limit,
+      offset,
+      sortField,
+      sortOrder,
+    );
 
     // Always return paginated response, even if empty, to update frontend metadata
     return paginated(
@@ -420,22 +447,33 @@ export const returnOrderByUser = async (req, res) => {
 
 export const getAllOrderByAdmin = async (req, res) => {
   try {
-    // Pagination parsing
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, parseInt(req.query.limit) || 5);
+    const page = Math.max(
+      DEFAULT_ORDER_PAGE,
+      parseInt(req.query.page) || DEFAULT_ORDER_PAGE,
+    );
+    const limit = Math.min(
+      MAX_ORDER_LIMIT,
+      parseInt(req.query.limit) || DEFAULT_ORDER_LIMIT,
+    );
     const offset = (page - 1) * limit;
+    const sortField = req.query.sortField || DEFAULT_ORDER_SORT_FIELD;
+    const sortOrder =
+      String(req.query.sortOrder || DEFAULT_ORDER_SORT_ORDER).toUpperCase() ===
+      "ASC"
+        ? "ASC"
+        : DEFAULT_ORDER_SORT_ORDER;
 
     const total = await countAllOrdersAdmin();
-    const rows = await modelGetAllOrdersAdmin(limit, offset);
+    const rows = await modelGetAllOrdersAdmin(limit, offset, sortField, sortOrder);
 
     return paginated(
       res,
-      "all order fetched seccessfully",
+      "all order fetched successfully",
       {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit) || 1,
       },
       rows,
     );

@@ -188,17 +188,19 @@ function DashboardPage() {
       </Card>
 
       <section className="space-y-4">
-        <Card
-          className="rounded-3xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]"
-          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
-        >
-          <h2 className="font-serif text-3xl text-gray-900 dark:text-slate-100">
-            Profile Dashboard
-          </h2>
-          <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
-            All account navigation options are available in the sidebar.
-          </p>
-        </Card>
+        {activeTab !== "orders" && (
+          <Card
+            className="rounded-3xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]"
+            pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+          >
+            <h2 className="font-serif text-3xl text-gray-900 dark:text-slate-100">
+              Profile Dashboard
+            </h2>
+            <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
+              All account navigation options are available in the sidebar.
+            </p>
+          </Card>
+        )}
 
         {activeTab === "orders" ? <Outlet /> : renderMain()}
       </section>

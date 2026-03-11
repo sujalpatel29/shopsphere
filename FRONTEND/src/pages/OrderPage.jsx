@@ -1,23 +1,24 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import OrderComponent from "../components/orderComponent";
-import { Outlet } from "react-router-dom";
 
 export default function OrderPage() {
   const { currentUser } = useSelector((state) => state.auth);
 
-  // only show orders to authenticated users; otherwise ask them to login
   if (!currentUser) {
     return (
-      <div className="text-center py-10">
-        <p>Please log in to view your orders.</p>
-      </div>
+      <section className="order-flow-hero">
+        <div className="order-flow-hero-content">
+          <p className="order-flow-eyebrow">Orders</p>
+          <h1 className="order-flow-title">Sign in to view your orders</h1>
+          <p className="order-flow-text">
+            Your account dashboard order history is only available after login.
+          </p>
+        </div>
+      </section>
     );
   }
   return (
-    <>
-      <OrderComponent />
-      <Outlet />
-    </>
+    <OrderComponent />
   );
 }

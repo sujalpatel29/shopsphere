@@ -70,10 +70,31 @@ export const insertValue = async (values) => {
   return rows;
 };
 
-// Retrieve all orders for a specific user with pagination
-export const getAllOrder = async (userId, limit, offset) => {
+// Retrieve all orders for a specific user with pagination and safe sorting
+export const getAllOrder = async (
+  userId,
+  limit,
+  offset,
+  sortField = "created_at",
+  sortOrder = "DESC",
+) => {
+  const sortableColumns = {
+    order_id: "order_id",
+    order_number: "order_number",
+    order_status: "order_status",
+    payment_status: "payment_status",
+    created_at: "created_at",
+    total_amount: "total_amount",
+  };
+
+  const orderBy = sortableColumns[sortField] || "created_at";
+  const direction = String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
+
   const [rows] = await pool.query(
-    "SELECT * FROM order_master WHERE user_id = ? AND is_deleted = 0 ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    `SELECT * FROM order_master
+     WHERE user_id = ? AND is_deleted = 0
+     ORDER BY ${orderBy} ${direction}
+     LIMIT ? OFFSET ?`,
     [userId, limit, offset],
   );
   return rows;
@@ -286,17 +307,40 @@ export const setOrderDeleted = async (order_id) => {
 };
 
 // Admin: fetch all orders with pagination
-export const getAllOrdersAdmin = async (limit, offset) => {
+export const getAllOrdersAdmin = async (
+  limit,
+  offset,
+  sortField = "created_at",
+  sortOrder = "DESC",
+) => {
+  const sortableColumns = {
+    order_id: "order_id",
+    order_number: "order_number",
+    order_status: "order_status",
+    payment_status: "payment_status",
+    created_at: "created_at",
+    total_amount: "total_amount",
+  };
+
+  const orderBy = sortableColumns[sortField] || "created_at";
+  const direction = String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
+
   const [rows] = await pool.query(
-    "SELECT * FROM order_master ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    `SELECT * FROM order_master
+   WHERE is_deleted = 0
+   ORDER BY ${orderBy} ${direction}
+   LIMIT ? OFFSET ?`,
     [limit, offset],
   );
+
   return rows;
 };
 
 // Admin: count all orders
 export const countAllOrdersAdmin = async () => {
-  const [rows] = await pool.query("SELECT COUNT(*) as total FROM order_master");
+  const [rows] = await pool.query(
+    "SELECT COUNT(*) as total FROM order_master WHERE is_deleted = 0",
+  );
   return rows[0].total;
 };
 
@@ -342,8 +386,8 @@ export const getAllItemsAdmin = async () => {
  * @returns {Promise<{total: number, data: Array, stats: Object}>}
  */
 export const findAllOrdersAdmin = async (filters = {}, pagination = {}) => {
-    // Stats — always reflect all non-deleted orders
-    const [statsRows] = await pool.execute(`
+  // Stats — always reflect all non-deleted orders
+  const [statsRows] = await pool.execute(`
       SELECT
         COUNT(*) AS totalOrders,
         SUM(CASE WHEN order_status = 'pending' THEN 1 ELSE 0 END) AS totalPending,
@@ -356,83 +400,89 @@ export const findAllOrdersAdmin = async (filters = {}, pagination = {}) => {
       FROM order_master
       WHERE is_deleted = 0
     `);
-    const stats = statsRows[0];
+  const stats = statsRows[0];
 
-    const conditions = ["o.is_deleted = 0"];
-    const values = [];
+  const conditions = ["o.is_deleted = 0"];
+  const values = [];
 
-    const baseSql = `
+  const baseSql = `
       FROM order_master o
       LEFT JOIN user_master u ON o.user_id = u.user_id
       LEFT JOIN user_addresses a ON o.address_id = a.address_id
       LEFT JOIN payment_master p ON p.order_id = o.order_id AND p.is_deleted = 0
     `;
 
-    // Search by order_number, customer name, or email
-    if (filters.search) {
-        conditions.push("(o.order_number LIKE ? OR u.name LIKE ? OR u.email LIKE ?)");
-        values.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
-    }
-
-    // Filter by order_status
-    if (filters.order_status) {
-        conditions.push("o.order_status = ?");
-        values.push(filters.order_status);
-    }
-
-    // Filter by payment_status
-    if (filters.payment_status) {
-        conditions.push("o.payment_status = ?");
-        values.push(filters.payment_status);
-    }
-
-    // Filter by payment_method
-    if (filters.payment_method) {
-        conditions.push("p.payment_method = ?");
-        values.push(filters.payment_method);
-    }
-
-    // Date range
-    if (filters.date_from) {
-        conditions.push("o.created_at >= ?");
-        values.push(filters.date_from);
-    }
-    if (filters.date_to) {
-        conditions.push("o.created_at <= ?");
-        values.push(filters.date_to + " 23:59:59");
-    }
-
-    const whereClause = `WHERE ${conditions.join(" AND ")}`;
-
-    // Count
-    const [countRows] = await pool.execute(
-        `SELECT COUNT(DISTINCT o.order_id) AS total ${baseSql} ${whereClause}`,
-        values
+  // Search by order_number, customer name, or email
+  if (filters.search) {
+    conditions.push(
+      "(o.order_number LIKE ? OR u.name LIKE ? OR u.email LIKE ?)",
     );
-    const total = countRows[0].total;
+    values.push(
+      `%${filters.search}%`,
+      `%${filters.search}%`,
+      `%${filters.search}%`,
+    );
+  }
 
-    // Pagination
-    const limit = Number(pagination.limit) || 10;
-    const offset = Number(pagination.offset) || 0;
+  // Filter by order_status
+  if (filters.order_status) {
+    conditions.push("o.order_status = ?");
+    values.push(filters.order_status);
+  }
 
-    // Sorting — whitelist
-    const sortableColumns = {
-        order_id: "o.order_id",
-        order_number: "o.order_number",
-        customer_name: "u.name",
-        total_amount: "o.total_amount",
-        order_status: "o.order_status",
-        payment_status: "o.payment_status",
-        created_at: "o.created_at",
-    };
+  // Filter by payment_status
+  if (filters.payment_status) {
+    conditions.push("o.payment_status = ?");
+    values.push(filters.payment_status);
+  }
 
-    let orderClause = "ORDER BY o.order_id DESC";
-    if (pagination.sortField && sortableColumns[pagination.sortField]) {
-        const dir = pagination.sortOrder === "asc" ? "ASC" : "DESC";
-        orderClause = `ORDER BY ${sortableColumns[pagination.sortField]} ${dir}`;
-    }
+  // Filter by payment_method
+  if (filters.payment_method) {
+    conditions.push("p.payment_method = ?");
+    values.push(filters.payment_method);
+  }
 
-    const dataSql = `
+  // Date range
+  if (filters.date_from) {
+    conditions.push("o.created_at >= ?");
+    values.push(filters.date_from);
+  }
+  if (filters.date_to) {
+    conditions.push("o.created_at <= ?");
+    values.push(filters.date_to + " 23:59:59");
+  }
+
+  const whereClause = `WHERE ${conditions.join(" AND ")}`;
+
+  // Count
+  const [countRows] = await pool.execute(
+    `SELECT COUNT(DISTINCT o.order_id) AS total ${baseSql} ${whereClause}`,
+    values,
+  );
+  const total = countRows[0].total;
+
+  // Pagination
+  const limit = Number(pagination.limit) || 10;
+  const offset = Number(pagination.offset) || 0;
+
+  // Sorting — whitelist
+  const sortableColumns = {
+    order_id: "o.order_id",
+    order_number: "o.order_number",
+    customer_name: "u.name",
+    total_amount: "o.total_amount",
+    order_status: "o.order_status",
+    payment_status: "o.payment_status",
+    created_at: "o.created_at",
+  };
+
+  let orderClause = "ORDER BY o.order_id DESC";
+  if (pagination.sortField && sortableColumns[pagination.sortField]) {
+    const dir = pagination.sortOrder === "asc" ? "ASC" : "DESC";
+    orderClause = `ORDER BY ${sortableColumns[pagination.sortField]} ${dir}`;
+  }
+
+  const dataSql = `
       SELECT DISTINCT o.*,
              u.name AS customer_name, u.email AS customer_email,
              a.full_name AS shipping_name, a.city AS shipping_city, a.state AS shipping_state,
@@ -445,9 +495,9 @@ export const findAllOrdersAdmin = async (filters = {}, pagination = {}) => {
       LIMIT ${limit} OFFSET ${offset}
     `;
 
-    const [dataRows] = await pool.execute(dataSql, values);
+  const [dataRows] = await pool.execute(dataSql, values);
 
-    return { total, data: dataRows, stats };
+  return { total, data: dataRows, stats };
 };
 
 /**
@@ -462,8 +512,9 @@ export const findAllOrdersAdmin = async (filters = {}, pagination = {}) => {
  * @returns {Promise<Object|null>} Combined order object with items[] and payments[], or null if not found
  */
 export const getOrderDetailAdmin = async (orderId) => {
-    // Order + user + address
-    const [orderRows] = await pool.execute(`
+  // Order + user + address
+  const [orderRows] = await pool.execute(
+    `
       SELECT o.*,
              u.name AS customer_name, u.email AS customer_email,
              a.full_name AS shipping_name, a.phone AS shipping_phone,
@@ -472,29 +523,37 @@ export const getOrderDetailAdmin = async (orderId) => {
       LEFT JOIN user_master u ON o.user_id = u.user_id
       LEFT JOIN user_addresses a ON o.address_id = a.address_id
       WHERE o.order_id = ? AND o.is_deleted = 0
-    `, [orderId]);
+    `,
+    [orderId],
+  );
 
-    if (!orderRows.length) return null;
+  if (!orderRows.length) return null;
 
-    // Order items
-    const [itemRows] = await pool.execute(`
+  // Order items
+  const [itemRows] = await pool.execute(
+    `
       SELECT * FROM order_items
       WHERE order_id = ? AND is_deleted = 0
       ORDER BY order_item_id ASC
-    `, [orderId]);
+    `,
+    [orderId],
+  );
 
-    // Payments
-    const [paymentRows] = await pool.execute(`
+  // Payments
+  const [paymentRows] = await pool.execute(
+    `
       SELECT * FROM payment_master
       WHERE order_id = ? AND is_deleted = 0
       ORDER BY created_at DESC
-    `, [orderId]);
+    `,
+    [orderId],
+  );
 
-    return {
-        ...orderRows[0],
-        items: itemRows,
-        payments: paymentRows,
-    };
+  return {
+    ...orderRows[0],
+    items: itemRows,
+    payments: paymentRows,
+  };
 };
 
 /**
@@ -508,9 +567,9 @@ export const getOrderDetailAdmin = async (orderId) => {
  * @returns {Promise<Object>} MySQL result with affectedRows
  */
 export const updatePaymentStatusAdmin = async (orderId, paymentStatus) => {
-    const [rows] = await pool.execute(
-        `UPDATE order_master SET payment_status = ?, updated_at = NOW() WHERE order_id = ?`,
-        [paymentStatus, orderId]
-    );
-    return rows;
+  const [rows] = await pool.execute(
+    `UPDATE order_master SET payment_status = ?, updated_at = NOW() WHERE order_id = ?`,
+    [paymentStatus, orderId],
+  );
+  return rows;
 };

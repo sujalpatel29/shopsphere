@@ -40,6 +40,8 @@ import { Card } from "primereact/card";
 import { logout } from "../../redux/slices/authSlice";
 import { useTheme } from "../../context/ThemeContext";
 import "./AdminDashboard.css";
+import AdminOrderComponent from "../../components/adminOrder/AdminOrderComponent"
+
 
 const adminNav = [
   { key: "users", label: "Users", icon: Users },
@@ -64,7 +66,7 @@ const adminNav = [
 const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
 const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
 const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
-const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
+// const AdminOrdersTab = lazy(() => import("./"));
 
 // Collect all valid tab keys for hash validation
 const validTabKeys = new Set(
@@ -262,52 +264,56 @@ function AdminDashboardPage() {
         </div>
       </div>
 
-      <section className="min-w-[0] min-h-0 h-full">
+      <section className="admin-main-panel min-w-[0] min-h-0 h-full">
         <Card
           className="rounded-2xl border border-gray-100 bg-white pt-6 px-6 pb-1 dark:border-[#1f2933] dark:bg-[#151e22] shadow-sm h-full overflow-hidden"
           pt={{ body: { className: "p-0 h-full flex flex-col" }, content: { className: "p-0 flex-1 flex flex-col min-h-0" } }}
         >
-          <div className="mb-4 flex items-center gap-3">
-            <Button
-              type="button"
-              onClick={toggleSidebar}
-              className="!hidden lg:!flex !items-center !justify-center !w-9 !h-9 !p-0 !rounded-lg !shadow-none !bg-transparent !text-gray-500 hover:!bg-gray-100 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!bg-gray-800 dark:hover:!text-gray-200 !transition-colors !border-none"
-              tooltip={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-              tooltipOptions={{ position: "right" }}
-            >
-              {sidebarOpen ? (
-                <PanelLeftClose className="h-5 w-5" />
-              ) : (
-                <PanelLeft className="h-5 w-5" />
-              )}
-            </Button>
-            <div>
-              <h3 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
-                {activeLabel}
-              </h3>
-              <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
-                Manage {activeLabel.toLowerCase()} here.
-              </p>
-            </div>
-          </div>
-
-          <Suspense fallback={<TabLoader />}>
-            {activeTab === "products-list" ? (
-              <AdminProductsTab />
-            ) : activeTab === "products-portions" ? (
-              <AdminPortionsTab />
-            ) : activeTab === "products-modifiers" ? (
-              <AdminModifiersTab />
-            ) : activeTab === "orders" ? (
-              <AdminOrdersTab />
-            ) : (
-              <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {activeLabel} view is ready for backend/API integration.
+          {activeTab !== "orders" && (
+            <div className="mb-4 flex items-center gap-3">
+              <Button
+                type="button"
+                onClick={toggleSidebar}
+                className="!hidden lg:!flex !items-center !justify-center !w-9 !h-9 !p-0 !rounded-lg !shadow-none !bg-transparent !text-gray-500 hover:!bg-gray-100 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!bg-gray-800 dark:hover:!text-gray-200 !transition-colors !border-none"
+                tooltip={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+                tooltipOptions={{ position: "right" }}
+              >
+                {sidebarOpen ? (
+                  <PanelLeftClose className="h-5 w-5" />
+                ) : (
+                  <PanelLeft className="h-5 w-5" />
+                )}
+              </Button>
+              <div>
+                <h3 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
+                  {activeLabel}
+                </h3>
+                <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
+                  Manage {activeLabel.toLowerCase()} here.
                 </p>
               </div>
-            )}
-          </Suspense>
+            </div>
+          )}
+
+          <div className="admin-main-scroll flex-1 min-h-0 overflow-y-auto pr-1">
+            <Suspense fallback={<TabLoader />}>
+              {activeTab === "products-list" ? (
+                <AdminProductsTab />
+              ) : activeTab === "products-portions" ? (
+                <AdminPortionsTab />
+              ) : activeTab === "products-modifiers" ? (
+                <AdminModifiersTab />
+              ) : activeTab === "orders" ? (
+                <AdminOrderComponent />
+              ) : (
+                <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {activeLabel} view is ready for backend/API integration.
+                  </p>
+                </div>
+              )}
+            </Suspense>
+          </div>
         </Card>
       </section>
     </div>

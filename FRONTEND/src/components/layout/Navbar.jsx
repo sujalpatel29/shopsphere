@@ -142,18 +142,7 @@ function Navbar() {
               }`}
               aria-label="Toggle dark mode"
             >
-<<<<<<< HEAD
-              {darkMode ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-              <span className="hidden md:inline">
-                {darkMode ? "Light" : "Dark"}
-              </span>
-=======
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
->>>>>>> 4a177b41b3db1e45014a0d94b9dad3a581de7d4e
             </Button>
 
             <Link

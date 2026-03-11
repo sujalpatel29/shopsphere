@@ -106,12 +106,7 @@ export const getAllProducts = async (req, res) => {
 
     // Pagination parsing
     const page = Math.max(1, parseInt(req.query.page) || 1);
-<<<<<<< HEAD
-    const limit = Math.min(50, parseInt(req.query.limit) || 5);
-
-=======
     const limit = Math.min(50, parseInt(req.query.limit) || 10);
->>>>>>> 4a177b41b3db1e45014a0d94b9dad3a581de7d4e
     const offset = (page - 1) * limit;
 
     // Sorting

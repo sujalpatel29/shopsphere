@@ -13,6 +13,8 @@ import OrderSelectAddressComponent from "../components/OrderSelectAddressCompone
 import OrderPaymentComponent from "../components/orderPaymentComponent";
 import CheckoutPage from "../pages/customer/CheckoutPage";
 import PaymentPage from "../pages/customer/PaymentPage";
+import AfterOrderSummeryComponent from "../components/AfterOrderSummeryComponent";
+import OrderConfirmationCODComponent from "../components/OrderConfirmationCODComponents";
 
 /** Redirect admin users to their dashboard — prevents admins from browsing customer pages */
 function RedirectIfAdmin({ children }) {
@@ -54,16 +56,8 @@ function AppRoutes() {
           <Route path="/checkout">
             <Route path="address" element={<OrderSelectAddressComponent/>} />
             <Route path="payment" element={<OrderPaymentComponent/>} />
-            
+            <Route path="beforeorderconfirm" element={<OrderConfirmationCODComponent/>} />   
           </Route>
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminRoute>
-                <AdminDashboardPage />
-              </AdminRoute>
-            }
-          />
           <Route path="/" element={<HomePage />} />
         </Route>
       </Route>

@@ -3,9 +3,22 @@ import api from "../../../api/api";
 
 export const fetchOrders = createAsyncThunk(
   "order/fetchOrders",
-  async ({ page = 1, limit = 5 } = {}) => {
+  async (params = {}) => {
+    const searchParams = new URLSearchParams();
+    const { page, limit, sortField, sortOrder } = params;
+
+    if (page !== undefined) searchParams.set("page", page);
+    if (limit !== undefined) searchParams.set("limit", limit);
+    if (sortField) searchParams.set("sortField", sortField);
+    if (sortOrder !== undefined) {
+      searchParams.set(
+        "sortOrder",
+        Number(sortOrder) === 1 ? "ASC" : "DESC",
+      );
+    }
+
     const res = await api.get(
-      `/order/user-allorder?page=${page}&limit=${limit}`,
+      `/order/user-allorder${searchParams.size ? `?${searchParams.toString()}` : ""}`,
     );
     return res.data;
   },
@@ -14,6 +27,32 @@ export const postOrders = createAsyncThunk("order/makeOrder", async () => {
   const res = await api.post("order/make-order");
   return res.data.data;
 });
+export const OrderSummery = createAsyncThunk("order/summery", async () => {
+  const res = await api.get("/order/order-summery");
+  return res.data.data;
+});
+export const getAdminOrder = createAsyncThunk(
+  "order/admiorder",
+  async (params = {}) => {
+    const searchParams = new URLSearchParams();
+    const { page, limit, sortField, sortOrder } = params;
+
+    if (page !== undefined) searchParams.set("page", page);
+    if (limit !== undefined) searchParams.set("limit", limit);
+    if (sortField) searchParams.set("sortField", sortField);
+    if (sortOrder !== undefined) {
+      searchParams.set(
+        "sortOrder",
+        Number(sortOrder) === 1 ? "ASC" : "DESC",
+      );
+    }
+
+    const res = await api.get(
+      `/order/allorder${searchParams.size ? `?${searchParams.toString()}` : ""}`,
+    );
+    return res.data;
+  },
+);
 export const findOrderItems = createAsyncThunk(
   "order/orderDetail",
   async ({ id, page = 1, limit = 5 } = {}) => {
@@ -23,16 +62,27 @@ export const findOrderItems = createAsyncThunk(
     return res.data;
   },
 );
-export const fetchUserAddress= createAsyncThunk("order/fatchAdress",async()=>{
-  const res= await api.get(`/users/show-addresses`);
- 
-  return res.data.data;
-})
+export const fetchUserAddress = createAsyncThunk(
+  "order/fatchAdress",
+  async () => {
+    const res = await api.get(`/users/show-addresses`);
+
+    return res.data.data;
+  },
+);
 const initialState = {
   orders: [],
-  userAddresses:[],
+  userAddresses: [],
   orderItems: [],
+  orderSummery: [],
+  adminOrders: [],
   pagination: {
+    totalItems: 0,
+    totalPages: 0,
+    currentPage: 1,
+    itemsPerPage: 5,
+  },
+  adminPagination: {
     totalItems: 0,
     totalPages: 0,
     currentPage: 1,
@@ -50,7 +100,20 @@ const initialState = {
 const orderSlice = createSlice({
   name: "order",
   initialState,
-  reducers: {},
+  reducers: {
+    updateOrderStatusLocally: (state, action) => {
+      const { orderId, status } = action.payload || {};
+      if (!orderId || !status) return;
+
+      const applyStatus = (order) =>
+        String(order?.order_id) === String(orderId)
+          ? { ...order, order_status: status }
+          : order;
+
+      state.orders = state.orders.map(applyStatus);
+      state.adminOrders = state.adminOrders.map(applyStatus);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchOrders.pending, (state) => {
@@ -66,6 +129,35 @@ const orderSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
       })
+      .addCase(getAdminOrder.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getAdminOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        state.adminOrders = action.payload.data ||[];
+        state.adminPagination = action.payload.pagination || {
+          totalItems :0 , 
+          totalPages :0, 
+          currentPage :1, 
+          itemsPerPage : 5, 
+
+        }
+      })
+      .addCase(getAdminOrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+      .addCase(OrderSummery.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(OrderSummery.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orderSummery = action.payload;
+      })
+      .addCase(OrderSummery.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
       .addCase(fetchUserAddress.pending, (state) => {
         state.loading = true;
       })
@@ -78,7 +170,6 @@ const orderSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
       })
-
       .addCase(postOrders.pending, (state) => {
         state.loading = true;
       })
@@ -106,4 +197,5 @@ const orderSlice = createSlice({
   },
 });
 
+export const { updateOrderStatusLocally } = orderSlice.actions;
 export default orderSlice.reducer;
