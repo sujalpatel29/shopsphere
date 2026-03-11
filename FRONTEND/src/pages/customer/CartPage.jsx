@@ -133,7 +133,8 @@ function CartPage() {
       message: `Are you sure you want to remove "${productName}" from your cart?`,
       header: "Remove Item",
       icon: "pi pi-exclamation-triangle",
-      acceptClassName: "p-button-danger",
+      acceptClassName: "!bg-red-500 !border-red-500 !text-white hover:!bg-red-600 !px-4 !py-2 !rounded-lg",
+      rejectClassName: "!bg-transparent !border-gray-300 !text-gray-700 hover:!bg-gray-100 dark:!text-gray-300 dark:hover:!bg-gray-800 !px-4 !py-2 !rounded-lg",
       accept: async () => {
         try {
           const response = await api.delete(`/cart/items/${cartItemId}`);
@@ -141,8 +142,8 @@ function CartPage() {
           toast.current?.show({
             severity: "success",
             summary: "Removed",
-            detail: "Item removed from cart",
-            life: 2000,
+            detail: `"${productName}" removed from cart`,
+            life: 3000,
           });
         } catch (error) {
           console.error("Error removing item:", error);
@@ -150,7 +151,7 @@ function CartPage() {
             severity: "error",
             summary: "Error",
             detail: error.response?.data?.message || "Failed to remove item",
-            life: 3000,
+            life: 5000,
           });
         }
       },
@@ -937,7 +938,7 @@ function CartPage() {
               {/* Total */}
               <div className="flex items-baseline justify-between gap-4 mb-6">
                 <span className="text-base font-semibold text-gray-900 dark:text-slate-100">Total</span>
-                <span className="font-serif text-3xl font-bold tracking-tight text-gray-900 dark:text-slate-100">
+                <span className="font-sans text-3xl font-bold tracking-tight text-gray-900 dark:text-slate-100">
                   ₹{formatINR(cart.total)}
                 </span>
               </div>
