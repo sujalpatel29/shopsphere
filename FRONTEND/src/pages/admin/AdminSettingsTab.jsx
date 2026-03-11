@@ -475,13 +475,15 @@ function AdminSettingsTab() {
             icon={<RefreshCw className="w-4 h-4" />}
             label="Refresh"
             onClick={loadData}
-            className="!bg-gray-600 !border-gray-600 hover:!bg-gray-700 !text-white"
+            className="!bg-gray-600 !border-gray-600 hover:!bg-gray-700 !text-white !rounded-xl !px-4 !py-2"
+            pt={{ icon: { className: "!mr-2" }, label: { className: "!text-sm !font-semibold" } }}
           />
           <Button
             icon={<Plus className="w-4 h-4" />}
             label="Add Setting"
             onClick={() => setShowAddDialog(true)}
-            className="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 !text-white"
+            className="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 !text-white !rounded-xl !px-4 !py-2"
+            pt={{ icon: { className: "!mr-2" }, label: { className: "!text-sm !font-semibold" } }}
           />
         </div>
       </div>
@@ -490,7 +492,7 @@ function AdminSettingsTab() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Settings Panel */}
         <div className="lg:col-span-2">
-          <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
             <TabView
               activeIndex={activeIndex}
               onTabChange={(e) => setActiveIndex(e.index)}
@@ -511,7 +513,7 @@ function AdminSettingsTab() {
                       </div>
                     }
                   >
-                    <div className="p-4 space-y-6">
+                    <div className="p-5 space-y-5">
                       {hasSettings ? (
                         <>
                           {Object.entries(categorySettings).map(([key, data]) => (
@@ -530,7 +532,8 @@ function AdminSettingsTab() {
                               label={`Save ${category.label} Settings`}
                               onClick={() => saveCategorySettings(category.key)}
                               loading={saving}
-                              className="!bg-teal-600 !border-teal-600 hover:!bg-teal-700"
+                              className="!bg-teal-600 !border-teal-600 hover:!bg-teal-700 !rounded-xl !px-4 !py-2"
+                              pt={{ icon: { className: "!mr-2" }, label: { className: "!text-sm !font-semibold" } }}
                             />
                           </div>
                         </>
@@ -555,31 +558,31 @@ function AdminSettingsTab() {
                   </div>
                 }
               >
-                <div className="p-4 space-y-6">
+                <div className="p-5 space-y-5">
                   {systemInfo && (
                     <>
                       {/* Database Info */}
                       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                          <Database className="w-5 h-5 text-amber-600" />
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                          <Database className="w-4 h-4 text-amber-600" />
                           Database
                         </h4>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <p className="text-xs text-gray-500">MySQL Version</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
                               {systemInfo.database?.mysql_version}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500">Database</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
                               {systemInfo.database?.database_name}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500">Tables</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
                               {systemInfo.database?.table_count}
                             </p>
                           </div>
@@ -588,26 +591,26 @@ function AdminSettingsTab() {
 
                       {/* Server Info */}
                       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                          <Server className="w-5 h-5 text-teal-600" />
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                          <Server className="w-4 h-4 text-teal-600" />
                           Server
                         </h4>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <p className="text-xs text-gray-500">Node Version</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
                               {systemInfo.nodeVersion}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500">Platform</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
                               {systemInfo.platform}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500">Uptime</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
                               {formatUptime(systemInfo.uptime)}
                             </p>
                           </div>
@@ -616,13 +619,13 @@ function AdminSettingsTab() {
 
                       {/* Memory Usage */}
                       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                          <Cpu className="w-5 h-5 text-purple-600" />
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                          <Cpu className="w-4 h-4 text-purple-600" />
                           Memory Usage
                         </h4>
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           <div>
-                            <div className="flex justify-between text-sm mb-1">
+                            <div className="flex justify-between text-xs mb-1">
                               <span className="text-gray-500">Heap Used</span>
                               <span className="font-medium text-gray-900 dark:text-white">
                                 {formatBytes(systemInfo.memoryUsage?.heapUsed)}
@@ -636,7 +639,7 @@ function AdminSettingsTab() {
                             />
                           </div>
                           <div>
-                            <div className="flex justify-between text-sm mb-1">
+                            <div className="flex justify-between text-xs mb-1">
                               <span className="text-gray-500">RSS</span>
                               <span className="font-medium text-gray-900 dark:text-white">
                                 {formatBytes(systemInfo.memoryUsage?.rss)}
@@ -648,17 +651,17 @@ function AdminSettingsTab() {
 
                       {/* Top Tables */}
                       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                          <HardDrive className="w-5 h-5 text-green-600" />
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                          <HardDrive className="w-4 h-4 text-green-600" />
                           Top Tables by Size
                         </h4>
                         <div className="space-y-2">
                           {systemInfo.tables?.slice(0, 5).map((table, index) => (
                             <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
-                              <span className="text-sm text-gray-700 dark:text-gray-300">{table.table_name}</span>
-                              <div className="flex items-center gap-4">
+                              <span className="text-xs text-gray-700 dark:text-gray-300">{table.table_name}</span>
+                              <div className="flex items-center gap-3">
                                 <span className="text-xs text-gray-500">{table.table_rows} rows</span>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                <span className="text-xs font-medium text-gray-900 dark:text-white">
                                   {table.size_mb} MB
                                 </span>
                               </div>
@@ -680,7 +683,7 @@ function AdminSettingsTab() {
                   </div>
                 }
               >
-                <div className="p-4">
+                <div className="p-5">
                   <DataTable
                     value={activityLogs}
                     className="admin-products-table"
@@ -719,47 +722,47 @@ function AdminSettingsTab() {
                 </div>
               </TabPanel>
             </TabView>
-          </Card>
+          </div>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-            <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-5 space-y-3">
               <Button
                 icon={<Activity className="w-4 h-4" />}
                 label="View All Logs"
                 onClick={() => setShowLogsDialog(true)}
-                className="!w-full !bg-gray-100 !text-gray-700 hover:!bg-gray-200 dark:!bg-gray-800 dark:!text-gray-300"
+                className="!w-full !bg-gray-100 !text-gray-700 hover:!bg-gray-200 dark:!bg-gray-800 dark:!text-gray-300 !rounded-xl"
                 text
               />
               <Button
                 icon={<RefreshCw className="w-4 h-4" />}
                 label="Clear Cache"
                 onClick={handleClearCache}
-                className="!w-full !bg-gray-100 !text-gray-700 hover:!bg-gray-200 dark:!bg-gray-800 dark:!text-gray-300"
+                className="!w-full !bg-gray-100 !text-gray-700 hover:!bg-gray-200 dark:!bg-gray-800 dark:!text-gray-300 !rounded-xl"
                 text
               />
               <Button
                 icon={<Database className="w-4 h-4" />}
                 label="Backup Database"
                 onClick={handleBackupDatabase}
-                className="!w-full !bg-gray-100 !text-gray-700 hover:!bg-gray-200 dark:!bg-gray-800 dark:!text-gray-300"
+                className="!w-full !bg-gray-100 !text-gray-700 hover:!bg-gray-200 dark:!bg-gray-800 dark:!text-gray-300 !rounded-xl"
                 text
               />
             </div>
-          </Card>
+          </div>
 
           {/* Stats */}
-          <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-            <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Statistics</h3>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Statistics</h3>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Total Settings</span>
                 <span className="font-bold text-gray-900 dark:text-white">
@@ -779,14 +782,14 @@ function AdminSettingsTab() {
                 </span>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Environment */}
-          <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-            <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Environment</h3>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Environment</h3>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Database Connected</span>
@@ -800,7 +803,7 @@ function AdminSettingsTab() {
                 <span className="text-sm text-gray-700 dark:text-gray-300">Stripe Test Mode</span>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
 

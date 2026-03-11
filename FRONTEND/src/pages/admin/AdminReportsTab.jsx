@@ -29,7 +29,7 @@ import { Chip } from "primereact/chip";
 import {
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  IndianRupee,
   Users,
   Package,
   ShoppingCart,
@@ -290,32 +290,46 @@ function AdminReportsTab() {
     };
 
     return (
-      <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{title}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 truncate">{title}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
               {typeof value === "number" && title.toLowerCase().includes("revenue")
                 ? formatCurrency(value)
                 : formatNumber(value)}
             </p>
             {trendValue !== undefined && (
-              <div className="flex items-center gap-1 mt-2">
+              <div className="mt-2 flex items-center gap-1">
                 {getTrendIcon(trend)}
-                <span className={`text-sm ${trend > 0 ? "text-green-500" : trend < 0 ? "text-red-500" : "text-gray-500"}`}>
+                <span className={`text-xs font-semibold ${trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-gray-500"}`}>
                   {trend > 0 ? "+" : ""}{formatPercent(trendValue)}
                 </span>
-                <span className="text-xs text-gray-400">vs last period</span>
               </div>
             )}
           </div>
-          <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
-            <Icon className="w-6 h-6" />
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${colorClasses[color]}`}>
+            <Icon className="h-5 w-5" />
           </div>
         </div>
-      </Card>
+      </div>
     );
   };
+
+  // Mini stat card for secondary stats
+  const MiniStatCard = ({ title, value, icon: Icon, valueColor = "text-gray-900" }) => (
+    <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+          <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{title}</p>
+          <p className={`text-lg font-bold ${valueColor}`}>{formatNumber(value)}</p>
+        </div>
+      </div>
+    </div>
+  );
 
   // Simple bar chart component (CSS-based)
   const SimpleBarChart = ({ data, valueKey, labelKey, height = 200 }) => {
@@ -452,26 +466,41 @@ function AdminReportsTab() {
             Comprehensive business insights and performance metrics
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:justify-end">
           <Dropdown
             value={timePeriod}
             options={TIME_PERIODS}
             onChange={(e) => setTimePeriod(e.value)}
-            className="!w-40"
             placeholder="Select Period"
+            className="!w-48"
+            pt={{
+              root: { className: "!rounded-xl" },
+              input: { className: "!py-2 !px-3 !text-sm !rounded-xl" },
+              trigger: { className: "!rounded-xl" },
+              panel: { className: "!rounded-xl" },
+              item: { className: "!text-sm" },
+            }}
           />
           <Button
             icon={<RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />}
             label="Refresh"
             onClick={handleRefresh}
-            className="!bg-teal-600 !border-teal-600 hover:!bg-teal-700 !text-white"
+            className="!bg-teal-600 !border-teal-600 hover:!bg-teal-700 !text-white !rounded-xl !px-4 !py-2"
+            pt={{
+              icon: { className: "!mr-2" },
+              label: { className: "!text-sm !font-semibold" },
+            }}
             disabled={refreshing}
           />
           <Button
             icon={<Download className="w-4 h-4" />}
             label="Export"
             onClick={handleExport}
-            className="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 !text-white"
+            className="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 !text-white !rounded-xl !px-4 !py-2"
+            pt={{
+              icon: { className: "!mr-2" },
+              label: { className: "!text-sm !font-semibold" },
+            }}
           />
         </div>
       </div>
@@ -481,7 +510,7 @@ function AdminReportsTab() {
         <StatCard
           title="Total Revenue"
           value={overview?.total_revenue}
-          icon={DollarSign}
+          icon={IndianRupee}
           color="primary"
         />
         <StatCard
@@ -505,55 +534,25 @@ function AdminReportsTab() {
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-            <Clock className="w-4 h-4" />
-            <span className="text-xs">Pending</span>
-          </div>
-          <p className="text-xl font-bold text-amber-600">{formatNumber(overview?.pending_orders)}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-            <CheckCircle className="w-4 h-4" />
-            <span className="text-xs">Delivered</span>
-          </div>
-          <p className="text-xl font-bold text-green-600">{formatNumber(overview?.delivered_orders)}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-            <Gift className="w-4 h-4" />
-            <span className="text-xs">Active Offers</span>
-          </div>
-          <p className="text-xl font-bold text-purple-600">{formatNumber(overview?.active_offers)}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-            <Users className="w-4 h-4" />
-            <span className="text-xs">Total Users</span>
-          </div>
-          <p className="text-xl font-bold text-blue-600">{formatNumber(overview?.total_users)}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-            <Package className="w-4 h-4" />
-            <span className="text-xs">Products</span>
-          </div>
-          <p className="text-xl font-bold text-teal-600">{formatNumber(overview?.total_products)}</p>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <MiniStatCard title="Pending Orders" value={overview?.pending_orders} icon={Clock} valueColor="text-amber-600" />
+        <MiniStatCard title="Delivered" value={overview?.delivered_orders} icon={CheckCircle} valueColor="text-green-600" />
+        <MiniStatCard title="Active Offers" value={overview?.active_offers} icon={Gift} valueColor="text-purple-600" />
+        <MiniStatCard title="Total Users" value={overview?.total_users} icon={Users} valueColor="text-blue-600" />
+        <MiniStatCard title="Products" value={overview?.total_products} icon={Package} valueColor="text-teal-600" />
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Trend */}
-        <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-amber-600" />
               Revenue Trend
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             <SimpleBarChart
               data={charts?.revenue?.slice(-10) || []}
               valueKey="revenue"
@@ -561,37 +560,37 @@ function AdminReportsTab() {
               height={200}
             />
           </div>
-        </Card>
+        </div>
 
         {/* Order Status Distribution */}
-        <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <PieChart className="w-5 h-5 text-teal-600" />
               Order Status Distribution
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             <SimplePieChart
               data={charts?.orderStatus || []}
               valueKey="count"
               labelKey="order_status"
             />
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Second Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Category Sales */}
-        <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-purple-600" />
               Top Categories by Revenue
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             <SimpleBarChart
               data={charts?.categorySales?.slice(0, 6) || []}
               valueKey="revenue"
@@ -599,37 +598,37 @@ function AdminReportsTab() {
               height={180}
             />
           </div>
-        </Card>
+        </div>
 
         {/* Payment Methods */}
-        <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-green-600" />
               Payment Methods
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             <SimplePieChart
               data={charts?.paymentMethods || []}
               valueKey="count"
               labelKey="payment_method"
             />
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Tables Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Selling Products */}
-        <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Package className="w-5 h-5 text-amber-600" />
               Top Selling Products
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             <DataTable
               value={topProducts || []}
               className="admin-products-table"
@@ -659,17 +658,17 @@ function AdminReportsTab() {
               />
             </DataTable>
           </div>
-        </Card>
+        </div>
 
         {/* Recent Orders */}
-        <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-teal-600" />
               Recent Orders
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             <DataTable
               value={recentOrders || []}
               className="admin-products-table"
@@ -702,20 +701,20 @@ function AdminReportsTab() {
               />
             </DataTable>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Alerts & Usage Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Alerts */}
-        <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-red-500" />
               Low Stock Alerts
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             {lowStock && lowStock.length > 0 ? (
               <div className="space-y-3">
                 {lowStock.slice(0, 5).map((product, index) => (
@@ -744,17 +743,17 @@ function AdminReportsTab() {
               </div>
             )}
           </div>
-        </Card>
+        </div>
 
         {/* Offer Usage Stats */}
-        <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Gift className="w-5 h-5 text-purple-600" />
               Top Offer Usage
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             {offerUsage && offerUsage.length > 0 ? (
               <div className="space-y-3">
                 {offerUsage.slice(0, 5).map((offer, index) => (
@@ -780,18 +779,18 @@ function AdminReportsTab() {
               </div>
             )}
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* User Registration Trend */}
-      <Card className="!shadow-sm !border !border-gray-100 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-600" />
             User Registration Trend
           </h3>
         </div>
-        <div className="p-4">
+        <div className="p-5">
           <SimpleBarChart
             data={charts?.userTrend?.slice(-14) || []}
             valueKey="new_users"
@@ -799,7 +798,7 @@ function AdminReportsTab() {
             height={150}
           />
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

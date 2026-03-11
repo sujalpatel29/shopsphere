@@ -52,6 +52,12 @@ function CartPage() {
   // Available offers display
   const [showOffers, setShowOffers] = useState(false);
 
+  const formatINR = (value) =>
+    Number(value || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
   // Fetch cart from backend
   const fetchCart = async () => {
     try {
@@ -511,7 +517,7 @@ function CartPage() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-sm text-gray-500 dark:text-slate-400">Total Amount</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-slate-100">₹{cart.total.toLocaleString()}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-slate-100">₹{formatINR(cart.total)}</p>
             </div>
             <Button
               label={
@@ -530,7 +536,7 @@ function CartPage() {
           </div>
           {cart.discount > 0 && (
             <p className="text-xs text-green-600 dark:text-green-400 text-center">
-              You're saving ₹{cart.discount.toLocaleString()} on this order
+              You're saving ₹{formatINR(cart.discount)} on this order
             </p>
           )}
         </div>
@@ -612,11 +618,11 @@ function CartPage() {
                       {/* Price */}
                       <div className="text-right sm:text-right">
                         <p className="font-semibold text-gray-900 dark:text-slate-100 text-base sm:text-lg">
-                          ₹{item.lineTotal.toLocaleString()}
+                          ₹{formatINR(item.lineTotal)}
                         </p>
                         {item.appliedOffer && (
                           <p className="text-xs sm:text-sm text-gray-400 line-through">
-                            ₹{(item.lineTotal + item.appliedOffer.discount_amount).toLocaleString()}
+                            ₹{formatINR(item.lineTotal + item.appliedOffer.discount_amount)}
                           </p>
                         )}
                       </div>
@@ -728,13 +734,18 @@ function CartPage() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <i className="pi pi-map-marker text-4xl text-gray-300 dark:text-slate-600 mb-3" />
-                  <p className="text-gray-500 dark:text-slate-400 mb-3 text-sm">No delivery address selected</p>
+                <div className="flex flex-col items-center justify-center text-center py-10 sm:py-12 rounded-xl border border-dashed border-[#e8dccf] dark:border-[#243440] bg-[#fff8ee]/30 dark:bg-[#0f171c]/30">
+                  <i className="pi pi-map-marker text-4xl text-gray-300 dark:text-slate-600 mb-4" />
+                  <p className="text-gray-600 dark:text-slate-300 text-sm font-medium">
+                    No delivery address selected
+                  </p>
+                  <p className="text-gray-500 dark:text-slate-400 text-xs mt-1 mb-5">
+                    Add an address to place your order.
+                  </p>
                   <Button
                     label="Add Address"
                     icon="pi pi-plus"
-                    className="bg-[#2f7a6f] text-white"
+                    className="p-button-sm !bg-[#2f7a6f] !border-none !text-white !rounded-xl hover:!bg-[#265c54] !transition-colors"
                     onClick={() => setShowAddressForm(true)}
                   />
                 </div>
@@ -841,7 +852,7 @@ function CartPage() {
                                 <p className="text-xs text-gray-500 dark:text-slate-400">{offer.description}</p>
                                 {!isApplicable && offer.min_purchase_amount && (
                                   <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-                                    Min. order ₹{offer.min_purchase_amount.toLocaleString()}
+                                    Min. order ₹{formatINR(offer.min_purchase_amount)}
                                   </p>
                                 )}
                               </div>
@@ -887,94 +898,47 @@ function CartPage() {
                 Order Summary
               </h2>
 
-              {/* Offer Code Section */}
-              <div className="mb-4 sm:mb-6">
-                {!hasOffer ? (
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">
-                      Apply Promo Code
-                    </label>
-                    <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
-                      Try: SAVE10, FLAT500, or NEWUSER
-                    </p>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={offerCode}
-                        onChange={(e) => setOfferCode(e.target.value.toUpperCase())}
-                        placeholder="Enter code"
-                        className="flex-1 px-3 sm:px-4 py-2 text-sm border border-[#e8dccf] dark:border-[#243440] rounded-lg bg-transparent text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2f7a6f]"
-                      />
-                      <Button
-                        label={applyingOffer ? "" : "Apply"}
-                        icon={applyingOffer ? "pi pi-spinner pi-spin" : null}
-                        onClick={applyOffer}
-                        disabled={!offerCode.trim() || applyingOffer}
-                        className="px-3 sm:px-4 py-2 text-sm bg-[#2f7a6f] border-none text-white rounded-lg hover:bg-[#265c54] disabled:opacity-50 transition-colors"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-500/10 rounded-lg">
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-green-700 dark:text-green-400">
-                        {cart.appliedCartOffer.offer_name}
-                      </p>
-                      <p className="text-xs text-green-600 dark:text-green-400">
-                        Discount: ₹{cart.appliedCartOffer.discount_amount}
-                      </p>
-                    </div>
-                    <button
-                      onClick={removeOffer}
-                      className="text-green-700 dark:text-green-400 hover:text-red-500 p-1 rounded transition-colors"
-                    >
-                      <i className="pi pi-times" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
               {/* Price Breakdown */}
               <div className="space-y-3 text-sm border-b border-gray-100 dark:border-[#243440] pb-4 mb-4">
                 <div className="flex justify-between text-gray-600 dark:text-slate-400">
                   <span>Subtotal ({cart.items.length} items)</span>
-                  <span>₹{cart.subtotal.toLocaleString()}</span>
+                  <span>₹{formatINR(cart.subtotal)}</span>
                 </div>
                 
                 {cart.tax > 0 && (
                   <div className="flex justify-between text-gray-600 dark:text-slate-400">
                     <span>Tax (GST)</span>
-                    <span>₹{cart.tax.toLocaleString()}</span>
+                    <span>₹{formatINR(cart.tax)}</span>
                   </div>
                 )}
                 
                 {cart.itemDiscount > 0 && (
                   <div className="flex justify-between text-green-600 dark:text-green-400">
                     <span>Item Discounts</span>
-                    <span>-₹{cart.itemDiscount.toLocaleString()}</span>
+                    <span>-₹{formatINR(cart.itemDiscount)}</span>
                   </div>
                 )}
                 
                 {cart.cartDiscount > 0 && (
                   <div className="flex justify-between text-green-600 dark:text-green-400">
                     <span>Cart Discount</span>
-                    <span>-₹{cart.cartDiscount.toLocaleString()}</span>
+                    <span>-₹{formatINR(cart.cartDiscount)}</span>
                   </div>
                 )}
 
                 {cart.discount > 0 && (
                   <div className="flex justify-between text-gray-600 dark:text-slate-400">
                     <span>Total Discount</span>
-                    <span className="text-green-600 dark:text-green-400">-₹{cart.discount.toLocaleString()}</span>
+                    <span className="text-green-600 dark:text-green-400">-₹{formatINR(cart.discount)}</span>
                   </div>
                 )}
               </div>
 
               {/* Total */}
-              <div className="flex justify-between items-center mb-6">
-                <span className="font-medium text-gray-900 dark:text-slate-100">Total</span>
-                <span className="font-serif text-2xl font-bold text-gray-900 dark:text-slate-100">
-                  ₹{cart.total.toLocaleString()}
+              <div className="flex items-baseline justify-between gap-4 mb-6">
+                <span className="text-base font-semibold text-gray-900 dark:text-slate-100">Total</span>
+                <span className="font-serif text-3xl font-bold tracking-tight text-gray-900 dark:text-slate-100">
+                  ₹{formatINR(cart.total)}
                 </span>
               </div>
 
