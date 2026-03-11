@@ -493,7 +493,7 @@ function CartPage() {
 
   return (
     <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b] pt-20">
-      <Toast ref={toast} position="top-right" />
+      <Toast ref={toast} position="top-right" pt={{ root: { style: { marginTop: '80px', zIndex: 9999 } } }} />
       <ConfirmDialog 
         className="cart-confirm-dialog"
         contentClassName="dark:bg-[#151e22]"

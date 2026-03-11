@@ -571,3 +571,12 @@ html:not(.dark)
   border-radius: var(--inner-top-radius) var(--inner-top-radius) 0 0;
   overflow: hidden;
 }
+
+/* ================================================= */
+/*                PrimeReact Toast                   */
+/* ================================================= */
+
+.p-toast {
+  z-index: 9999 !important;
+  top: 80px !important;
+}

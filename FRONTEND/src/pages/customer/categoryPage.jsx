@@ -840,7 +840,8 @@ function CategoryPage() {
   };
 
   return (
-    <div className="category-page">
+    <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b] pt-20">
+      <Toast ref={toast} position="top-right" pt={{ root: { style: { marginTop: '80px', zIndex: 9999 } } }} />
       <div className="container mx-auto px-4 py-8">
         <div className="category-page-layout flex flex-col lg:flex-row gap-8">
         <CategoryFilterSidebar
