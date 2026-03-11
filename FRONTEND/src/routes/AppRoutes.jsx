@@ -50,7 +50,7 @@ function AppRoutes() {
           <Route path="/categories" element={<CategoryPage />} />
           <Route path="/products" element={<HomePage />} />
           <Route path="/products/:id" element={<ProductDetailsPlaceholder />} />
-          <Route path="/items" element={<ItemsPage />} />
+          <Route path="/items/:id" element={<ItemsPage />} />
         </Route>
       </Route>
 

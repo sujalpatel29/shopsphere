@@ -22,7 +22,7 @@ export const getProductsByCategories = (params = {}) =>
 
 export const getProductsByCategoryFilters = (params = {}) =>
   API.get("/api/category/filter/products", { params });
-
+/*  */
 export const getCategoryProductsPriceRange = (params = {}) =>
   API.get("/api/category/filter/products/price-range", { params });
 

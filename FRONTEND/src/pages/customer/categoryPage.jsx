@@ -384,9 +384,7 @@ const getSelectedCategoryIds = (selectedKeys = {}) =>
   Object.entries(selectedKeys)
     .filter(
       ([, value]) =>
-        value === true ||
-        value?.checked === true ||
-        value?.partialChecked === true,
+        value === true || value?.checked === true,
     )
     .map(([key]) => Number(key))
     .filter((value) => Number.isFinite(value) && value > 0);

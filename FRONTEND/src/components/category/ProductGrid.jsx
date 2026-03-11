@@ -72,8 +72,10 @@ function ProductGrid({
                       icon="pi pi-shopping-cart"
                       onClick={(e) => {
                         e.stopPropagation();
+                        const id = product.product_id || product.id;
+                        if (!id) return;
                         onAddToCart?.(product);
-                        navigate("/items");
+                        navigate(`/items/${id}`);
                       }}
                       className="outline-none !w-full !px-4 !py-2.5 !bg-transparent !border !border-[var(--primary-color)] !text-[var(--primary-color)]"
                     />
