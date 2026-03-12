@@ -159,6 +159,23 @@ const offerUpdateBaseSchema = z.object({
     .optional(),
 });
 
+const normalizeDateOnly = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const normalizeTimeOnly = (value) => {
+  if (!value) return null;
+  const match = String(value).trim().match(/^(\d{2}:\d{2})/);
+  return match ? match[1] : null;
+};
+
 /**
  * Create-offer business validation:
  * - Enforces valid date range
@@ -166,8 +183,35 @@ const offerUpdateBaseSchema = z.object({
  */
 const refineOfferCreate = (schema) =>
   schema.superRefine((data, ctx) => {
+    const today = normalizeDateOnly(new Date());
+    const startDateOnly = normalizeDateOnly(data.start_date);
+    const endDateOnly = normalizeDateOnly(data.end_date);
+    const currentTime = normalizeTimeOnly(new Date().toTimeString());
+    const startTimeOnly = normalizeTimeOnly(data.start_time);
+
+    if (startDateOnly && today && startDateOnly < today) {
+      ctx.addIssue({
+        path: ["start_date"],
+        message: "start_date cannot be in the past",
+      });
+    }
+
+    if (
+      startDateOnly &&
+      today &&
+      startDateOnly === today &&
+      startTimeOnly &&
+      currentTime &&
+      startTimeOnly < currentTime
+    ) {
+      ctx.addIssue({
+        path: ["start_time"],
+        message: "start_time cannot be in the past for today",
+      });
+    }
+
     // Date validation
-    if (data.start_date && data.end_date) {
+    if (startDateOnly && endDateOnly) {
       if (new Date(data.start_date) > new Date(data.end_date)) {
         ctx.addIssue({
           path: ["start_date"],
@@ -192,8 +236,35 @@ const refineOfferCreate = (schema) =>
  */
 const refineOfferUpdate = (schema) =>
   schema.superRefine((data, ctx) => {
+    const today = normalizeDateOnly(new Date());
+    const startDateOnly = normalizeDateOnly(data.start_date);
+    const endDateOnly = normalizeDateOnly(data.end_date);
+    const currentTime = normalizeTimeOnly(new Date().toTimeString());
+    const startTimeOnly = normalizeTimeOnly(data.start_time);
+
+    if (startDateOnly && today && startDateOnly < today) {
+      ctx.addIssue({
+        path: ["start_date"],
+        message: "start_date cannot be in the past",
+      });
+    }
+
+    if (
+      startDateOnly &&
+      today &&
+      startDateOnly === today &&
+      startTimeOnly &&
+      currentTime &&
+      startTimeOnly < currentTime
+    ) {
+      ctx.addIssue({
+        path: ["start_time"],
+        message: "start_time cannot be in the past for today",
+      });
+    }
+
     // Date validation (only if both exist)
-    if (data.start_date && data.end_date) {
+    if (startDateOnly && endDateOnly) {
       if (new Date(data.start_date) > new Date(data.end_date)) {
         ctx.addIssue({
           path: ["start_date"],
@@ -243,6 +314,32 @@ const userIdParamSchema = z.object({
 });
 
 /**
+ * Route param validation for product id based endpoints.
+ */
+const productIdParamSchema = z.object({
+  id: z.coerce
+    .number({
+      required_error: "id is required",
+      invalid_type_error: "id must be a number",
+    })
+    .int("id must be an integer")
+    .min(1, "id must be a positive number"),
+});
+
+/**
+ * Route param validation for category id based endpoints.
+ */
+const categoryIdParamSchema = z.object({
+  id: z.coerce
+    .number({
+      required_error: "id is required",
+      invalid_type_error: "id must be a number",
+    })
+    .int("id must be an integer")
+    .min(1, "id must be a positive number"),
+});
+
+/**
  * Final schema used by update-offer endpoint.
  * Also ensures at least one field is present in request body.
  */
@@ -269,26 +366,35 @@ const statusChangeOfferSchema = z.object({
  * Required:
  * - `offer_name`
  */
-const validateOfferSchema = z.object({
-  offer_name: z
-    .string({ required_error: "offer_name is required" })
-    .trim()
-    .min(1, "offer_name cannot be empty"),
+const validateOfferSchema = z
+  .object({
+    offer_name: z
+      .string({ required_error: "offer_name is required" })
+      .trim()
+      .min(1, "offer_name cannot be empty"),
 
-  product_id: z.coerce
-    .number({ invalid_type_error: "product_id must be a number" })
-    .int("product_id must be an integer")
-    .min(1, "product_id must be a positive number")
-    .optional()
-    .nullable(),
+    product_id: z.coerce
+      .number({ invalid_type_error: "product_id must be a number" })
+      .int("product_id must be an integer")
+      .min(1, "product_id must be a positive number")
+      .optional()
+      .nullable(),
 
-  category_id: z.coerce
-    .number({ invalid_type_error: "category_id must be a number" })
-    .int("category_id must be an integer")
-    .min(1, "category_id must be a positive number")
-    .optional()
-    .nullable(),
-});
+    category_id: z.coerce
+      .number({ invalid_type_error: "category_id must be a number" })
+      .int("category_id must be an integer")
+      .min(1, "category_id must be a positive number")
+      .optional()
+      .nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.product_id && data.category_id) {
+      ctx.addIssue({
+        path: ["product_id"],
+        message: "Provide only one: product_id or category_id",
+      });
+    }
+  });
 
 // ============================================================================
 // OFFER PRODUCT CATEGORY MAPPING VALIDATION SCHEMAS
@@ -443,6 +549,19 @@ export const validateOfferIdParam = validate(offerIdParamSchema, "params");
  * Validate user id route param
  */
 export const validateUserIdParam = validate(userIdParamSchema, "params");
+
+/**
+ * Validate product id route param
+ */
+export const validateProductIdParam = validate(productIdParamSchema, "params");
+
+/**
+ * Validate category id route param
+ */
+export const validateCategoryIdParam = validate(
+  categoryIdParamSchema,
+  "params",
+);
 
 /**
  * Validate update-offer payload

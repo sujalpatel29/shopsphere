@@ -327,20 +327,23 @@ export const isOfferMappedToScope = async (offerId, productId, categoryId) => {
  */
 export const getOfferUsageByOfferId = async (offerId) => {
   const [result] = await pool.query(
-    `SELECT ou.offer_id,
+    `SELECT ou.offer_usage_id,
+    ou.offer_id,
     om.offer_name,
     om.offer_type,
     om.discount_type,
     om.discount_value,
     ou.user_id,
+    um.name AS username,
     ou.order_id,
     ou.discount_amount,
-    -- ou.usage_count,
-    ou.created_at 
-    FROM offer_usage AS ou 
+    ou.created_at
+    FROM offer_usage AS ou
     LEFT JOIN offer_master AS om
-    ON om.offer_id=ou.offer_id 
-    WHERE ou.offer_id=?`,
+    ON om.offer_id = ou.offer_id
+    LEFT JOIN user_master AS um
+    ON um.user_id = ou.user_id
+    WHERE ou.offer_id = ?`,
     [offerId],
   );
   return result;
@@ -352,20 +355,23 @@ export const getOfferUsageByOfferId = async (offerId) => {
  */
 export const getOfferUsageByUserId = async (userId) => {
   const [result] = await pool.query(
-    `SELECT ou.offer_id,
+    `SELECT ou.offer_usage_id,
+    ou.offer_id,
     om.offer_name,
     om.offer_type,
     om.discount_type,
     om.discount_value,
     ou.user_id,
+    um.name AS username,
     ou.order_id,
     ou.discount_amount,
-    -- ou.usage_count,
-    ou.created_at 
-    FROM offer_usage AS ou 
+    ou.created_at
+    FROM offer_usage AS ou
     LEFT JOIN offer_master AS om
-    ON om.offer_id=ou.offer_id
-    WHERE ou.user_id=?`,
+    ON om.offer_id = ou.offer_id
+    LEFT JOIN user_master AS um
+    ON um.user_id = ou.user_id
+    WHERE ou.user_id = ?`,
     [userId],
   );
   return result;
@@ -842,14 +848,16 @@ export const getCartItemsWithOffer = async (cartId) => {
 };
 
 /**
- * Get applicable offers for a product
+ * Get active offers for a product id.
  * @param {number} productId - Product ID
- * @returns {Promise<Array>} Applicable offers
+ * @returns {Promise<Array>} Offer rows
  */
-export const getApplicableOffersForProduct = async (productId) => {
+export const getOfferByProductId = async (productId) => {
   const [rows] = await pool.query(
     `SELECT om.*,
-            opc.offer_product_category_id
+            opc.offer_product_category_id,
+            opc.product_id,
+            opc.category_id
      FROM offer_master om
      INNER JOIN offer_product_category opc ON opc.offer_id = om.offer_id
      WHERE om.is_active = 1
@@ -877,14 +885,16 @@ export const getApplicableOffersForProduct = async (productId) => {
 };
 
 /**
- * Get applicable offers for a category
+ * Get active offers for a category id.
  * @param {number} categoryId - Category ID
- * @returns {Promise<Array>} Applicable offers
+ * @returns {Promise<Array>} Offer rows
  */
-export const getApplicableOffersForCategory = async (categoryId) => {
+export const getOfferByCategoryId = async (categoryId) => {
   const [rows] = await pool.query(
     `SELECT om.*,
-            opc.offer_product_category_id
+            opc.offer_product_category_id,
+            opc.product_id,
+            opc.category_id
      FROM offer_master om
      INNER JOIN offer_product_category opc ON opc.offer_id = om.offer_id
      WHERE om.is_active = 1
@@ -910,6 +920,57 @@ export const getApplicableOffersForCategory = async (categoryId) => {
   );
   return rows;
 };
+
+/**
+ * Get both product and category offers visible for a product detail page.
+ * @param {number} productId - Product ID
+ * @returns {Promise<{product_offers: Array, category_offers: Array}>}
+ */
+export const getVisibleOffersByProductId = async (productId) => {
+  const productOffers = await getOfferByProductId(productId);
+
+  const [categoryRows] = await pool.query(
+    `SELECT DISTINCT category_id
+     FROM product_categories
+     WHERE product_id = ?`,
+    [productId],
+  );
+
+  if (!categoryRows || categoryRows.length === 0) {
+    return {
+      product_offers: productOffers,
+      category_offers: [],
+    };
+  }
+
+  const categoryIds = categoryRows.map((row) => row.category_id);
+  const categoryOfferBuckets = await Promise.all(
+    categoryIds.map((categoryId) => getOfferByCategoryId(categoryId)),
+  );
+
+  const categoryOffers = categoryOfferBuckets.flat();
+
+  return {
+    product_offers: productOffers,
+    category_offers: categoryOffers,
+  };
+};
+
+/**
+ * Backward-compatible alias: applicable offers for a product.
+ * @param {number} productId - Product ID
+ * @returns {Promise<Array>} Applicable offers
+ */
+export const getApplicableOffersForProduct = async (productId) =>
+  getOfferByProductId(productId);
+
+/**
+ * Backward-compatible alias: applicable offers for a category.
+ * @param {number} categoryId - Category ID
+ * @returns {Promise<Array>} Applicable offers
+ */
+export const getApplicableOffersForCategory = async (categoryId) =>
+  getOfferByCategoryId(categoryId);
 
 /**
  * Get applicable cart-level offers (flat_discount, first_order, time_based)

@@ -27,7 +27,7 @@ import {
   togglePortionStatus,
   deletePortion,
 } from "../../../api/adminPortionsApi";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 function AdminPortionsTab() {
   const toast = useRef(null);
@@ -211,3 +211,4 @@ function AdminPortionsTab() {
 }
 
 export default AdminPortionsTab;
+
