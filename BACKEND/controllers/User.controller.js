@@ -196,7 +196,7 @@ const formatRetrySeconds = (retryAfterMs) => {
 //user
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.validated?.body || req.body;
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);

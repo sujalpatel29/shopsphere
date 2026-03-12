@@ -13,7 +13,7 @@
     @apply text-gray-900;
     font-family: "Jost", sans-serif;
     background-color: #f3ecdf;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   .dark body {
