@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { dashboardPlaceholderContent } from "../constants";
 import AddressesSection from "./AddressesSection";
 import DashboardLoadingState from "./DashboardLoadingState";
+import HelpSupportPage from "./HelpSupportPage";
 import OffersPage from "./OffersPage";
 import OrdersPage from "./OrdersPage";
 import PaymentsPage from "./PaymentsPage";
@@ -130,6 +131,10 @@ function DashboardContent({ currentUser, dashboard, showToast }) {
         showToast={showToast}
       />
     );
+  }
+
+  if (dashboard.activeTab === "support") {
+    return <HelpSupportPage />;
   }
 
   const activeContent = dashboardPlaceholderContent[dashboard.activeTab];

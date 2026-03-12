@@ -13,6 +13,16 @@ import OrderDetailsDialog from "./dashboard/components/OrderDetailsDialog";
 import { profileNav } from "./dashboard/constants";
 import "../admin/AdminDashboard.css";
 
+const dashboardTabSet = new Set(profileNav.map((item) => item.key));
+
+const getDashboardPathForTab = (tab) => {
+  if (!tab || tab === "profile") {
+    return "/dashboard";
+  }
+
+  return `/dashboard?tab=${encodeURIComponent(tab)}`;
+};
+
 function DashboardPage() {
   const { currentUser } = useSelector((state) => state.auth || {});
   const dashboard = useCustomerDashboard();
@@ -62,21 +72,36 @@ function DashboardPage() {
         setActiveTab("orders");
       }
 
-      if (location.pathname !== "/dashboard") {
-        navigate("/dashboard", { replace: true });
+      const targetPath = getDashboardPathForTab("orders");
+
+      if (`${location.pathname}${location.search}` !== targetPath) {
+        navigate(targetPath, { replace: true });
       }
     }
-  }, [activeTab, location.pathname, navigate, setActiveTab]);
+  }, [activeTab, location.pathname, location.search, navigate, setActiveTab]);
+
+  useEffect(() => {
+    const queryTab = new URLSearchParams(location.search).get("tab");
+
+    if (!queryTab || !dashboardTabSet.has(queryTab)) {
+      return;
+    }
+
+    if (activeTab !== queryTab) {
+      setActiveTab(queryTab);
+    }
+  }, [activeTab, location.search, setActiveTab]);
 
   const handleTabChange = useCallback(
     (nextTab) => {
       setActiveTab(nextTab);
+      const targetPath = getDashboardPathForTab(nextTab);
 
-      if (location.pathname !== "/dashboard") {
-        navigate("/dashboard");
+      if (`${location.pathname}${location.search}` !== targetPath) {
+        navigate(targetPath);
       }
     },
-    [location.pathname, navigate, setActiveTab],
+    [location.pathname, location.search, navigate, setActiveTab],
   );
 
   const activeLabel = useMemo(() => {
