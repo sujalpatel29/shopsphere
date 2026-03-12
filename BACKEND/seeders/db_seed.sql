@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- Combined Seed Data - ecommerce_accrete
 -- Covers all tables end-to-end with fully consistent FK references,
 -- unique-key compliance, and correct amount calculations.
@@ -63,21 +63,23 @@ TRUNCATE TABLE user_master;
 -- ============================================================
 -- 1. USERS
 -- user_id=1 is Admin; users 2-10 are customers created by Admin.
--- Passwords for users 4 & 5 are already bcrypt-hashed.
+-- All passwords are bcrypt-hashed (10 rounds) — no plaintext stored.
+--   admin123    -> users 1
+--   password123 -> users 2-3, 6-10
 -- ============================================================
 INSERT INTO user_master
 (user_id, name, email, password, role, is_deleted, is_blocked, refresh_token, last_login, created_by)
 VALUES
-(1,  'Admin User',   'admin@example.com',  'admin123',                                                               'admin',    0, 0, NULL, NULL, NULL),
-(2,  'Rahul Sharma', 'rahul@example.com',  'password123',                                                            'customer', 0, 0, NULL, NULL, 1),
-(3,  'Priya Singh',  'priya@example.com',  'password123',                                                            'customer', 0, 0, NULL, NULL, 1),
-(4,  'Om Patel',     'om@gmail.com',       '$2b$10$d4IVAEVTp3tDa8vTZW2zZ.KVTToxTvcPV8dBA1hBuo1YojevV5SUu',         'customer', 0, 0, NULL, NULL, 1),
-(5,  'Omi Shah',     'omi@gmail.com',      '$2b$10$XmqPYzOtmfEORvztqTb3rOX9LCh7QH8G5/MgZR4/K5ejzSoxyGJta',        'customer', 0, 0, NULL, NULL, 1),
-(6,  'Arjun Mehta',  'arjun@example.com',  'password123',                                                            'customer', 0, 0, NULL, NULL, 1),
-(7,  'Sneha Reddy',  'sneha@example.com',  'password123',                                                            'customer', 0, 0, NULL, NULL, 1),
-(8,  'Vikram Nair',  'vikram@example.com', 'password123',                                                            'customer', 0, 0, NULL, NULL, 1),
-(9,  'Kavya Iyer',   'kavya@example.com',  'password123',                                                            'customer', 0, 0, NULL, NULL, 1),
-(10, 'Rohan Gupta',  'rohan@example.com',  'password123',                                                            'customer', 0, 0, NULL, NULL, 1);
+(1,  'Admin User',   'admin@example.com',  '$2b$10$YHleyQYYtVlzOGDiMiM02.Ep.yiUudBuvZp/XIePXBluU92rV0IO.', 'admin',    0, 0, NULL, NULL, NULL),
+(2,  'Rahul Sharma', 'rahul@example.com',  '$2b$10$RW4SIlmiRrWS7TT5u4kKP.PSxhY//pe/NNf2Pxo9DmN6S4AYUE1Tu', 'customer', 0, 0, NULL, NULL, 1),
+(3,  'Priya Singh',  'priya@example.com',  '$2b$10$RW4SIlmiRrWS7TT5u4kKP.PSxhY//pe/NNf2Pxo9DmN6S4AYUE1Tu', 'customer', 0, 0, NULL, NULL, 1),
+(4,  'Om Patel',     'om@gmail.com',       '$2b$10$d4IVAEVTp3tDa8vTZW2zZ.KVTToxTvcPV8dBA1hBuo1YojevV5SUu', 'customer', 0, 0, NULL, NULL, 1),
+(5,  'Omi Shah',     'omi@gmail.com',      '$2b$10$XmqPYzOtmfEORvztqTb3rOX9LCh7QH8G5/MgZR4/K5ejzSoxyGJta', 'customer', 0, 0, NULL, NULL, 1),
+(6,  'Arjun Mehta',  'arjun@example.com',  '$2b$10$RW4SIlmiRrWS7TT5u4kKP.PSxhY//pe/NNf2Pxo9DmN6S4AYUE1Tu', 'customer', 0, 0, NULL, NULL, 1),
+(7,  'Sneha Reddy',  'sneha@example.com',  '$2b$10$RW4SIlmiRrWS7TT5u4kKP.PSxhY//pe/NNf2Pxo9DmN6S4AYUE1Tu', 'customer', 0, 0, NULL, NULL, 1),
+(8,  'Vikram Nair',  'vikram@example.com', '$2b$10$RW4SIlmiRrWS7TT5u4kKP.PSxhY//pe/NNf2Pxo9DmN6S4AYUE1Tu', 'customer', 0, 0, NULL, NULL, 1),
+(9,  'Kavya Iyer',   'kavya@example.com',  '$2b$10$RW4SIlmiRrWS7TT5u4kKP.PSxhY//pe/NNf2Pxo9DmN6S4AYUE1Tu', 'customer', 0, 0, NULL, NULL, 1),
+(10, 'Rohan Gupta',  'rohan@example.com',  '$2b$10$RW4SIlmiRrWS7TT5u4kKP.PSxhY//pe/NNf2Pxo9DmN6S4AYUE1Tu', 'customer', 0, 0, NULL, NULL, 1);
 
 
 -- ============================================================
@@ -179,7 +181,7 @@ VALUES
 (40, 'gaming_headset',   'Gaming Headset',         'Gaming headset',                'Headset',                2999,  2499,   85,  4,  1, 0, 1),
 (41, 'usb_cable',        'USB Cable',              'Charging cable',                'Type C Cable',           499,   399,    300, 4,  1, 0, 1),
 (42, 'power_bank',       'Power Bank',             'Portable charger',              '20000mAh Power Bank',    1999,  1699,   200, 4,  1, 0, 1),
--- Electronics root (category 1) â€” tablets + speakers + networking + storage + monitor
+-- Electronics root (category 1) — tablets + speakers + networking + storage + monitor
 (43, 'tablet',           'Android Tablet',         '10 inch tablet',                'Android Tablet',         19999, 17999,  60,  1,  1, 0, 1),
 (44, 'ipad',             'Apple iPad',             'Apple tablet',                  'iPad 10th Gen',          49999, 46999,  45,  1,  1, 0, 1),
 (45, 'bluetooth_speaker','Bluetooth Speaker',      'Portable speaker',              'Speaker',                2499,  1999,   120, 4,  1, 0, 1),
@@ -296,36 +298,48 @@ VALUES
 (10,3,0,1),(10,1,0,1),
 (11,3,0,1),(11,1,0,1),
 (12,3,0,1),(12,1,0,1),
--- Accessories (4) â€” no ancestor needed (parent is Electronics=1)
-(13,4,0,1),(14,4,0,1),
-(15,4,0,1),(16,4,0,1),
--- Men Clothing (6) â€” parent Fashion (5)
-(17,6,0,1),(18,6,0,1),
-(19,6,0,1),(20,6,0,1),
--- Women Clothing (7) â€” parent Fashion (5)
-(21,7,0,1),(22,7,0,1),
-(23,7,0,1),(24,7,0,1),
--- Footwear (8) â€” parent Fashion (5)
-(25,8,0,1),(26,8,0,1),
-(27,8,0,1),(28,8,0,1),
+-- Accessories (4) + Electronics (1)
+(13,4,0,1),(13,1,0,1),
+(14,4,0,1),(14,1,0,1),
+(15,4,0,1),(15,1,0,1),
+(16,4,0,1),(16,1,0,1),
+-- Men Clothing (6) + Fashion (5)
+(17,6,0,1),(17,5,0,1),
+(18,6,0,1),(18,5,0,1),
+(19,6,0,1),(19,5,0,1),
+(20,6,0,1),(20,5,0,1),
+-- Women Clothing (7) + Fashion (5)
+(21,7,0,1),(21,5,0,1),
+(22,7,0,1),(22,5,0,1),
+(23,7,0,1),(23,5,0,1),
+(24,7,0,1),(24,5,0,1),
+-- Footwear (8) + Fashion (5)
+(25,8,0,1),(25,5,0,1),
+(26,8,0,1),(26,5,0,1),
+(27,8,0,1),(27,5,0,1),
+(28,8,0,1),(28,5,0,1),
 -- Smart Devices (9) + Electronics (1)
 (29,9,0,1),(29,1,0,1),
 (30,9,0,1),(30,1,0,1),
 (31,9,0,1),(31,1,0,1),
 (32,9,0,1),(32,1,0,1),
--- Home Appliances (10) â€” root
+-- Home Appliances (10) — root
 (33,10,0,1),(34,10,0,1),
 (35,10,0,1),(36,10,0,1),
 (37,10,0,1),(38,10,0,1),
--- Accessories continued
-(39,4,0,1),(40,4,0,1),
-(41,4,0,1),(42,4,0,1),
+-- Accessories continued (4) + Electronics (1)
+(39,4,0,1),(39,1,0,1),
+(40,4,0,1),(40,1,0,1),
+(41,4,0,1),(41,1,0,1),
+(42,4,0,1),(42,1,0,1),
 -- Electronics root (tablets, iPad)
 (43,1,0,1),(44,1,0,1),
--- Accessories (speaker, soundbar, router, ssd, hdd)
-(45,4,0,1),(46,4,0,1),
-(47,4,0,1),(48,4,0,1),
-(49,4,0,1),
+-- Accessories (speaker, soundbar, router, ssd, hdd) (4) + Electronics (1)
+(45,4,0,1),(45,1,0,1),
+(46,4,0,1),(46,1,0,1),
+(47,4,0,1),(47,1,0,1),
+(48,4,0,1),(48,1,0,1),
+(49,4,0,1),(49,1,0,1),
 -- Monitor â†’ Laptops category (display peripheral)
 (50,3,0,1);
 
@@ -668,16 +682,16 @@ VALUES
 INSERT INTO offer_master
 (offer_id, offer_name, description, offer_type, discount_type, discount_value, maximum_discount_amount, min_purchase_amount, usage_limit_per_user, start_date, end_date, start_time, end_time, is_active, is_deleted, created_by)
 VALUES
-(1,  'FLAT200',       'Flat â‚¹200 off on orders above â‚¹1000',          'flat_discount',     'fixed_amount', 200.00,  200.00,   1000.00,   2, '2025-01-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
-(2,  'FLAT500',       'Flat â‚¹500 off on orders above â‚¹5000',          'flat_discount',     'fixed_amount', 500.00,  500.00,   5000.00,   1, '2025-01-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
-(3,  'FLAT1000',      'Flat â‚¹1000 off on orders above â‚¹15000',        'flat_discount',     'fixed_amount', 1000.00, 1000.00,  15000.00,  1, '2025-01-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
-(4,  'ELECTRONICS15', '15% off on Electronics (max â‚¹3000)',           'category_discount', 'percentage',   15.00,   3000.00,  500.00,    2, '2025-03-01 00:00:00', '2026-06-30 23:59:59', NULL, NULL, 1, 0, 1),
-(5,  'FASHION20',     '20% off on Fashion items (max â‚¹1000)',         'category_discount', 'percentage',   20.00,   1000.00,  300.00,    3, '2025-04-01 00:00:00', '2026-09-30 23:59:59', NULL, NULL, 1, 0, 1),
-(6,  'MOBILES10',     '10% off on all Mobiles (max â‚¹2000)',           'category_discount', 'percentage',   10.00,   2000.00,  5000.00,   2, '2025-05-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
-(7,  'APPLIANCEDEAL', '8% off on Home Appliances (max â‚¹2500)',        'category_discount', 'percentage',   8.00,    2500.00,  10000.00,  2, '2025-02-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
-(8,  'IPHONE5K',      'â‚¹5000 off on iPhone 15',                      'product_discount',  'fixed_amount', 5000.00, 5000.00,  70000.00,  1, '2025-06-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
-(9,  'SAMSUNG10',     '10% off on Samsung Galaxy S24 (max â‚¹5000)',   'product_discount',  'percentage',   10.00,   5000.00,  80000.00,  1, '2025-06-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
-(10, 'MACBOOK5K',     'â‚¹5000 off on MacBook Air',                    'product_discount',  'fixed_amount', 5000.00, 5000.00,  100000.00, 1, '2025-07-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1);
+(1,  'FLAT200',       'Flat ₹200 off on orders above ₹1000',          'flat_discount',     'fixed_amount', 200.00,  200.00,   1000.00,   2, '2025-01-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
+(2,  'FLAT500',       'Flat ₹500 off on orders above ₹5000',          'flat_discount',     'fixed_amount', 500.00,  500.00,   5000.00,   1, '2025-01-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
+(3,  'FLAT1000',      'Flat ₹1000 off on orders above ₹15000',        'flat_discount',     'fixed_amount', 1000.00, 1000.00,  15000.00,  1, '2025-01-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
+(4,  'ELECTRONICS15', '15% off on Electronics (max ₹3000)',           'category_discount', 'percentage',   15.00,   3000.00,  500.00,    2, '2025-03-01 00:00:00', '2026-06-30 23:59:59', NULL, NULL, 1, 0, 1),
+(5,  'FASHION20',     '20% off on Fashion items (max ₹1000)',         'category_discount', 'percentage',   20.00,   1000.00,  300.00,    3, '2025-04-01 00:00:00', '2026-09-30 23:59:59', NULL, NULL, 1, 0, 1),
+(6,  'MOBILES10',     '10% off on all Mobiles (max ₹2000)',           'category_discount', 'percentage',   10.00,   2000.00,  5000.00,   2, '2025-05-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
+(7,  'APPLIANCEDEAL', '8% off on Home Appliances (max ₹2500)',        'category_discount', 'percentage',   8.00,    2500.00,  10000.00,  2, '2025-02-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
+(8,  'IPHONE5K',      '₹5000 off on iPhone 15',                      'product_discount',  'fixed_amount', 5000.00, 5000.00,  70000.00,  1, '2025-06-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
+(9,  'SAMSUNG10',     '10% off on Samsung Galaxy S24 (max ₹5000)',   'product_discount',  'percentage',   10.00,   5000.00,  80000.00,  1, '2025-06-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1),
+(10, 'MACBOOK5K',     '₹5000 off on MacBook Air',                    'product_discount',  'fixed_amount', 5000.00, 5000.00,  100000.00, 1, '2025-07-01 00:00:00', '2026-12-31 23:59:59', NULL, NULL, 1, 0, 1);
 
 
 -- ============================================================
@@ -748,33 +762,33 @@ VALUES
 INSERT INTO order_items
 (order_item_id, order_id, product_id, product_portion_id, modifier_id, product_name, portion_value, modifier_value, quantity, price, discount, tax, total, is_deleted, created_by)
 VALUES
--- Order 1: iPhone 15 128GB, Black â€” no offer (1Ã—74999 âˆ’ 0 + 13499.82 = 88498.82)
+-- Order 1: iPhone 15 128GB, Black — no offer (1Ã—74999 âˆ’ 0 + 13499.82 = 88498.82)
 (1,  1,  1,  1,    1,    'Apple iPhone 15',    '128 GB',  'Black',    1, 74999.00,  0.00,    13499.82, 88498.82,  0, 2),
--- Order 2: iPhone 14 256GB, White â€” FLAT200; pp=4 belongs to product 2 âœ“
+-- Order 2: iPhone 14 256GB, White — FLAT200; pp=4 belongs to product 2 âœ“
 (2,  2,  2,  4,    2,    'Apple iPhone 14',    '256 GB',  'White',    1, 69999.00,  200.00,  12563.82, 82362.82,  0, 3),
--- Order 3: Samsung A54 128GB, Black â€” no offer; pp=7 belongs to product 4 âœ“
+-- Order 3: Samsung A54 128GB, Black — no offer; pp=7 belongs to product 4 âœ“
 (3,  3,  4,  7,    1,    'Samsung Galaxy A54', '128 GB',  'Black',    1, 34999.00,  0.00,    6299.82,  41397.82,  0, 4),
--- Order 4: Redmi Note 13 128GB, Blue â€” FLAT500; pp=9 belongs to product 5 âœ“
+-- Order 4: Redmi Note 13 128GB, Blue — FLAT500; pp=9 belongs to product 5 âœ“
 (4,  4,  5,  9,    3,    'Redmi Note 13',      '128 GB',  'Blue',     1, 22999.00,  500.00,  4139.82,  26737.82,  0, 5),
--- Order 5: MacBook Air 8GB RAM â€” MACBOOK5K â‚¹5000 off; pp=17 belongs to product 9 âœ“
+-- Order 5: MacBook Air 8GB RAM — MACBOOK5K ₹5000 off; pp=17 belongs to product 9 âœ“
 (5,  5,  9,  17,   NULL, 'Apple MacBook Air',  '8 GB RAM',NULL,       1, 109999.00, 5000.00, 19799.82, 124798.82, 0, 6),
 -- Order 6: Men T-Shirt x2 size M -- FLAT200 [Fix 5 total; Fix 6 tax: 18%x(2x599-200)=179.64]
 (6,  6,  17, 26,   NULL, 'Men T-Shirt',        'M',       NULL,       2, 599.00,    200.00,  179.64,   1177.64,   0, 7),
--- Order 6: Logitech Mouse â€” no portion, no offer
+-- Order 6: Logitech Mouse — no portion, no offer
 (7,  6,  15, NULL, NULL, 'Logitech Mouse',     NULL,      NULL,       1, 1199.00,   0.00,    215.82,   1414.82,   0, 7),
--- Order 7: Apple Watch 41mm, Black â€” no offer, cancelled; pp=51 belongs to product 29 âœ“
+-- Order 7: Apple Watch 41mm, Black — no offer, cancelled; pp=51 belongs to product 29 âœ“
 (8,  7,  29, 51,   1,    'Apple Watch',        '41 mm',   'Black',    1, 42999.00,  0.00,    7739.82,  50738.82,  0, 8),
--- Order 8: Mi Band 41mm â€” no offer; pp=55 belongs to product 31 âœ“
+-- Order 8: Mi Band 41mm — no offer; pp=55 belongs to product 31 âœ“
 (9,  8,  31, 55,   NULL, 'Mi Band',            '41 mm',   NULL,       1, 3499.00,   0.00,    629.82,   4177.82,   0, 9),
--- Order 9: Samsung Galaxy S24 256GB â€” SAMSUNG10 10% off capped â‚¹5000; pp=5 belongs to product 3 âœ“
+-- Order 9: Samsung Galaxy S24 256GB — SAMSUNG10 10% off capped ₹5000; pp=5 belongs to product 3 âœ“
 (10, 9,  3,  5,    NULL, 'Samsung Galaxy S24', '256 GB',  NULL,       1, 84999.00,  5000.00, 15299.82, 95298.82,  0, 10),
--- Order 10: SSD Drive 1TB â€” no offer; pp=89 belongs to product 48 âœ“
+-- Order 10: SSD Drive 1TB — no offer; pp=89 belongs to product 48 âœ“
 (11, 10, 48, 89,   NULL, 'SSD Drive',          '1 TB',    NULL,       1, 7999.00,   0.00,    1439.82,  9487.82,   0, 2),
--- Order 11: Android Tablet Standard â€” FLAT1000; pp=79 belongs to product 43 âœ“
+-- Order 11: Android Tablet Standard — FLAT1000; pp=79 belongs to product 43 âœ“
 (12, 11, 43, 79,   NULL, 'Android Tablet',     'Standard',NULL,       1, 17999.00,  1000.00, 3239.82,  20337.82,  0, 3),
--- Order 12: Dell Inspiron 8GB RAM â€” no offer; pp=21 belongs to product 11 âœ“
+-- Order 12: Dell Inspiron 8GB RAM — no offer; pp=21 belongs to product 11 âœ“
 (13, 12, 11, 21,   NULL, 'Dell Inspiron',      '8 GB RAM',NULL,       1, 58999.00,  0.00,    10619.82, 69618.82,  0, 4),
--- Order 12: Gaming Keyboard â€” no portion (accessories often bought without variant)
+-- Order 12: Gaming Keyboard — no portion (accessories often bought without variant)
 (14, 12, 16, NULL, NULL, 'Gaming Keyboard',    NULL,      NULL,       1, 3499.00,   0.00,    629.82,   4128.82,   0, 4);
 
 
@@ -791,12 +805,12 @@ VALUES
 (2,  2,  'TXN20250610002', 'debit_card',        82362.82,  'INR', 'completed', 'HDFC Debit 1234',   '{"code":"00","msg":"Approved"}',        0, 0.00,      '2025-06-10 14:22:00', '2025-06-10 14:22:30', NULL, 0, 3),
 (3,  3,  'TXN20250615003', 'stripe',            41397.82,  'INR', 'completed', 'Stripe Token',      '{"status":"succeeded","id":"ch_3abc"}', 0, 0.00,      '2025-06-15 09:10:00', '2025-06-15 09:10:15', NULL, 0, 4),
 (4,  4,  'TXN20250620004', 'paypal',            26737.82,  'INR', 'completed', 'PayPal Account',    '{"status":"COMPLETED","id":"PAY-xyz"}', 0, 0.00,      '2025-06-20 11:05:00', '2025-06-20 11:05:20', NULL, 0, 5),
--- [Fix 2] Was 126798.82 â€” must equal order 5 total_amount 124798.82
+-- [Fix 2] Was 126798.82 — must equal order 5 total_amount 124798.82
 (5,  5,  'TXN20250701005', 'credit_card',      124798.82,  'INR', 'completed', 'Axis CC 9999',      '{"code":"00","msg":"Approved"}',        0, 0.00,      '2025-07-01 16:30:00', '2025-07-01 16:30:50', NULL, 0, 6),
 (6,  6,  'TXN20250710006', 'cash_on_delivery',  2641.46,   'INR', 'completed', 'COD',               '{"status":"collected"}',               0, 0.00,      '2025-07-10 12:00:00', '2025-07-14 15:00:00', NULL, 0, 7),
 (7,  7,  'TXN20250715007', 'credit_card',       50738.82,  'INR', 'refunded',  'ICICI CC 5678',     '{"code":"00","msg":"Approved"}',        1, 50738.82,  '2025-07-15 09:00:00', '2025-07-15 09:00:40', NULL, 0, 8),
 (8,  8,  'TXN20250720008', 'debit_card',         4177.82,  'INR', 'completed', 'SBI Debit 7890',    '{"code":"00","msg":"Approved"}',        0, 0.00,      '2025-07-20 18:00:00', '2025-07-20 18:00:25', NULL, 0, 9),
--- [Fix 3] Was 59898.82 â€” must equal order 9 total_amount 95298.82
+-- [Fix 3] Was 59898.82 — must equal order 9 total_amount 95298.82
 (9,  9,  'TXN20250801009', 'stripe',            95298.82,  'INR', 'completed', 'Stripe Token',      '{"status":"succeeded","id":"ch_4def"}', 0, 0.00,      '2025-08-01 13:45:00', '2025-08-01 13:45:18', NULL, 0, 10),
 (10, 10, 'TXN20250810010', 'paypal',             9487.82,  'INR', 'completed', 'PayPal Account',    '{"status":"COMPLETED","id":"PAY-abc"}', 0, 0.00,      '2025-08-10 10:10:00', '2025-08-10 10:10:22', NULL, 0, 2),
 -- Orders 11-12 are pending; no transaction_id yet
@@ -830,7 +844,7 @@ INSERT INTO cart_master
 (cart_id, user_id, offer_id, discount_amount, is_deleted, created_by)
 VALUES
 (1, 2,  NULL, 0.00,   0, 2),   -- Rahul: no offer applied
-(2, 3,  5,    800.00, 0, 3),   -- Priya: FASHION20 (offer 5) applied, â‚¹800 estimated discount
+(2, 3,  5,    800.00, 0, 3),   -- Priya: FASHION20 (offer 5) applied, ₹800 estimated discount
 (3, 6,  6,    200.00, 0, 6),   -- Arjun: MOBILES10 (offer 6) applied
 (4, 8,  NULL, 0.00,   0, 8),   -- Vikram: no offer
 (5, 9,  1,    200.00, 0, 9);   -- Kavya: FLAT200 (offer 1) applied
@@ -847,21 +861,21 @@ VALUES
 INSERT INTO cart_items
 (cart_item_id, cart_id, product_id, product_portion_id, modifier_id, offer_id, quantity, price, is_deleted, created_by)
 VALUES
--- Rahul's cart: MacBook Air 8GB RAM (pp=17) â€” no offer, no modifier
+-- Rahul's cart: MacBook Air 8GB RAM (pp=17) — no offer, no modifier
 (1, 1, 9,  17,   NULL, NULL, 1, 109999.00, 0, 2),
 -- Rahul's cart: Gaming Mouse Standard (pp=71) [Fix 4: was NULL â†’ 71]
 (2, 1, 39, 71,   NULL, NULL, 1, 1599.00,   0, 2),
--- Priya's cart: Women Saree size M (pp=41) â€” FASHION20 offer applied
+-- Priya's cart: Women Saree size M (pp=41) — FASHION20 offer applied
 (3, 2, 24, 41,   NULL, 5,    1, 3499.00,   0, 3),
--- Priya's cart: Women Kurti size M (pp=39) Ã—2 â€” FASHION20
+-- Priya's cart: Women Kurti size M (pp=39) Ã—2 — FASHION20
 (4, 2, 23, 39,   NULL, 5,    2, 999.00,    0, 3),
--- Arjun's cart: OnePlus 12 256GB (pp=11) â€” MOBILES10
+-- Arjun's cart: OnePlus 12 256GB (pp=11) — MOBILES10
 (5, 3, 6,  11,   NULL, 6,    1, 61999.00,  0, 6),
--- Vikram's cart: Sony Headphones â€” no portion (product 14 has no product_portion rows)
+-- Vikram's cart: Sony Headphones — no portion (product 14 has no product_portion rows)
 (6, 4, 14, NULL, NULL, NULL, 1, 32999.00,  0, 8),
--- Vikram's cart: Power Bank Standard (pp=77) â€” no offer
+-- Vikram's cart: Power Bank Standard (pp=77) — no offer
 (7, 4, 42, 77,   NULL, NULL, 1, 1699.00,   0, 8),
--- Kavya's cart: Smart TV 55 inch (pp=59) â€” FLAT200
+-- Kavya's cart: Smart TV 55 inch (pp=59) — FLAT200
 (8, 5, 33, 59,   17,   1,    1, 54999.00,  0, 9);
 
 
@@ -894,7 +908,7 @@ VALUES
 
 -- ============================================================
 -- 19. REVIEW HELPFUL VOTES
--- UNIQUE(review_id, user_id) â€” no user can mark same review twice.
+-- UNIQUE(review_id, user_id) — no user can mark same review twice.
 -- A user cannot mark their own review helpful (enforced by app logic).
 -- Count of rows per review_id must equal product_reviews.helpful_count.
 -- Review 13 (helpful_count=0) intentionally has no rows.

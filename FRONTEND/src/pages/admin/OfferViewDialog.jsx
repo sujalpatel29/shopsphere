@@ -16,7 +16,9 @@ const formatDate = (value) => {
 
 const formatNumber = (value) => {
   if (value === null || value === undefined || value === "") return "-";
-  return Number(value).toLocaleString();
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  return num.toLocaleString();
 };
 
 const formatDuration = (startDate, endDate) => {
@@ -37,7 +39,7 @@ const formatTime = (value, kind) => {
 };
 
 function OfferViewDialog({ visible, onHide, offer }) {
-  const lifecycle = getOfferLifecycleMeta(offer);
+  const lifecycle = offer ? getOfferLifecycleMeta(offer) : null;
 
   const footer = (
     <div className="flex justify-end">
@@ -76,9 +78,13 @@ function OfferViewDialog({ visible, onHide, offer }) {
       pt={{
         root: { className: "admin-dialog rounded-2xl overflow-hidden" },
         header: { className: "admin-dialog-header px-6 py-4 border-b" },
-        title: { className: "text-xl font-serif text-gray-900 dark:text-slate-100" },
+        title: {
+          className: "text-xl font-serif text-gray-900 dark:text-slate-100",
+        },
         content: { className: "p-6 font-sans admin-offer-view-scroll" },
-        footer: { className: "admin-dialog-footer px-6 py-4 border-t rounded-b-2xl" },
+        footer: {
+          className: "admin-dialog-footer px-6 py-4 border-t rounded-b-2xl",
+        },
       }}
     >
       {offer ? (
@@ -119,22 +125,37 @@ function OfferViewDialog({ visible, onHide, offer }) {
               </span>,
             )}
             {infoItem("Discount Type", offer.discount_type || "-")}
-            {infoItem(
-              "Discount Value",
-              offer.discount_type === "percentage"
-                ? `${formatNumber(offer.discount_value)}%`
-                : `Rs ${formatNumber(offer.discount_value)}`,
-            )}
+const formatCurrency = (value) => {
+  if (value === null || value === undefined || value === "") return "-";
+  const num = Number(value);
+  if (Number.isNaN(num)) return "-";
+  return `Rs ${num.toLocaleString()}`;
+};
+
+// ... elsewhere in the component ...
+
             {infoItem(
               "Maximum Discount Amount",
+              formatCurrency(offer.maximum_discount_amount),
+            )}
+            {infoItem(
+              "Minimum Purchase Amount",
+              formatCurrency(offer.min_purchase_amount),
+            )}
               `Rs ${formatNumber(offer.maximum_discount_amount)}`,
             )}
             {infoItem(
               "Minimum Purchase Amount",
               `Rs ${formatNumber(offer.min_purchase_amount)}`,
             )}
-            {infoItem("Usage Limit Per User", formatNumber(offer.usage_limit_per_user))}
-            {infoItem("Duration", formatDuration(offer.start_date, offer.end_date))}
+            {infoItem(
+              "Usage Limit Per User",
+              formatNumber(offer.usage_limit_per_user),
+            )}
+            {infoItem(
+              "Duration",
+              formatDuration(offer.start_date, offer.end_date),
+            )}
             <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {infoItem("Start Date", formatDate(offer.start_date))}
               {infoItem("End Date", formatDate(offer.end_date))}

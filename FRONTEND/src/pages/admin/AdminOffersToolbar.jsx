@@ -33,6 +33,14 @@ function AdminOffersToolbar({
 }) {
   const debounceRef = useRef(null);
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
   const handleSearchChange = useCallback(
     (e) => {
       const value = e.target.value;
@@ -69,11 +77,14 @@ function AdminOffersToolbar({
           className="admin-filter-dropdown w-full sm:w-44"
           pt={{
             root: {
-              className: "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
+              className:
+                "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
             },
             input: { className: "px-3 text-sm" },
             trigger: { className: "w-8" },
-            panel: { className: "admin-dropdown-panel rounded-lg shadow-xl mt-1" },
+            panel: {
+              className: "admin-dropdown-panel rounded-lg shadow-xl mt-1",
+            },
           }}
         />
 
@@ -87,28 +98,43 @@ function AdminOffersToolbar({
           className="admin-filter-dropdown w-full sm:w-52"
           pt={{
             root: {
-              className: "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
+              className:
+                "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
             },
             input: { className: "px-3 text-sm" },
             trigger: { className: "w-8" },
-            panel: { className: "admin-dropdown-panel rounded-lg shadow-xl mt-1" },
+            panel: {
+              className: "admin-dropdown-panel rounded-lg shadow-xl mt-1",
+            },
           }}
         />
-      </div>
+            <span className="text-xs font-bold text-red-600 dark:text-red-300">{(totalAll ?? 0) - (totalActive ?? 0)}</span>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Total</span>
-            <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{totalAll}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Total
+            </span>
+            <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
+              {totalAll}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40">
-            <span className="text-xs text-green-600 dark:text-green-400">Active</span>
-            <span className="text-xs font-bold text-green-700 dark:text-green-300">{totalActive}</span>
+            <span className="text-xs text-green-600 dark:text-green-400">
+              Active
+            </span>
+            <span className="text-xs font-bold text-green-700 dark:text-green-300">
+              {totalActive}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40">
-            <span className="text-xs text-red-500 dark:text-red-400">Inactive</span>
-            <span className="text-xs font-bold text-red-600 dark:text-red-300">{totalAll - totalActive}</span>
+            <span className="text-xs text-red-500 dark:text-red-400">
+              Inactive
+            </span>
+            <span className="text-xs font-bold text-red-600 dark:text-red-300">
+              {totalAll - totalActive}
+            </span>
           </div>
         </div>
 

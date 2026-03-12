@@ -642,6 +642,15 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+  }
+  .admin-products-table .p-skeleton {
+    animation: none;
+  }
+}
+
 /* ===== Skeleton Loading ===== */
 .admin-products-table .p-skeleton {
   background: linear-gradient(
@@ -662,7 +671,6 @@
     background-position: 200% 0;
   }
 }
-
 /* ===== Custom Scrollbar — DataTable ===== */
 
 /* Webkit — DataTable body */

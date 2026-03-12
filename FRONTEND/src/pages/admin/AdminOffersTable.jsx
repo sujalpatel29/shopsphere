@@ -57,7 +57,9 @@ function AdminOffersTable({
 
   const maxDiscountBody = (rowData) => (
     <span className="text-[0.875rem] leading-5 font-normal text-gray-700 dark:text-gray-300">
-      Rs {formatNumber(rowData.maximum_discount_amount)}
+      {rowData.maximum_discount_amount != null
+        ? `Rs ${formatNumber(rowData.maximum_discount_amount)}`
+        : "-"}
     </span>
   );
 
@@ -191,9 +193,7 @@ function AdminOffersTable({
         <Column
           field="scope_name"
           header="Product / Category"
-          body={(rowData) => (
-            <span>{rowData.scope_name || "-"}</span>
-          )}
+          body={(rowData) => <span>{rowData.scope_name || "-"}</span>}
           style={{ minWidth: "14rem" }}
           headerClassName={headerClass}
           bodyClassName={bodyClass}
