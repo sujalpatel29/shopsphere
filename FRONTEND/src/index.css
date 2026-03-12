@@ -718,7 +718,11 @@ html:not(.dark)
 /* Keep customer dashboard toast visible above sticky navbar/header. */
 .customer-dashboard-toast.p-toast {
   top: 7.5rem !important;
-  z-index: 13000 !important;
+  z-index: 100000 !important;
+}
+
+.customer-dashboard-toast.p-toast .p-toast-message {
+  z-index: 100001 !important;
 }
 
 @media (max-width: 767px) {
@@ -734,4 +738,208 @@ html:not(.dark)
 body.dashboard-toast-only .p-message,
 body.dashboard-toast-only .p-inline-message {
   display: none !important;
+}
+
+/* Address dialogs themed to match customer dashboard UI. */
+.address-dialog.p-dialog {
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  border-radius: 1rem !important;
+  overflow: hidden !important;
+  box-shadow: 0 24px 48px -28px rgba(15, 23, 42, 0.5) !important;
+}
+
+.address-dialog .p-dialog-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25) !important;
+  background: linear-gradient(135deg, #fff8ee 0%, #f6ecdb 100%) !important;
+  color: #1f2937 !important;
+  padding: 1rem 1.25rem !important;
+}
+
+.address-dialog .p-dialog-title {
+  font-family: "Playfair Display", serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+}
+
+.address-dialog .p-dialog-content {
+  background: #fff8ee !important;
+  color: #1f2937 !important;
+  padding: 1.05rem 1.25rem 1.25rem !important;
+}
+
+.address-dialog .p-dialog-header-icon {
+  color: #334155 !important;
+}
+
+.address-dialog .p-dialog-header-icon:hover {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #b45309 !important;
+}
+
+.address-dialog-form {
+  border-radius: 0.85rem;
+}
+
+.address-dialog-subtitle {
+  margin-top: 0.1rem;
+  line-height: 1.45;
+}
+
+.address-dialog-divider {
+  opacity: 0.6;
+}
+
+.address-dialog .p-float-label label {
+  color: #6b7280 !important;
+  font-size: 0.94rem !important;
+}
+
+.address-dialog .address-dialog-input {
+  background: #ffffff !important;
+  border: 1px solid #d9e1ea !important;
+  color: #1f2937 !important;
+  padding: 0.72rem 0.82rem !important;
+  font-size: 1.03rem !important;
+  box-shadow: none !important;
+}
+
+.address-dialog .address-dialog-input:enabled:focus {
+  border-color: #1d7f75 !important;
+  box-shadow: 0 0 0 3px rgba(29, 127, 117, 0.16) !important;
+}
+
+.address-dialog .address-dialog-textarea {
+  min-height: 5.8rem;
+  resize: vertical;
+}
+
+.address-dialog .p-inputswitch {
+  transform: scale(0.96);
+}
+
+.address-dialog-actions {
+  margin-top: 0.35rem;
+}
+
+.review-dialog .review-dialog-dropdown .p-dropdown-label {
+  padding: 0.72rem 0.82rem !important;
+}
+
+.review-dialog .review-dialog-dropdown .p-dropdown-trigger {
+  color: #64748b !important;
+}
+
+.review-dialog .p-rating .p-rating-icon {
+  color: #cbd5e1;
+}
+
+.review-dialog .p-rating .p-rating-icon.p-rating-icon-active {
+  color: #f59e0b;
+}
+
+.payment-dialog .p-tag {
+  border-radius: 9999px !important;
+  font-size: 0.73rem !important;
+  padding: 0.2rem 0.55rem !important;
+}
+
+.dark .address-dialog.p-dialog {
+  border-color: #2a3441 !important;
+  box-shadow: 0 24px 52px -30px rgba(2, 6, 23, 0.9) !important;
+}
+
+.dark .address-dialog .p-dialog-header {
+  border-bottom-color: #2a3441 !important;
+  background: linear-gradient(135deg, #1a2332 0%, #111a27 100%) !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .address-dialog .p-dialog-content {
+  background: #111a27 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .address-dialog .p-float-label label {
+  color: #94a3b8 !important;
+}
+
+.dark .address-dialog .address-dialog-input {
+  background: #162130 !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .address-dialog .address-dialog-input:enabled:focus {
+  border-color: #5eead4 !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2) !important;
+}
+
+.dark .review-dialog .review-dialog-dropdown .p-dropdown-trigger {
+  color: #94a3b8 !important;
+}
+
+.dark .address-dialog .p-dialog-header-icon {
+  color: #94a3b8 !important;
+}
+
+.dark .address-dialog .p-dialog-header-icon:hover {
+  background: rgba(234, 179, 8, 0.14) !important;
+  color: #facc15 !important;
+}
+
+/* Help & Support layout tune-up for dashboard sidebar alignment. */
+.support-page-shell {
+  width: 100%;
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+}
+
+.support-cards-grid {
+  align-items: stretch;
+}
+
+.support-info-card {
+  min-height: 204px;
+}
+
+.support-faq-shell {
+  overflow: hidden;
+  position: relative;
+  z-index: 0;
+}
+
+.support-faq-item {
+  position: relative;
+  z-index: 0;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.support-faq-item:hover {
+  border-color: rgba(26, 59, 53, 0.25);
+}
+
+.support-faq-button {
+  transition: background-color 180ms ease;
+}
+
+.support-faq-button:hover {
+  background: rgba(26, 59, 53, 0.04);
+}
+
+.dark .support-faq-item:hover {
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.dark .support-faq-button:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+@media (max-width: 1279px) {
+  .support-info-card {
+    min-height: auto;
+  }
 }

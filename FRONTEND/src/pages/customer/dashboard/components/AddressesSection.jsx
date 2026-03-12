@@ -74,22 +74,10 @@ function AddressesSection({
         />
       )}
 
-      {addressFormError && (
-        <Message className="mt-4 w-full" severity="error" text={addressFormError} />
-      )}
-      {addressFormSuccess && (
-        <Message className="mt-4 w-full" severity="success" text={addressFormSuccess} />
-      )}
-      {addressActionError && (
-        <Message className="mt-4 w-full" severity="error" text={addressActionError} />
-      )}
-
       <AddAddressModal
         visible={showAddAddressForm}
         addressForm={addressForm}
         addingAddress={addingAddress}
-        addressFormError={addressFormError}
-        addressActionError={addressActionError}
         onChange={onAddAddressChange}
         onSubmit={onAddAddressSubmit}
         onHide={onToggleAddForm}

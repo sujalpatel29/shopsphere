@@ -23,7 +23,12 @@ function DashboardContent({ currentUser, dashboard, showToast }) {
   useEffect(() => {
     const message = dashboard.error || "";
 
-    if (!message || toastTrackerRef.current.dashboardError === message) {
+    if (!message) {
+      toastTrackerRef.current.dashboardError = "";
+      return;
+    }
+
+    if (toastTrackerRef.current.dashboardError === message) {
       return;
     }
 
@@ -34,7 +39,12 @@ function DashboardContent({ currentUser, dashboard, showToast }) {
   useEffect(() => {
     const message = dashboard.orderItemsError || "";
 
-    if (!message || toastTrackerRef.current.orderItemsError === message) {
+    if (!message) {
+      toastTrackerRef.current.orderItemsError = "";
+      return;
+    }
+
+    if (toastTrackerRef.current.orderItemsError === message) {
       return;
     }
 
@@ -45,7 +55,12 @@ function DashboardContent({ currentUser, dashboard, showToast }) {
   useEffect(() => {
     const message = dashboard.addressFormError || "";
 
-    if (!message || toastTrackerRef.current.addressFormError === message) {
+    if (!message) {
+      toastTrackerRef.current.addressFormError = "";
+      return;
+    }
+
+    if (toastTrackerRef.current.addressFormError === message) {
       return;
     }
 
@@ -56,7 +71,12 @@ function DashboardContent({ currentUser, dashboard, showToast }) {
   useEffect(() => {
     const message = dashboard.addressActionError || "";
 
-    if (!message || toastTrackerRef.current.addressActionError === message) {
+    if (!message) {
+      toastTrackerRef.current.addressActionError = "";
+      return;
+    }
+
+    if (toastTrackerRef.current.addressActionError === message) {
       return;
     }
 
@@ -67,7 +87,12 @@ function DashboardContent({ currentUser, dashboard, showToast }) {
   useEffect(() => {
     const message = dashboard.addressFormSuccess || "";
 
-    if (!message || toastTrackerRef.current.addressSuccess === message) {
+    if (!message) {
+      toastTrackerRef.current.addressSuccess = "";
+      return;
+    }
+
+    if (toastTrackerRef.current.addressSuccess === message) {
       return;
     }
 

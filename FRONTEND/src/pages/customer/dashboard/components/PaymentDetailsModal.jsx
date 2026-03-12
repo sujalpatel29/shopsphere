@@ -1,7 +1,6 @@
 import { Card } from "primereact/card";
 import { Dialog } from "primereact/dialog";
 import { Divider } from "primereact/divider";
-import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
 
@@ -34,13 +33,13 @@ const statusSeverity = (status) => {
   return "secondary";
 };
 
-function PaymentDetailsModal({ error, loading, onHide, payment, visible }) {
+function PaymentDetailsModal({ loading, onHide, payment, visible }) {
   return (
     <Dialog
       header={`Payment Details ${
         payment?.transaction_id ? `| ${payment.transaction_id}` : ""
       }`}
-      className="!overflow-hidden"
+      className="address-dialog payment-dialog !overflow-hidden"
       visible={visible}
       style={{ width: "92vw", maxWidth: "760px" }}
       breakpoints={{ "960px": "94vw", "641px": "96vw" }}
@@ -54,8 +53,6 @@ function PaymentDetailsModal({ error, loading, onHide, payment, visible }) {
             Loading payment details...
           </p>
         </div>
-      ) : error ? (
-        <Message severity="error" text={error} />
       ) : payment ? (
         <Card className="rounded-xl border border-slate-200/80 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -134,7 +131,9 @@ function PaymentDetailsModal({ error, loading, onHide, payment, visible }) {
           </div>
         </Card>
       ) : (
-        <Message severity="info" text="Payment details not available." />
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Payment details not available.
+        </p>
       )}
     </Dialog>
   );

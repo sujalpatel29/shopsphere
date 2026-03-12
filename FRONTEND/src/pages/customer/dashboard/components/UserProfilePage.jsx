@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Avatar } from "primereact/avatar";
 import { Card } from "primereact/card";
 import { Chip } from "primereact/chip";
-import { Divider } from "primereact/divider";
-import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import api from "../../../../../api/api";
 import EditProfileForm from "./EditProfileForm";
@@ -205,9 +203,6 @@ function UserProfilePage({ currentUser, showToast }) {
           </div>
         </div>
       </Card>
-
-      {infoMessage && <Message severity="success" text={infoMessage} className="w-full" />}
-      {errorMessage && <Message severity="error" text={errorMessage} className="w-full" />}
 
       <div className="grid gap-4">
         <EditProfileForm

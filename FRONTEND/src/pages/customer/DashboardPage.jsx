@@ -87,10 +87,8 @@ function DashboardPage() {
       return;
     }
 
-    if (activeTab !== queryTab) {
-      setActiveTab(queryTab);
-    }
-  }, [activeTab, location.search, setActiveTab]);
+    setActiveTab(queryTab);
+  }, [location.search, setActiveTab]);
 
   const handleTabChange = useCallback(
     (nextTab) => {
@@ -165,7 +163,8 @@ function DashboardPage() {
       <Toast
         ref={toastRef}
         position="top-right"
-        baseZIndex={13000}
+        baseZIndex={100000}
+        appendTo={typeof document !== "undefined" ? document.body : undefined}
         className="customer-dashboard-toast"
       />
 
@@ -182,8 +181,6 @@ function DashboardPage() {
         visible={dashboard.editAddressDialogVisible}
         form={dashboard.editAddressForm}
         updating={dashboard.updatingAddress}
-        addressFormError={dashboard.addressFormError}
-        addressActionError={dashboard.addressActionError}
         onHide={dashboard.closeEditAddressDialog}
         onChange={dashboard.handleEditAddressInputChange}
         onSubmit={dashboard.handleUpdateAddress}

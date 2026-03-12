@@ -3,13 +3,11 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Divider } from "primereact/divider";
 import { InputText } from "primereact/inputtext";
-import { Message } from "primereact/message";
 
 function EditProfileForm({ initialValues, loading, onSubmit, onValidationError }) {
   const [form, setForm] = useState({
     name: initialValues?.name || "",
   });
-  const [error, setError] = useState("");
 
   useEffect(() => {
     setForm({
@@ -32,11 +30,9 @@ function EditProfileForm({ initialValues, loading, onSubmit, onValidationError }
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError("");
 
     const validationError = validate();
     if (validationError) {
-      setError(validationError);
       onValidationError?.(validationError);
       return;
     }
@@ -70,8 +66,6 @@ function EditProfileForm({ initialValues, loading, onSubmit, onValidationError }
             className="w-full !rounded-xl !border-slate-300 !bg-slate-100 !px-3 !py-2.5 !text-slate-900 placeholder:!text-slate-500 focus:!border-amber-500 focus:!shadow-none dark:!border-slate-600 dark:!bg-slate-800 dark:!text-slate-100 dark:placeholder:!text-slate-400"
           />
         </div>
-
-        {error && <Message severity="error" text={error} />}
 
         <Button
           type="submit"

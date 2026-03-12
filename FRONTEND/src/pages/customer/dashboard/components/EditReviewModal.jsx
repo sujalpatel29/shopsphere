@@ -6,14 +6,13 @@ import { Dropdown } from "primereact/dropdown";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
-import { Message } from "primereact/message";
 import { Rating } from "primereact/rating";
 
 function EditReviewModal({
-  error,
   mode,
   onHide,
   onSubmit,
+  onValidationError,
   review,
   reviewableProducts,
   saving,
@@ -23,7 +22,6 @@ function EditReviewModal({
   const [title, setTitle] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [productId, setProductId] = useState(null);
-  const [formError, setFormError] = useState("");
 
   const isCreateMode = mode === "create";
 
@@ -37,7 +35,6 @@ function EditReviewModal({
       setTitle("");
       setReviewText("");
       setProductId(reviewableProducts?.[0]?.product_id ?? null);
-      setFormError("");
       return;
     }
 
@@ -45,7 +42,6 @@ function EditReviewModal({
     setTitle(review?.title || "");
     setReviewText(review?.review_text || "");
     setProductId(Number(review?.product_id) || null);
-    setFormError("");
   }, [isCreateMode, review, reviewableProducts, visible]);
 
   const productOptions = useMemo(
@@ -59,15 +55,14 @@ function EditReviewModal({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setFormError("");
 
     if (!rating || Number(rating) < 1) {
-      setFormError("Please select a rating.");
+      onValidationError?.("Please select a rating.");
       return;
     }
 
     if (isCreateMode && !productId) {
-      setFormError("Please select a product.");
+      onValidationError?.("Please select a product.");
       return;
     }
 
@@ -87,15 +82,15 @@ function EditReviewModal({
   return (
     <Dialog
       header={isCreateMode ? "Write Review" : "Edit Review"}
-      className="!overflow-hidden"
+      className="address-dialog review-dialog !overflow-hidden"
       visible={visible}
       style={{ width: "92vw", maxWidth: "760px" }}
       breakpoints={{ "960px": "94vw", "641px": "96vw" }}
       onHide={onHide}
       dismissableMask
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+      <form onSubmit={handleSubmit} className="address-dialog-form review-dialog-form space-y-5">
+        <p className="address-dialog-subtitle text-sm text-slate-500 dark:text-slate-400">
           {isCreateMode
             ? "Share your product experience to help other customers."
             : "Update your review details."}
@@ -109,7 +104,7 @@ function EditReviewModal({
               options={productOptions}
               optionLabel="label"
               optionValue="value"
-              className="w-full !rounded-xl"
+              className="address-dialog-input review-dialog-dropdown w-full !rounded-xl"
               filter
             />
             <label htmlFor="review_product">Product</label>
@@ -130,7 +125,7 @@ function EditReviewModal({
             id="review_title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            className="w-full !rounded-xl"
+            className="address-dialog-input w-full !rounded-xl"
           />
           <label htmlFor="review_title">Review Title</label>
         </FloatLabel>
@@ -140,18 +135,15 @@ function EditReviewModal({
             id="review_text"
             value={reviewText}
             onChange={(event) => setReviewText(event.target.value)}
-            className="w-full !rounded-xl"
+            className="address-dialog-input address-dialog-textarea w-full !rounded-xl"
             rows={4}
           />
           <label htmlFor="review_text">Review Text</label>
         </FloatLabel>
 
-        <Divider className="!my-1" />
+        <Divider className="!my-2 address-dialog-divider" />
 
-        {formError && <Message severity="error" text={formError} />}
-        {error && <Message severity="error" text={error} />}
-
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="address-dialog-actions flex flex-wrap justify-end gap-2 pt-1">
           <Button
             type="button"
             label="Cancel"
@@ -159,7 +151,7 @@ function EditReviewModal({
             outlined
             onClick={onHide}
             disabled={saving}
-            className="!w-full !rounded-xl sm:!w-auto"
+            className="!w-full !rounded-xl !border-slate-300 !text-slate-700 hover:!bg-slate-100 dark:!border-slate-600 dark:!text-slate-200 dark:hover:!bg-slate-800 sm:!w-auto"
           />
           <Button
             type="submit"
@@ -167,7 +159,7 @@ function EditReviewModal({
             icon={isCreateMode ? "pi pi-send" : "pi pi-save"}
             disabled={saving}
             loading={saving}
-            className="!w-full !rounded-xl !bg-amber-500 !px-4 !py-2 !text-sm !font-semibold !text-[#132a29] hover:!bg-amber-400 sm:!w-auto"
+            className="!w-full !rounded-xl !bg-[#1d7f75] !px-5 !py-2.5 !text-sm !font-semibold !text-white hover:!bg-[#17665e] sm:!w-auto"
           />
         </div>
       </form>

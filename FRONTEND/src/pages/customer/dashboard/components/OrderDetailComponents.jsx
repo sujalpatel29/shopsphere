@@ -51,6 +51,7 @@ export default function OrderDetailComponents({
   onClose,
   isDialog = false,
   onOrderStatusChange,
+  showToast,
 }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ export default function OrderDetailComponents({
   const { id } = useParams();
 
   const data = location.state?.data;
-  const { loading, error, orderItems, itemPagination, orders } = useSelector((state) => state.order || {});
+  const { loading, orderItems, itemPagination, orders } = useSelector((state) => state.order || {});
   const { currentUser } = useSelector((state) => state.auth || {});
 
   const resolvedOrderId = orderIdProp || id;
@@ -86,6 +87,14 @@ export default function OrderDetailComponents({
     if (!resolvedOrderId) return;
     dispatch(findOrderItems({ id: resolvedOrderId, page: 1, limit: 5 }));
   }, [resolvedOrderId, dispatch]);
+
+  useEffect(() => {
+    if (!statusError) {
+      return;
+    }
+
+    showToast?.("error", "Error", statusError);
+  }, [showToast, statusError]);
 
   useEffect(() => {
     const currentPage = itemPagination?.currentPage || 1;
@@ -128,6 +137,7 @@ export default function OrderDetailComponents({
       if (onOrderStatusChange) {
         onOrderStatusChange(nextStatus);
       }
+      showToast?.("success", "Success", "Order status updated successfully.");
     } catch (err) {
       setStatusError(
         err?.response?.data?.message || "Unable to update order status.",
@@ -160,6 +170,7 @@ export default function OrderDetailComponents({
       if (onOrderStatusChange) {
         onOrderStatusChange("cancelled");
       }
+      showToast?.("success", "Success", "Order cancelled successfully.");
     } catch (err) {
       setStatusError(
         err?.response?.data?.message || "Unable to cancel this order.",
@@ -192,6 +203,7 @@ export default function OrderDetailComponents({
       if (onOrderStatusChange) {
         onOrderStatusChange("returned");
       }
+      showToast?.("success", "Success", "Return request submitted successfully.");
     } catch (err) {
       setStatusError(
         err?.response?.data?.message || "Unable to return this order.",
@@ -227,17 +239,6 @@ export default function OrderDetailComponents({
 
   return (
     <div className={isDialog ? "" : "orders-page-wrapper animate-fade-in"}>
-      {error && (
-        <div className="order-flow-alert mb-4 border-red-300/70 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
-          {error}
-        </div>
-      )}
-      {statusError && (
-        <div className="order-flow-alert mb-4 border-red-300/70 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
-          {statusError}
-        </div>
-      )}
-
       <section className={`${isDialog ? "mb-4" : "order-flow-hero mb-6"}`}>
         <div className={isDialog ? "flex flex-wrap items-start justify-between gap-3" : "order-flow-hero-content flex flex-wrap items-start justify-between gap-4"}>
           <div>

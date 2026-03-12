@@ -2,7 +2,6 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
 
@@ -54,7 +53,9 @@ function PaymentsTable({ loading, onViewDetails, payments }) {
             Loading payments...
           </div>
         ) : payments.length === 0 ? (
-          <Message severity="info" text="No payment history found." className="w-full" />
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            No payment history found.
+          </div>
         ) : (
           payments.map((row) => (
             <div

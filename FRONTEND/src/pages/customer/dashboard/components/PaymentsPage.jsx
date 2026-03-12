@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Message } from "primereact/message";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../../../../api/api";
 import PaymentDetailsModal from "./PaymentDetailsModal";
 import PaymentsTable from "./PaymentsTable";
@@ -108,24 +107,14 @@ function PaymentsPage({ showToast }) {
     }
   }, []);
 
-  const paymentCount = useMemo(() => payments.length, [payments.length]);
-
   return (
     <div className="space-y-5">
-      <Message
-        severity="info"
-        text={`Total payment records: ${paymentCount}`}
-        className="w-full"
-      />
-      {error && <Message severity="error" text={error} className="w-full" />}
-
       <PaymentsTable payments={payments} loading={loading} onViewDetails={openDetails} />
 
       <PaymentDetailsModal
         visible={detailsVisible}
         payment={selectedPayment}
         loading={detailsLoading}
-        error={detailsError}
         onHide={() => {
           setDetailsVisible(false);
           setDetailsError("");

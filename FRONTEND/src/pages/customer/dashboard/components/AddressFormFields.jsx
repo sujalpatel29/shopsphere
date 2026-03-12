@@ -10,14 +10,14 @@ function AddressFormFields({
 }) {
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         <FloatLabel>
           <InputText
             id="full_name"
             name="full_name"
             value={form.full_name}
             onChange={onChange}
-            className="w-full !rounded-xl"
+            className="address-dialog-input w-full !rounded-xl"
           />
           <label htmlFor="full_name">Full name *</label>
         </FloatLabel>
@@ -27,7 +27,7 @@ function AddressFormFields({
             name="phone"
             value={form.phone}
             onChange={onChange}
-            className="w-full !rounded-xl"
+            className="address-dialog-input w-full !rounded-xl"
           />
           <label htmlFor="phone">Phone (10 digits) *</label>
         </FloatLabel>
@@ -39,7 +39,7 @@ function AddressFormFields({
               value={form.address_line1}
               onChange={onChange}
               rows={2}
-              className="w-full !rounded-xl"
+              className="address-dialog-input address-dialog-textarea w-full !rounded-xl"
             />
             <label htmlFor="address_line1">Address line 1 *</label>
           </FloatLabel>
@@ -52,7 +52,7 @@ function AddressFormFields({
               value={form.address_line2}
               onChange={onChange}
               rows={2}
-              className="w-full !rounded-xl"
+              className="address-dialog-input address-dialog-textarea w-full !rounded-xl"
             />
             <label htmlFor="address_line2">Address line 2 (optional)</label>
           </FloatLabel>
@@ -63,7 +63,7 @@ function AddressFormFields({
             name="city"
             value={form.city}
             onChange={onChange}
-            className="w-full !rounded-xl"
+            className="address-dialog-input w-full !rounded-xl"
           />
           <label htmlFor="city">City *</label>
         </FloatLabel>
@@ -73,7 +73,7 @@ function AddressFormFields({
             name="state"
             value={form.state}
             onChange={onChange}
-            className="w-full !rounded-xl"
+            className="address-dialog-input w-full !rounded-xl"
           />
           <label htmlFor="state">State *</label>
         </FloatLabel>
@@ -83,7 +83,7 @@ function AddressFormFields({
             name="postal_code"
             value={form.postal_code}
             onChange={onChange}
-            className="w-full !rounded-xl"
+            className="address-dialog-input w-full !rounded-xl"
           />
           <label htmlFor="postal_code">Postal code *</label>
         </FloatLabel>
@@ -93,7 +93,7 @@ function AddressFormFields({
             name="country"
             value={form.country}
             onChange={onChange}
-            className="w-full !rounded-xl"
+            className="address-dialog-input w-full !rounded-xl"
           />
           <label htmlFor="country">Country</label>
         </FloatLabel>

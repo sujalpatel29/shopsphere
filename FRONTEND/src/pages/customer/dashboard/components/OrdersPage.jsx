@@ -24,7 +24,7 @@ const formatINR = (value) =>
   }).format(Number(value) || 0);
 
 // component name should be capitalized so React treats it as a component
-export default function OrdersPage() {
+export default function OrdersPage({ showToast }) {
   const dispatch = useDispatch();
   // the reducer is registered under "order" in the store, not "orders".
   // provide a default object to avoid destructure errors when state is undefined.
@@ -66,6 +66,14 @@ export default function OrdersPage() {
       }),
     );
   }, [dispatch, sortField, sortOrder]);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    showToast?.("error", "Error", error);
+  }, [error, showToast]);
 
   useEffect(() => {
     const currentPage = pagination?.currentPage || 1;
@@ -195,11 +203,6 @@ export default function OrdersPage() {
 
   return (
     <div className="orders-page-wrapper animate-fade-in">
-      {error && (
-        <div className="order-flow-alert border-red-300/70 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
-          {error}
-        </div>
-      )}
       <div className="orders-card">
         <DataTable
           value={sortedOrders}
@@ -289,6 +292,7 @@ export default function OrdersPage() {
             orderData={selectedOrder}
             onClose={handleOrderDialogClose}
             isDialog
+            showToast={showToast}
           />
         )}
       </Dialog>

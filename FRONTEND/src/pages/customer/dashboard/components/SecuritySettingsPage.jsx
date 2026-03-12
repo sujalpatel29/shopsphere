@@ -3,7 +3,6 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Divider } from "primereact/divider";
 import { InputText } from "primereact/inputtext";
-import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import api from "../../../../../api/api";
 import ChangePasswordForm from "./ChangePasswordForm";
@@ -319,21 +318,6 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_20px_38px_-30px_rgba(15,23,42,0.85)] dark:border-[#1f2933] dark:bg-[#151e22]">
-        <div className="flex items-center gap-2">
-          <i className="pi pi-shield text-amber-600 dark:text-amber-300" />
-          <h2 className="font-serif text-2xl text-slate-900 dark:text-slate-100">
-            Login & Security
-          </h2>
-        </div>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Change your email with OTP verification and update password securely.
-        </p>
-      </Card>
-
-      {infoMessage && <Message severity="success" text={infoMessage} className="w-full" />}
-      {errorMessage && <Message severity="error" text={errorMessage} className="w-full" />}
-
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_18px_34px_-30px_rgba(15,23,42,0.85)] dark:border-[#1f2933] dark:bg-[#151e22]">
           <div className="flex items-center gap-2">
@@ -372,8 +356,12 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
               </label>
               <InputText
                 id="new_email"
+                name="change_email_new"
                 value={newEmail}
                 onChange={(event) => setNewEmail(event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                autoCapitalize="none"
                 placeholder="Enter new email"
                 className="w-full !rounded-xl !border-slate-300 !bg-slate-100 !px-3 !py-2.5 !text-slate-900 placeholder:!text-slate-500 focus:!border-amber-500 focus:!shadow-none dark:!border-slate-600 dark:!bg-slate-800 dark:!text-slate-100 dark:placeholder:!text-slate-400"
               />
@@ -453,8 +441,12 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
             </label>
             <InputText
               id="delete_account_email"
+              name="delete_account_email"
               value={deleteEmail}
               onChange={(event) => setDeleteEmail(event.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              autoCapitalize="none"
               placeholder="Enter your account email"
               className="w-full !rounded-xl !border-red-200 !bg-white !px-3 !py-2.5 !text-slate-900 placeholder:!text-slate-500 focus:!border-red-400 focus:!shadow-none dark:!border-red-800 dark:!bg-slate-900 dark:!text-slate-100 dark:placeholder:!text-slate-400"
             />

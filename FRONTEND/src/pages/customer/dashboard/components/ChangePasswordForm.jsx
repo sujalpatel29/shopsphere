@@ -3,7 +3,6 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Divider } from "primereact/divider";
 import { Password } from "primereact/password";
-import { Message } from "primereact/message";
 
 function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
   const [form, setForm] = useState({
@@ -11,7 +10,6 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
     newPassword: "",
     confirmPassword: "",
   });
-  const [error, setError] = useState("");
 
   const handleChange = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -39,11 +37,9 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError("");
 
     const validationError = validate();
     if (validationError) {
-      setError(validationError);
       onValidationError?.(validationError);
       return;
     }
@@ -144,9 +140,6 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
             className="w-full [&_.p-inputtext]:!w-full [&_.p-inputtext]:!rounded-xl [&_.p-inputtext]:!border-slate-300 [&_.p-inputtext]:!bg-slate-100 [&_.p-inputtext]:!px-3 [&_.p-inputtext]:!py-2.5 [&_.p-inputtext]:!text-slate-900 [&_.p-inputtext]:placeholder:!text-slate-500 [&_.p-inputtext]:focus:!border-amber-500 [&_.p-inputtext]:focus:!shadow-none dark:[&_.p-inputtext]:!border-slate-600 dark:[&_.p-inputtext]:!bg-slate-800 dark:[&_.p-inputtext]:!text-slate-100 dark:[&_.p-inputtext]:placeholder:!text-slate-400"
           />
         </div>
-
-        {error && <Message severity="error" text={error} />}
-
         <Button
           type="submit"
           label={loading ? "Updating..." : "Update Password"}

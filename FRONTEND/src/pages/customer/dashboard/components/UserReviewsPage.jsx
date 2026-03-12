@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import api from "../../../../../api/api";
 import EditReviewModal from "./EditReviewModal";
@@ -384,15 +383,12 @@ function UserReviewsPage({ showToast }) {
         </div>
       </Card>
 
-      {successMessage && <Message severity="success" text={successMessage} className="w-full" />}
-      {error && <Message severity="error" text={error} className="w-full" />}
-
       {!hasReviews ? (
-        <Message
-          severity="info"
-          text="You have not added any reviews yet."
-          className="w-full"
-        />
+        <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_16px_30px_-26px_rgba(15,23,42,0.8)] dark:border-[#1f2933] dark:bg-[#151e22]">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            You have not added any reviews yet.
+          </p>
+        </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {reviews.map((review) => (
@@ -415,13 +411,13 @@ function UserReviewsPage({ showToast }) {
         review={selectedReview}
         reviewableProducts={reviewableProducts}
         saving={savingReview}
-        error={modalError}
         onHide={() => {
           setModalVisible(false);
           setSelectedReview(null);
           setModalError("");
         }}
         onSubmit={handleSaveReview}
+        onValidationError={setModalError}
       />
     </div>
   );

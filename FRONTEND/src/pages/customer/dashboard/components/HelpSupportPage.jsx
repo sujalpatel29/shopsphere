@@ -39,11 +39,11 @@ function FaqItem({ question, answer }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-white overflow-hidden dark:border-[#1f2933] dark:bg-[#151e22] transition-all">
+    <div className="support-faq-item rounded-xl border border-gray-100 bg-white overflow-hidden dark:border-[#1f2933] dark:bg-[#151e22]">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
+        className="support-faq-button w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
       >
         <span className="text-sm font-medium text-gray-900 dark:text-slate-100">
           {question}
@@ -70,11 +70,11 @@ function HelpSupportPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
+    <div className="support-page-shell space-y-6 min-w-0">
       {/* Contact Us + About Us Cards */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="support-cards-grid grid gap-4 lg:gap-5 xl:grid-cols-2">
         {/* Contact Us */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
+        <div className="support-info-card rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
           <h2 className="font-serif text-xl text-gray-900 dark:text-slate-100">
             Contact Us
           </h2>
@@ -92,7 +92,7 @@ function HelpSupportPage() {
         </div>
 
         {/* About Us */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
+        <div className="support-info-card rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
           <h2 className="font-serif text-xl text-gray-900 dark:text-slate-100">
             About Us
           </h2>
@@ -111,7 +111,7 @@ function HelpSupportPage() {
       </div>
 
       {/* FAQs Section */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
+      <div className="support-faq-shell rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
         <h2 className="font-serif text-xl text-gray-900 dark:text-slate-100">
           FAQs
         </h2>
