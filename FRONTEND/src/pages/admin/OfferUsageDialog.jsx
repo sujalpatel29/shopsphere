@@ -47,6 +47,7 @@ function OfferUsageDialog({
       header={offer ? `Offer Usage - ${offer.offer_name}` : "Offer Usage"}
       visible={visible}
       onHide={onHide}
+      draggable={false}
       style={{ width: "min(64rem, 96vw)" }}
       footer={footer}
       dismissableMask

@@ -19,6 +19,23 @@ const formatNumber = (value) => {
   return Number(value).toLocaleString();
 };
 
+const formatDuration = (startDate, endDate) => {
+  if (!startDate || !endDate) return "-";
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "-";
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const diff = Math.floor((end - start) / msPerDay) + 1;
+  if (diff <= 0) return "-";
+  return `${diff} day${diff > 1 ? "s" : ""}`;
+};
+
+const formatTime = (value, kind) => {
+  if (value) return value;
+  if (kind === "start") return "Not set (starts at beginning of day)";
+  return "Not set (ends at 11:59 PM)";
+};
+
 function OfferViewDialog({ visible, onHide, offer }) {
   const lifecycle = getOfferLifecycleMeta(offer);
 
@@ -33,8 +50,10 @@ function OfferViewDialog({ visible, onHide, offer }) {
     </div>
   );
 
-  const infoItem = (label, value) => (
-    <div className="rounded-xl border border-gray-200 bg-white/60 p-4 dark:border-gray-700 dark:bg-slate-900/40">
+  const infoItem = (label, value, className = "") => (
+    <div
+      className={`rounded-xl border border-gray-200 bg-white/60 p-4 dark:border-gray-700 dark:bg-slate-900/40 ${className}`}
+    >
       <p className="text-xs font-medium uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400">
         {label}
       </p>
@@ -49,6 +68,7 @@ function OfferViewDialog({ visible, onHide, offer }) {
       header={offer ? `Offer Details - ${offer.offer_name}` : "Offer Details"}
       visible={visible}
       onHide={onHide}
+      draggable={false}
       style={{ width: "min(58rem, 95vw)" }}
       footer={footer}
       dismissableMask
@@ -57,7 +77,7 @@ function OfferViewDialog({ visible, onHide, offer }) {
         root: { className: "admin-dialog rounded-2xl overflow-hidden" },
         header: { className: "admin-dialog-header px-6 py-4 border-b" },
         title: { className: "text-xl font-serif text-gray-900 dark:text-slate-100" },
-        content: { className: "p-6 font-sans" },
+        content: { className: "p-6 font-sans admin-offer-view-scroll" },
         footer: { className: "admin-dialog-footer px-6 py-4 border-t rounded-b-2xl" },
       }}
     >
@@ -73,6 +93,12 @@ function OfferViewDialog({ visible, onHide, offer }) {
               />,
             )}
             {infoItem("Offer Name", offer.offer_name || "-")}
+            {infoItem("Product / Category", offer.scope_name || "-")}
+            {infoItem(
+              "Description",
+              offer.description?.trim() || "No description provided.",
+              "md:col-span-2",
+            )}
             {infoItem(
               "Lifecycle",
               <Tag
@@ -108,20 +134,13 @@ function OfferViewDialog({ visible, onHide, offer }) {
               `Rs ${formatNumber(offer.min_purchase_amount)}`,
             )}
             {infoItem("Usage Limit Per User", formatNumber(offer.usage_limit_per_user))}
-            {infoItem("Product / Category", offer.scope_name || "-")}
-            {infoItem("Start Date", formatDate(offer.start_date))}
-            {infoItem("End Date", formatDate(offer.end_date))}
-            {infoItem("Start Time", offer.start_time || "-")}
-            {infoItem("End Time", offer.end_time || "-")}
-          </div>
-
-          <div className="rounded-xl border border-gray-200 bg-white/60 p-4 dark:border-gray-700 dark:bg-slate-900/40">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400">
-              Description
-            </p>
-            <p className="mt-2 text-sm text-gray-800 dark:text-gray-200">
-              {offer.description || "-"}
-            </p>
+            {infoItem("Duration", formatDuration(offer.start_date, offer.end_date))}
+            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {infoItem("Start Date", formatDate(offer.start_date))}
+              {infoItem("End Date", formatDate(offer.end_date))}
+              {infoItem("Start Time", formatTime(offer.start_time, "start"))}
+              {infoItem("End Time", formatTime(offer.end_time, "end"))}
+            </div>
           </div>
         </div>
       ) : null}

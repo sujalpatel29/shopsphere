@@ -28,6 +28,7 @@ function OfferDeleteDialog({ visible, onHide, offer, onConfirm, deleting }) {
       header="Confirm Deletion"
       visible={visible}
       onHide={onHide}
+      draggable={false}
       style={{ width: "400px" }}
       breakpoints={{ "641px": "90vw" }}
       footer={footerContent}

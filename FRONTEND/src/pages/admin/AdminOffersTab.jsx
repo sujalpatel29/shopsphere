@@ -41,7 +41,6 @@ const EMPTY_FORM = {
 
 const REQUIRED_FIELDS = [
   "offer_name",
-  "description",
   "offer_type",
   "discount_type",
   "discount_value",
@@ -54,9 +53,24 @@ const REQUIRED_FIELDS = [
 
 const toInputDate = (value) => {
   if (!value) return "";
+  if (typeof value === "string") {
+    // Keep plain SQL date/date-time strings stable (no timezone conversion).
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+    const sqlDateTime = value.match(/^(\d{4}-\d{2}-\d{2})\s/);
+    if (sqlDateTime) {
+      return sqlDateTime[1];
+    }
+  }
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 const toInputTime = (value) => {
@@ -384,7 +398,6 @@ function AdminOffersTab() {
     const currentTime = getCurrentTimeString();
 
     if (!form.offer_name.trim()) errors.offer_name = "Offer name is required";
-    if (!form.description.trim()) errors.description = "Description is required";
     if (!form.offer_type) errors.offer_type = "Offer type is required";
     if (!form.discount_type) errors.discount_type = "Discount type is required";
     if (!form.start_date) errors.start_date = "Start date is required";
@@ -410,7 +423,14 @@ function AdminOffersTab() {
       errors.maximum_discount_amount = "Maximum discount amount is required";
     }
 
-    if (
+    if (form.offer_type === "product_discount") {
+      if (
+        form.min_purchase_amount !== "" &&
+        (Number.isNaN(minPurchase) || minPurchase < 0)
+      ) {
+        errors.min_purchase_amount = "Min purchase amount must be a valid number";
+      }
+    } else if (
       form.min_purchase_amount === "" ||
       Number.isNaN(minPurchase) ||
       minPurchase < 0
@@ -427,14 +447,15 @@ function AdminOffersTab() {
     }
 
     if (
-      !Number.isNaN(maxDiscount) &&
-      !Number.isNaN(minPurchase) &&
+      form.discount_type === "fixed_amount" &&
       form.maximum_discount_amount !== "" &&
-      form.min_purchase_amount !== "" &&
-      maxDiscount > minPurchase
+      form.discount_value !== "" &&
+      !Number.isNaN(maxDiscount) &&
+      !Number.isNaN(discountValue) &&
+      maxDiscount < discountValue
     ) {
       errors.maximum_discount_amount =
-        "Maximum discount amount cannot be greater than min purchase amount";
+        "Maximum discount amount cannot be less than discount value for fixed amount";
     }
 
     if (form.start_date && form.end_date) {
@@ -444,15 +465,6 @@ function AdminOffersTab() {
       if (startDate > endDate) {
         errors.start_date = "Start date must be before end date";
         errors.end_date = "End date must be after start date";
-      }
-
-      if (form.start_date === form.end_date) {
-        if (!form.start_time) {
-          errors.start_time = "Start time is required for same-day offers";
-        }
-        if (!form.end_time) {
-          errors.end_time = "End time is required for same-day offers";
-        }
       }
     }
 
@@ -464,7 +476,20 @@ function AdminOffersTab() {
       errors.start_time = "Start time cannot be in the past for today";
     }
 
-    if (form.start_time && form.end_time && form.start_time >= form.end_time) {
+    if (form.end_date === today) {
+      if (form.end_time && form.end_time <= currentTime) {
+        errors.end_time = "End time must be in the future for today";
+      }
+    }
+
+    if (
+      form.start_date &&
+      form.end_date &&
+      form.start_date === form.end_date &&
+      form.start_time &&
+      form.end_time &&
+      form.start_time >= form.end_time
+    ) {
       errors.start_time = "Start time must be before end time";
     }
 
@@ -479,23 +504,29 @@ function AdminOffersTab() {
     return errors;
   }, [form]);
 
-  const buildPayload = useCallback(() => ({
-    offer_name: form.offer_name.trim(),
-    description: form.description.trim() || null,
-    offer_type: form.offer_type,
-    discount_type: form.discount_type,
-    discount_value: Number(form.discount_value),
-    maximum_discount_amount: Number(form.maximum_discount_amount),
-    min_purchase_amount:
-      form.min_purchase_amount === "" ? null : Number(form.min_purchase_amount),
-    usage_limit_per_user:
-      form.usage_limit_per_user === "" ? null : Number(form.usage_limit_per_user),
-    start_date: `${form.start_date} 00:00:00`,
-    end_date: `${form.end_date} 23:59:59`,
-    start_time: form.start_time || null,
-    end_time: form.end_time || null,
-    is_active: form.is_active ? 1 : 0,
-  }), [form]);
+  const buildPayload = useCallback(() => {
+    const today = getTodayDateString();
+    const autoStartTime =
+      form.start_date === today && !form.start_time ? getCurrentTimeString() : null;
+
+    return {
+      offer_name: form.offer_name.trim(),
+      description: form.description.trim() || null,
+      offer_type: form.offer_type,
+      discount_type: form.discount_type,
+      discount_value: Number(form.discount_value),
+      maximum_discount_amount: Number(form.maximum_discount_amount),
+      min_purchase_amount:
+        form.min_purchase_amount === "" ? null : Number(form.min_purchase_amount),
+      usage_limit_per_user:
+        form.usage_limit_per_user === "" ? null : Number(form.usage_limit_per_user),
+      start_date: `${form.start_date} 00:00:00`,
+      end_date: `${form.end_date} 23:59:59`,
+      start_time: form.start_time || autoStartTime,
+      end_time: form.end_time || null,
+      is_active: form.is_active ? 1 : 0,
+    };
+  }, [form]);
 
   const handleSave = useCallback(async () => {
     const errors = validateForm();
@@ -543,6 +574,18 @@ function AdminOffersTab() {
               ...mappingPayload,
             });
           }
+        } else {
+          const mappings = await fetchAdminOfferMappingsByOfferId(selectedOffer.offer_id);
+          await Promise.all(
+            (mappings || [])
+              .filter((m) => m?.offer_product_category_id)
+              .map((m) =>
+                updateAdminOfferMapping(m.offer_product_category_id, {
+                  product_id: null,
+                  category_id: null,
+                }),
+              ),
+          );
         }
 
         showToast("success", "Success", "Offer updated successfully");

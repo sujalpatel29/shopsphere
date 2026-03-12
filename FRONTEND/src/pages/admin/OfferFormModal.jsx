@@ -39,6 +39,7 @@ function OfferFormModal({
       header={isEditing ? "Edit Offer" : "Create Offer"}
       visible={visible}
       onHide={onHide}
+      draggable={false}
       style={{ width: "min(56rem, 95vw)" }}
       contentClassName="!pb-3"
       className="admin-dialog"
@@ -69,7 +70,7 @@ function OfferFormModal({
 
         <div className="md:col-span-2">
           <label htmlFor="description" className="block text-sm font-medium mb-1">
-            Description <span className="text-red-500">*</span>
+            Description
           </label>
           <InputTextarea
             id="description"
@@ -237,7 +238,10 @@ function OfferFormModal({
 
         <div>
           <label htmlFor="min_purchase_amount" className="block text-sm font-medium mb-1">
-            Min Purchase Amount <span className="text-red-500">*</span>
+            Min Purchase Amount{" "}
+            {form.offer_type !== "product_discount" && (
+              <span className="text-red-500">*</span>
+            )}
           </label>
           <InputText
             id="min_purchase_amount"
