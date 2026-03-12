@@ -117,7 +117,11 @@ export const reviewModel = {
 };
 
 // Fetch paginated reviews for product with optional filters/sort.
-export const getReviewsByProduct = async (product_id, filters, user_id = null) => {
+export const getReviewsByProduct = async (
+  product_id,
+  filters,
+  user_id = null,
+) => {
   const page = Math.max(1, Number(filters.page || 1));
   const limit = Math.max(1, Math.min(100, Number(filters.limit || 10)));
   const offset = (page - 1) * limit;
@@ -225,7 +229,11 @@ export const getReviewsByProduct = async (product_id, filters, user_id = null) =
         ORDER BY ${sortBy}
         LIMIT ? OFFSET ?
       `;
-      const [fallbackRows] = await pool.query(fallbackQuery, [...whereValues, limit, offset]);
+      const [fallbackRows] = await pool.query(fallbackQuery, [
+        ...whereValues,
+        limit,
+        offset,
+      ]);
       rows = fallbackRows;
     } else {
       throw error;
@@ -275,11 +283,11 @@ export const getProductRatingSummary = async (product_id) => {
   const totalRatings = Number(summary.total_ratings || 0);
 
   const rating_breakdown = {
-    "5": { count: 0, percentage: 0 },
-    "4": { count: 0, percentage: 0 },
-    "3": { count: 0, percentage: 0 },
-    "2": { count: 0, percentage: 0 },
-    "1": { count: 0, percentage: 0 },
+    5: { count: 0, percentage: 0 },
+    4: { count: 0, percentage: 0 },
+    3: { count: 0, percentage: 0 },
+    2: { count: 0, percentage: 0 },
+    1: { count: 0, percentage: 0 },
   };
 
   // Build 1-5 star breakdown with percentage.
@@ -288,7 +296,8 @@ export const getProductRatingSummary = async (product_id) => {
     const count = Number(row.count || 0);
     rating_breakdown[key] = {
       count,
-      percentage: totalRatings > 0 ? Math.round((count / totalRatings) * 100) : 0,
+      percentage:
+        totalRatings > 0 ? Math.round((count / totalRatings) * 100) : 0,
     };
   });
 

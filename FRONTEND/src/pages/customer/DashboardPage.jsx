@@ -1,19 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PanelLeft, PanelLeftClose } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { Toast } from "primereact/toast";
 import { useSelector } from "react-redux";
+import { PanelLeft, PanelLeftClose } from "lucide-react";
+import { useCustomerDashboard } from "./dashboard/useCustomerDashboard";
 import DashboardContent from "./dashboard/components/DashboardContent";
 import DashboardSidebar from "./dashboard/components/DashboardSidebar";
 import EditAddressDialog from "./dashboard/components/EditAddressDialog";
 import OrderDetailsDialog from "./dashboard/components/OrderDetailsDialog";
 import { profileNav } from "./dashboard/constants";
-import { useCustomerDashboard } from "./dashboard/useCustomerDashboard";
+import "../admin/AdminDashboard.css";
 
 function DashboardPage() {
-  const { currentUser } = useSelector((state) => state.auth);
+  const { currentUser } = useSelector((state) => state.auth || {});
   const dashboard = useCustomerDashboard();
+  const { activeTab, setActiveTab } = dashboard;
+  const navigate = useNavigate();
+  const location = useLocation();
   const toastRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
@@ -25,58 +30,72 @@ function DashboardPage() {
   });
 
   const toggleSidebar = useCallback(() => {
-    setSidebarOpen((previous) => {
-      const next = !previous;
-
+    setSidebarOpen((prev) => {
+      const next = !prev;
       try {
         localStorage.setItem("customer-sidebar-open", String(next));
       } catch {
-        // Ignore localStorage failures to keep UI responsive.
+        // no-op
       }
-
       return next;
     });
   }, []);
-
-  const activeLabel = useMemo(
-    () =>
-      profileNav.find((tab) => tab.key === dashboard.activeTab)?.label ||
-      "Dashboard",
-    [dashboard.activeTab],
-  );
 
   const showToast = useCallback((severity, summary, detail) => {
     if (!detail) {
       return;
     }
 
-    toastRef.current?.show({ severity, summary, detail, life: 3000 });
+    toastRef.current?.show({
+      severity,
+      summary,
+      detail,
+      life: 3000,
+    });
   }, []);
 
   useEffect(() => {
-    document.body.classList.add("dashboard-toast-only");
+    const isOrdersPath = location.pathname.startsWith("/dashboard/orders");
 
-    return () => {
-      document.body.classList.remove("dashboard-toast-only");
-    };
-  }, []);
+    if (isOrdersPath) {
+      if (activeTab !== "orders") {
+        setActiveTab("orders");
+      }
+
+      if (location.pathname !== "/dashboard") {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [activeTab, location.pathname, navigate, setActiveTab]);
+
+  const handleTabChange = useCallback(
+    (nextTab) => {
+      setActiveTab(nextTab);
+
+      if (location.pathname !== "/dashboard") {
+        navigate("/dashboard");
+      }
+    },
+    [location.pathname, navigate, setActiveTab],
+  );
+
+  const activeLabel = useMemo(() => {
+    const active = profileNav.find((entry) => entry.key === activeTab);
+    return active?.label || "Profile";
+  }, [activeTab]);
 
   return (
     <div
-      className={`admin-dashboard-grid grid items-start gap-6 p-6 ${
-        sidebarOpen ? "lg:grid-cols-[290px_1fr]" : "lg:grid-cols-1"
-      }`}
+      className={`admin-dashboard-grid grid items-start gap-6 p-6 ${sidebarOpen ? "lg:grid-cols-[290px_1fr]" : "lg:grid-cols-1"}`}
     >
       <DashboardSidebar
-        currentUser={dashboard.profile || currentUser}
-        activeTab={dashboard.activeTab}
-        loading={dashboard.loading}
-        onRefresh={dashboard.loadDashboardData}
-        onTabChange={dashboard.setActiveTab}
+        activeTab={activeTab}
+        currentUser={currentUser}
         sidebarOpen={sidebarOpen}
+        onTabChange={handleTabChange}
       />
 
-      <section className="min-w-[0] min-h-0 h-full">
+      <section className="admin-main-panel min-w-[0] min-h-0 h-full">
         <Card
           className="rounded-2xl border border-gray-100 bg-white pt-6 px-6 pb-1 dark:border-[#1f2933] dark:bg-[#151e22] shadow-sm h-full overflow-hidden"
           pt={{
@@ -108,9 +127,9 @@ function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+          <div className="admin-main-scroll flex-1 min-h-0 overflow-y-auto pr-1">
             <DashboardContent
-              currentUser={dashboard.profile || currentUser}
+              currentUser={currentUser}
               dashboard={dashboard}
               showToast={showToast}
             />

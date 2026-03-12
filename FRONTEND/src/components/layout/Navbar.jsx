@@ -17,6 +17,7 @@ import { Sidebar } from "primereact/sidebar";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
+import { postOrders, fetchOrders,fetchUserAddress } from "../../redux/slices/orderSlice";
 import { useTheme } from "../../context/ThemeContext";
 
 const menuSections = [
@@ -151,7 +152,8 @@ function Navbar() {
               Shop
             </Link>
             <Link
-              to="/"
+              to="/checkout/address"
+              
               className={`relative transition ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
               aria-label="Cart"
             >
@@ -191,7 +193,9 @@ function Navbar() {
 
         <div
           className={`hidden border-t md:block ${
-            darkMode ? "border-[#1f2933] bg-[#1a2327]" : "border-amber-200/70 bg-[#f5ecde]"
+            darkMode
+              ? "border-[#1f2933] bg-[#1a2327]"
+              : "border-amber-200/70 bg-[#f5ecde]"
           }`}
         >
           <nav className="relative mx-auto flex w-full max-w-[1600px] items-center gap-2 overflow-hidden px-4 py-1.5 md:px-8 lg:px-12">
@@ -331,7 +335,9 @@ function Navbar() {
                     {section.items.map((item) => (
                       <Link
                         key={item.label}
-                        to={item.href === "/dashboard" ? dashboardPath : item.href}
+                        to={
+                          item.href === "/dashboard" ? dashboardPath : item.href
+                        }
                         onClick={() => setMenuOpen(false)}
                         className={`flex items-center justify-between rounded-lg px-2 py-2.5 text-sm font-medium transition ${darkMode ? "text-slate-200 hover:bg-[#1a2327] hover:text-amber-300" : "text-gray-700 hover:bg-amber-50/80 hover:text-amber-700"}`}
                       >

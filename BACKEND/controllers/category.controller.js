@@ -476,13 +476,10 @@ export const getAllcategory = async (req, res) => {
       },
       categories,
     );
-
   } catch (error) {
     return serverError(res, error.message);
   }
 };
-
-
 
 /*
 =====================================
@@ -529,7 +526,9 @@ export const getCategoriesByIds = async (req, res) => {
         (positionById.get(Number(b.category_id)) ?? Number.MAX_SAFE_INTEGER),
     );
 
-    const foundIds = new Set(sortedCategories.map((item) => Number(item.category_id)));
+    const foundIds = new Set(
+      sortedCategories.map((item) => Number(item.category_id)),
+    );
     const missingIds = ids.filter((id) => !foundIds.has(id));
 
     return ok(res, "Categories fetched successfully", {

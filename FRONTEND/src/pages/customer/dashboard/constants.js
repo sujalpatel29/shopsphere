@@ -1,8 +1,6 @@
 import {
   CreditCard,
   HelpCircle,
-  Heart,
-  LayoutDashboard,
   MapPin,
   Package,
   Star,
@@ -29,14 +27,12 @@ export const pageHeaderCardClassName =
   "rounded-3xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const profileNav = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "profile", label: "Profile", icon: User },
   { key: "orders", label: "Orders", icon: Package },
   { key: "payments", label: "Payment Methods", icon: CreditCard },
   { key: "addresses", label: "Addresses", icon: MapPin },
   { key: "wallet", label: "Wallet & Offers", icon: WalletCards },
   { key: "reviews", label: "Reviews", icon: Star },
-  { key: "wishlist", label: "Wishlist", icon: Heart },
   { key: "security", label: "Login & Security", icon: Shield },
   { key: "support", label: "Help & Support", icon: HelpCircle },
 ];

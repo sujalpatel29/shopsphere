@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../../api/api";
-import { initialAddressForm } from "./constants";
+import { initialAddressForm, profileNav } from "./constants";
 import {
   buildAddressFormState,
   buildAddressPayload,
@@ -14,8 +14,30 @@ import {
 const normalizeProfilePayload = (payload) =>
   Array.isArray(payload) ? payload[0] : payload;
 
+const DEFAULT_ACTIVE_TAB = "profile";
+const activeTabKeys = new Set(profileNav.map((item) => item.key));
+
+const normalizeActiveTab = (tab) => {
+  if (tab === "dashboard") {
+    return DEFAULT_ACTIVE_TAB;
+  }
+
+  if (!activeTabKeys.has(tab)) {
+    return DEFAULT_ACTIVE_TAB;
+  }
+
+  return tab;
+};
+
 export function useCustomerDashboard() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      const storedTab = localStorage.getItem("customer-dashboard-active-tab");
+      return normalizeActiveTab(storedTab || DEFAULT_ACTIVE_TAB);
+    } catch {
+      return DEFAULT_ACTIVE_TAB;
+    }
+  });
   const [profile, setProfile] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
@@ -101,17 +123,10 @@ export function useCustomerDashboard() {
         return Number(b?.order_id || 0) - Number(a?.order_id || 0);
       });
 
-      const ordersWithCount = await Promise.all(
-        sortedOrders.map(async (order) => {
-          try {
-            const itemsRes = await api.get(`/order-item/${order.order_id}/items`);
-            const items = toArray(extractData(itemsRes));
-            return { ...order, item_count: items.length };
-          } catch {
-            return { ...order, item_count: Number(order?.item_count) || 0 };
-          }
-        }),
-      );
+      const ordersWithCount = sortedOrders.map((order) => ({
+        ...order,
+        item_count: Number(order?.item_count) || 0,
+      }));
 
       setUserOrders(ordersWithCount);
       setDefaultAddressId(await fetchDefaultAddressId(fallbackDefaultId));
@@ -538,6 +553,16 @@ export function useCustomerDashboard() {
   }, [userOrders]);
 
   const recentOrders = useMemo(() => userOrders.slice(0, 5), [userOrders]);
+
+  const setActiveTab = useCallback((nextTab) => {
+    const normalizedTab = normalizeActiveTab(nextTab);
+    setActiveTabState(normalizedTab);
+    try {
+      localStorage.setItem("customer-dashboard-active-tab", normalizedTab);
+    } catch {
+      // no-op
+    }
+  }, []);
 
   return {
     activeTab,

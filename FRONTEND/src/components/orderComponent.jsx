@@ -1,6 +1,7 @@
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchOrders } from "../../../../redux/slices/orderSlice";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { fetchOrders } from "../redux/slices/orderSlice";
+import { useEffect, useState } from "react";
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -24,7 +25,7 @@ const formatINR = (value) =>
   }).format(Number(value) || 0);
 
 // component name should be capitalized so React treats it as a component
-export default function OrdersPage() {
+export default function OrderComponent() {
   const dispatch = useDispatch();
   // the reducer is registered under "order" in the store, not "orders".
   // provide a default object to avoid destructure errors when state is undefined.
@@ -39,24 +40,12 @@ export default function OrdersPage() {
   const { orders, loading, error, pagination } = useSelector(
     (state) => state.order || {},
   );
-  const orderCount = Array.isArray(orders) ? orders.length : 0;
   const [first, setFirst] = useState(0);
   const [sortField, setSortField] = useState(DEFAULT_ORDER_SORT_FIELD);
   const [sortOrder, setSortOrder] = useState(DEFAULT_ORDER_SORT_ORDER);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
-  const skipInitialFetchRef = useRef(
-    sortField === DEFAULT_ORDER_SORT_FIELD &&
-      sortOrder === DEFAULT_ORDER_SORT_ORDER &&
-      orderCount > 0,
-  );
-
   useEffect(() => {
-    if (skipInitialFetchRef.current) {
-      skipInitialFetchRef.current = false;
-      return;
-    }
-
     dispatch(
       fetchOrders({
         page: DEFAULT_ORDER_PAGE,
@@ -101,7 +90,7 @@ export default function OrdersPage() {
     setGlobalValue(value);
   };
   
-  const sortedOrders = useMemo(() => {
+  const sortedOrders = React.useMemo(() => {
     const rows = Array.isArray(orders) ? [...orders] : [];
     const direction = sortOrder === 1 ? 1 : -1;
     
@@ -121,7 +110,7 @@ export default function OrdersPage() {
     });
   }, [orders, sortField, sortOrder]);
 
-  if (loading && !orderCount) {
+  if (loading && !orders.length) {
     return <div className="order-flow-empty">Loading your orders...</div>;
   }
 
@@ -186,7 +175,7 @@ export default function OrdersPage() {
         <div className="order-flow-card-muted min-w-[190px] px-4 py-3 text-left">
           <p className="order-flow-stat-label">Total Orders</p>
           <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-slate-100">
-            {pagination?.totalItems || orderCount || 0}
+            {pagination?.totalItems || orders.length || 0}
           </p>
         </div>
       </div>

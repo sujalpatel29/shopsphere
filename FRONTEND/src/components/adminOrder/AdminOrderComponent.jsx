@@ -1,6 +1,9 @@
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchOrders } from "../../../../redux/slices/orderSlice";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { getAdminOrder } from "../../redux/slices/orderSlice";
+import { useEffect, useState } from "react";
+import OrderDetailComponents from "../OrderDetailComponents";
+
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -8,7 +11,7 @@ import { InputText } from "primereact/inputtext";
 import { FilterMatchMode } from "primereact/api";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
-import OrderDetailComponents from "./OrderDetailComponents";
+// import OrderDetailComponents from "./OrderDetailComponents";
 import { Package } from "lucide-react";
 
 const DEFAULT_ORDER_PAGE = 1;
@@ -24,104 +27,95 @@ const formatINR = (value) =>
   }).format(Number(value) || 0);
 
 // component name should be capitalized so React treats it as a component
-export default function OrdersPage() {
+export default function AdminOrderComponent () {
   const dispatch = useDispatch();
   // the reducer is registered under "order" in the store, not "orders".
   // provide a default object to avoid destructure errors when state is undefined.
   const [globalValue, setGlobalValue] = useState("");
   const [filters, setFilters] = useState({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    customer_name: { value: null, matchMode: FilterMatchMode.CONTAINS },
     order_number: { value: null, matchMode: FilterMatchMode.CONTAINS },
     order_status: { value: null, matchMode: FilterMatchMode.CONTAINS },
     payment_status: { value: null, matchMode: FilterMatchMode.CONTAINS },
     created_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
   });
-  const { orders, loading, error, pagination } = useSelector(
+  const { adminOrders, loading, error, adminPagination  } = useSelector(
     (state) => state.order || {},
   );
-  const orderCount = Array.isArray(orders) ? orders.length : 0;
   const [first, setFirst] = useState(0);
   const [sortField, setSortField] = useState(DEFAULT_ORDER_SORT_FIELD);
   const [sortOrder, setSortOrder] = useState(DEFAULT_ORDER_SORT_ORDER);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
-  const skipInitialFetchRef = useRef(
-    sortField === DEFAULT_ORDER_SORT_FIELD &&
-      sortOrder === DEFAULT_ORDER_SORT_ORDER &&
-      orderCount > 0,
+useEffect(() => {
+  dispatch(
+    getAdminOrder({
+      page: DEFAULT_ORDER_PAGE,
+      limit: DEFAULT_ORDER_ROWS,
+      sortField,
+      sortOrder,
+    }),
   );
+}, [dispatch, sortField, sortOrder]);
 
   useEffect(() => {
-    if (skipInitialFetchRef.current) {
-      skipInitialFetchRef.current = false;
-      return;
-    }
-
-    dispatch(
-      fetchOrders({
-        page: DEFAULT_ORDER_PAGE,
-        limit: DEFAULT_ORDER_ROWS,
-        sortField,
-        sortOrder,
-      }),
-    );
-  }, [dispatch, sortField, sortOrder]);
-
-  useEffect(() => {
-    const currentPage = pagination?.currentPage || 1;
-    const rows = pagination?.itemsPerPage || DEFAULT_ORDER_ROWS;
+    const currentPage = adminPagination?.currentPage || 1;
+    const rows = adminPagination?.itemsPerPage || DEFAULT_ORDER_ROWS;
     setFirst((currentPage - 1) * rows);
-  }, [pagination?.currentPage, pagination?.itemsPerPage]);
+  }, [adminPagination?.currentPage, adminPagination?.itemsPerPage]);
 
   const onPage = (event) => {
     // PrimeReact sometimes doesn't populate `page`; safer to compute from first/rows
     const page = Math.floor(event.first / event.rows) + 1;
     const limit = event.rows;
     setFirst(event.first);
-    dispatch(fetchOrders({ page, limit, sortField, sortOrder }));
+    dispatch(getAdminOrder({ page, limit, sortField, sortOrder }));
   };
 
-  const onSort = (event) => {
-    setSortField(event.sortField || DEFAULT_ORDER_SORT_FIELD);
-    setSortOrder(event.sortOrder || DEFAULT_ORDER_SORT_ORDER);
-    setFirst(0);
+const onSort = (event) => {
+  const nextSortField = event.sortField || DEFAULT_ORDER_SORT_FIELD;
+  const nextSortOrder = event.sortOrder || DEFAULT_ORDER_SORT_ORDER;
+
+  setSortField(nextSortField);
+  setSortOrder(nextSortOrder);
+  setFirst(0);
+};
+
+  const handleAdminOrderStatusChange = (nextStatus) => {
+    setSelectedOrder((prev) =>
+      prev ? { ...prev, order_status: nextStatus } : prev,
+    );
+    dispatch(
+      getAdminOrder({
+        page: adminPagination?.currentPage || 1,
+        limit: adminPagination?.itemsPerPage || DEFAULT_ORDER_ROWS,
+        sortField,
+        sortOrder,
+      }),
+    );
   };
+
+
 
   const handleOrderDialogClose = () => {
     setShowOrderDialog(false);
     setSelectedOrder(null);
   };
-  
+
+
   const onGlobalFilterChange = (e) => {
     const value = e.target.value;
     let _filters = { ...filters };
     _filters["global"].value = value;
-    
+
     setFilters(_filters);
     setGlobalValue(value);
   };
-  
-  const sortedOrders = useMemo(() => {
-    const rows = Array.isArray(orders) ? [...orders] : [];
-    const direction = sortOrder === 1 ? 1 : -1;
-    
-    return rows.sort((a, b) => {
-      const left = a?.[sortField];
-      const right = b?.[sortField];
-      
-      if (sortField === "created_at") {
-        return (new Date(left).getTime() - new Date(right).getTime()) * direction;
-      }
-      
-      if (sortField === "total_amount" || sortField === "order_id") {
-        return ((Number(left) || 0) - (Number(right) || 0)) * direction;
-      }
-      
-      return String(left ?? "").localeCompare(String(right ?? "")) * direction;
-    });
-  }, [orders, sortField, sortOrder]);
 
-  if (loading && !orderCount) {
+  
+
+  if (loading && !adminOrders.length) {
     return <div className="order-flow-empty">Loading your orders...</div>;
   }
 
@@ -186,7 +180,7 @@ export default function OrdersPage() {
         <div className="order-flow-card-muted min-w-[190px] px-4 py-3 text-left">
           <p className="order-flow-stat-label">Total Orders</p>
           <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-slate-100">
-            {pagination?.totalItems || orderCount || 0}
+            {adminPagination?.totalItems || adminOrders.length || 0}
           </p>
         </div>
       </div>
@@ -202,12 +196,12 @@ export default function OrdersPage() {
       )}
       <div className="orders-card">
         <DataTable
-          value={sortedOrders}
+          value={adminOrders}
           lazy
           paginator
           scrollable
           scrollHeight="52vh"
-          rows={pagination?.itemsPerPage || DEFAULT_ORDER_ROWS}
+          rows={adminPagination?.itemsPerPage || DEFAULT_ORDER_ROWS}
           first={first}
           rowsPerPageOptions={[5, 10, 25, 50]}
           responsiveLayout="stack"
@@ -216,7 +210,7 @@ export default function OrdersPage() {
           tableStyle={{ width: "100%" }}
           paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
           currentPageReportTemplate="{first} to {last} of {totalRecords}"
-          totalRecords={pagination?.totalItems || 0}
+          totalRecords={adminPagination?.totalItems || 0}
           onPage={onPage}
           onSort={onSort}
           sortField={sortField}
@@ -231,6 +225,7 @@ export default function OrdersPage() {
           }}
           className="cursor-pointer orders-main-table orders-main-table-scrollable"
           globalFilterFields={[
+            "customer_name",
             "order_number",
             "order_status",
             "payment_status",
@@ -240,6 +235,13 @@ export default function OrdersPage() {
           emptyMessage="No Order found."
         >
           <Column field="order_id" sortable header="ID" />
+
+          <Column
+            field="customer_name"
+            sortable
+            header="Customer Name"
+            body={(row) => row.customer_name || "-"}
+          />
 
           <Column field="order_number" sortable header="Order Number" />
 
@@ -289,6 +291,7 @@ export default function OrdersPage() {
             orderData={selectedOrder}
             onClose={handleOrderDialogClose}
             isDialog
+            onOrderStatusChange={handleAdminOrderStatusChange}
           />
         )}
       </Dialog>

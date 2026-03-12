@@ -8,8 +8,11 @@ import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import HomePage from "../pages/customer/HomePage";
 import DashboardPage from "../pages/customer/DashboardPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
+import OrderSelectAddressComponent from "../components/OrderSelectAddressComponent";
+import OrderPaymentComponent from "../components/orderPaymentComponent";
 import CheckoutPage from "../pages/customer/CheckoutPage";
 import PaymentPage from "../pages/customer/PaymentPage";
+import OrderConfirmationCODComponent from "../components/OrderConfirmationCODComponents";
 
 /** Redirect admin users to their dashboard — prevents admins from browsing customer pages */
 function RedirectIfAdmin({ children }) {
@@ -52,6 +55,11 @@ function AppRoutes() {
       {/* Public Routes with Layout — admin gets redirected to dashboard */}
       <Route element={<RedirectIfAdmin />}>
         <Route element={<AppLayout />}>
+          <Route path="/checkout">
+            <Route path="address" element={<OrderSelectAddressComponent/>} />
+            <Route path="payment" element={<OrderPaymentComponent/>} />
+            <Route path="beforeorderconfirm" element={<OrderConfirmationCODComponent/>} />   
+          </Route>
           <Route path="/" element={<HomePage />} />
         </Route>
       </Route>
@@ -60,7 +68,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         {/* Customer routes with Navbar/Footer */}
         <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard/*" element={<DashboardPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/payment" element={<PaymentPage />} />
         </Route>
