@@ -327,20 +327,23 @@ export const isOfferMappedToScope = async (offerId, productId, categoryId) => {
  */
 export const getOfferUsageByOfferId = async (offerId) => {
   const [result] = await pool.query(
-    `SELECT ou.offer_id,
+    `SELECT ou.offer_usage_id,
+    ou.offer_id,
     om.offer_name,
     om.offer_type,
     om.discount_type,
     om.discount_value,
     ou.user_id,
+    um.name AS username,
     ou.order_id,
     ou.discount_amount,
-    -- ou.usage_count,
-    ou.created_at 
-    FROM offer_usage AS ou 
+    ou.created_at
+    FROM offer_usage AS ou
     LEFT JOIN offer_master AS om
-    ON om.offer_id=ou.offer_id 
-    WHERE ou.offer_id=?`,
+    ON om.offer_id = ou.offer_id
+    LEFT JOIN user_master AS um
+    ON um.user_id = ou.user_id
+    WHERE ou.offer_id = ?`,
     [offerId],
   );
   return result;
@@ -352,20 +355,23 @@ export const getOfferUsageByOfferId = async (offerId) => {
  */
 export const getOfferUsageByUserId = async (userId) => {
   const [result] = await pool.query(
-    `SELECT ou.offer_id,
+    `SELECT ou.offer_usage_id,
+    ou.offer_id,
     om.offer_name,
     om.offer_type,
     om.discount_type,
     om.discount_value,
     ou.user_id,
+    um.name AS username,
     ou.order_id,
     ou.discount_amount,
-    -- ou.usage_count,
-    ou.created_at 
-    FROM offer_usage AS ou 
+    ou.created_at
+    FROM offer_usage AS ou
     LEFT JOIN offer_master AS om
-    ON om.offer_id=ou.offer_id
-    WHERE ou.user_id=?`,
+    ON om.offer_id = ou.offer_id
+    LEFT JOIN user_master AS um
+    ON um.user_id = ou.user_id
+    WHERE ou.user_id = ?`,
     [userId],
   );
   return result;
