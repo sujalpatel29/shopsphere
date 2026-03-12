@@ -87,6 +87,7 @@ function ProductDetailsPage() {
   const { currentUser } = useSelector((state) => state.auth);
   const toastRef = useRef(null);
   const ctaAnchorRef = useRef(null);
+  const bottomSentinelRef = useRef(null);
   const touchStartXRef = useRef(0);
 
   const [loading, setLoading] = useState(true);
@@ -114,6 +115,7 @@ function ProductDetailsPage() {
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [isBottomVisible, setIsBottomVisible] = useState(false);
 
   const showToast = useCallback((severity, summaryText, detail) => {
     toastRef.current?.show({ severity, summary: summaryText, detail, life: 3000 });
@@ -346,6 +348,19 @@ function ProductDetailsPage() {
     return () => observer.disconnect();
   }, [loading]);
 
+  useEffect(() => {
+    const sentinel = bottomSentinelRef.current;
+    if (!sentinel) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsBottomVisible(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loading]);
+
   const handleToggleWishlist = () => {
     const raw = localStorage.getItem(userScopedWishlistKey);
     const ids = raw ? JSON.parse(raw) : [];
@@ -421,6 +436,7 @@ function ProductDetailsPage() {
     const title = product.display_name || product.name;
     const url = window.location.href;
     try {
+      showToast("info", "Link Copied", "Product link copied to clipboard.");
       if (navigator.share) {
         await navigator.share({ title, text: product.short_description || title, url });
       } else if (navigator.clipboard) {
@@ -949,7 +965,9 @@ function ProductDetailsPage() {
         </Card>
       )}
 
-      {showStickyBar && (
+      <div ref={bottomSentinelRef} className="h-1 w-full" aria-hidden="true" />
+
+      {showStickyBar && !isBottomVisible && (
         <div
           className={`fixed bottom-0 left-0 right-0 z-30 border-t px-4 py-3 shadow-lg ${
             darkMode ? "border-[#1f2933] bg-[#151e22]/95" : "border-amber-200 bg-[#fff8ee]/95"
