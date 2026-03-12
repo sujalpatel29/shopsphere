@@ -28,7 +28,7 @@ import {
   updateProductStatus,
   deleteAdminProduct,
 } from "../../../api/adminProductsApi";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 /**
  * AdminProductsTab - Main orchestrator component for product management
@@ -337,3 +337,4 @@ function AdminProductsTab() {
 }
 
 export default AdminProductsTab;
+
