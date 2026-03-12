@@ -63,7 +63,7 @@ const adminNav = [
 
 const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
 const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
-// const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
+const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
 // const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
 
 // Collect all valid tab keys for hash validation
@@ -298,8 +298,6 @@ function AdminDashboardPage() {
               <AdminPortionsTab />
             ) : activeTab === "products-modifiers" ? (
               <AdminModifiersTab />
-            ) : activeTab === "orders" ? (
-              <AdminOrdersTab />
             ) : (
               <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
                 <p className="text-sm text-gray-500 dark:text-gray-400">

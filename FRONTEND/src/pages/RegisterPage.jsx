@@ -12,6 +12,7 @@ function RegisterPage() {
   const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [validationError, setValidationError] = useState("");
+  const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#^()_\-+=])[A-Za-z\d@$!%*?&.#^()_\-+=]{8,}$/;
   const dispatch = useDispatch();
   const { loading, error: authError } = useSelector((state) => state.auth);
   const navigate = useNavigate();
@@ -20,12 +21,21 @@ function RegisterPage() {
     event.preventDefault();
     setValidationError("");
 
+    if (!PASSWORD_REGEX.test(password)) {
+      setValidationError(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+      );
+      return;
+    }
+
     if (password !== confirmPassword) {
       setValidationError("Passwords do not match.");
       return;
     }
 
-    const resultAction = await dispatch(registerUser({ name, email, password }));
+    const resultAction = await dispatch(
+      registerUser({ name, email, password }),
+    );
     if (registerUser.fulfilled.match(resultAction)) {
       navigate("/login");
     }

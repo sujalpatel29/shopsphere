@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CreditCard,
   LayoutDashboard,
@@ -12,10 +12,12 @@ import {
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
+import { Accordion, AccordionTab } from "primereact/accordion";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Tag } from "primereact/tag";
 import { useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const profileNav = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,8 +32,19 @@ const profileNav = [
 ];
 
 function DashboardPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+
+    if (tab && profileNav.some((item) => item.key === tab)) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   const userOrders = useMemo(() => [], []);
 
@@ -70,6 +83,105 @@ function DashboardPage() {
         <Column field="status" header="Status" body={statusTemplate} />
       </DataTable>
     </Card>
+  );
+
+  const ContactUsPanel = () => (
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card
+          className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
+          <h2 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
+            Contact Us
+          </h2>
+          <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
+            Need help with orders, account, or payments? Reach out to our
+            support team.
+          </p>
+          <Button
+            type="button"
+            label="Go To Contact Page"
+            onClick={() => navigate("/info/contact")}
+            className="mt-5 !rounded-xl !bg-amber-600 !px-5 !py-2.5 !text-white !border-none hover:!bg-amber-700"
+          />
+        </Card>
+
+        <Card
+          className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
+          <h2 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
+            About Us
+          </h2>
+          <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
+            Learn more about ShopSphere, our mission, and how we support our
+            customers.
+          </p>
+          <Button
+            type="button"
+            label="Go To About Page"
+            onClick={() => navigate("/info/about")}
+            className="mt-5 !rounded-xl !bg-amber-600 !px-5 !py-2.5 !text-white !border-none hover:!bg-amber-700"
+          />
+        </Card>
+      </div>
+
+      <Card
+        className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]"
+        pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+      >
+        <h2 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
+          FAQs
+        </h2>
+        <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">
+          Quick answers for orders, payments, and returns.
+        </p>
+
+        <Accordion
+          className="mt-4"
+          pt={{
+            root: { className: "space-y-2" },
+            tab: {
+              className:
+                "rounded-xl border border-amber-200/80 bg-white shadow-[0_1px_2px_rgba(2,6,23,0.05)] overflow-hidden dark:!border-[#334155] dark:!bg-[#1e293b]",
+            },
+            headerAction: {
+              className:
+                "bg-transparent px-4 py-3 text-left text-[15px] font-medium text-gray-800 transition hover:bg-amber-50/40 dark:!bg-[#1e293b] dark:!text-slate-100 dark:hover:!bg-[#273549]",
+            },
+            headerTitle: {
+              className: "leading-6 pr-3",
+            },
+            headerIcon: {
+              className: "text-amber-600 dark:text-amber-300 ml-auto text-sm",
+            },
+            content: {
+              className:
+                "border-t border-amber-200/70 bg-[#fffdfa] px-4 py-3 text-sm leading-relaxed text-gray-600 dark:border-[#334155] dark:bg-[#151e22] dark:text-slate-300",
+            },
+          }}
+        >
+          <AccordionTab header="How can I track my order?">
+            You can track your order from Dashboard &gt; Orders. Each order
+            shows its live status and delivery timeline.
+          </AccordionTab>
+          <AccordionTab header="What if my payment failed but amount got deducted?">
+            If your payment was deducted, wait a few minutes for auto
+            reconciliation. If not resolved, contact us with your
+            order/payment reference.
+          </AccordionTab>
+          <AccordionTab header="How do I request a return or replacement?">
+            Open your order in Dashboard &gt; Orders and choose
+            return/replacement if eligible. You can also contact support for
+            help.
+          </AccordionTab>
+          <AccordionTab header="How quickly will support respond?">
+            Our support team usually responds within 24 working hours.
+          </AccordionTab>
+        </Accordion>
+      </Card>
+    </div>
   );
 
   const renderMain = () => {
@@ -158,6 +270,8 @@ function DashboardPage() {
       return renderOrdersTable("Order History");
     }
 
+    if (activeTab === "support") return <ContactUsPanel />;
+
     const contentMap = {
       payments: {
         title: "Payment Methods",
@@ -180,7 +294,7 @@ function DashboardPage() {
         text: "Update password, review active sessions, and secure your account.",
       },
       support: {
-        title: "Help & Support",
+        title: "Contact Us",
         text: "Get order support, raise issues, and contact customer service.",
       },
     };
@@ -263,6 +377,7 @@ function DashboardPage() {
 
         {renderMain()}
       </section>
+
     </div>
   );
 }

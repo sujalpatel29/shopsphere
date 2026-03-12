@@ -54,9 +54,10 @@ export const registerUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Server error"
-      );
+      const data = error.response?.data;
+      const validationMsg =
+        data?.errors?.[0]?.msg || data?.errors?.[0]?.message;
+      return rejectWithValue(validationMsg || data?.message || "Server error");
     }
   }
 );
@@ -99,9 +100,11 @@ const authSlice = createSlice({
       // REGISTER
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(registerUser.fulfilled, (state) => {
         state.loading = false;
+        state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
