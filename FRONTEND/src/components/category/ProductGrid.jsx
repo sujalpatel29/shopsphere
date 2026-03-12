@@ -1,8 +1,11 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "primereact/skeleton";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Paginator } from "primereact/paginator";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
+import { getProductRatingSummariesBulk } from "../../services/categoryApi";
 
 function ProductGrid({
   isLoading,
@@ -12,6 +15,16 @@ function ProductGrid({
   onPageChange,
 }) {
   const navigate = useNavigate();
+  const { darkMode } = useTheme();
+  const [ratingMap, setRatingMap] = useState({});
+  const fetchedRatingsRef = useRef(new Set());
+  const productIds = useMemo(
+    () =>
+      products
+        .map((product) => product.product_id || product.id)
+        .filter(Boolean),
+    [products]
+  );
 
   // NEW FUNCTION (added without modifying existing logic)
   const getDiscountDetails = (product) => {
@@ -28,6 +41,52 @@ function ProductGrid({
       percent,
     };
   };
+
+  const getRatingDetails = (product) => {
+    const id = product.product_id || product.id;
+    return id ? ratingMap[id] : null;
+  };
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!productIds.length) return;
+
+    let isActive = true;
+
+    const fetchRatings = async () => {
+      const pending = productIds.filter(
+        (id) => id && !fetchedRatingsRef.current.has(id)
+      );
+
+      if (!pending.length) return;
+
+      pending.forEach((id) => fetchedRatingsRef.current.add(id));
+
+      try {
+        const response = await getProductRatingSummariesBulk(pending);
+        const payload = response?.data;
+        const summaries = payload?.success ? payload.data : {};
+
+        if (!isActive) return;
+
+        setRatingMap((prev) => {
+          const next = { ...prev };
+          Object.keys(summaries || {}).forEach((id) => {
+            next[id] = summaries[id];
+          });
+          return next;
+        });
+      } catch (error) {
+        // Keep UI resilient if rating fetch fails
+      }
+    };
+
+    fetchRatings();
+
+    return () => {
+      isActive = false;
+    };
+  }, [productIds, isLoading]);
 
   if (isLoading) {
     return (
@@ -50,37 +109,84 @@ function ProductGrid({
   return (
     <div className="category-product-grid space-y-6">
       <div className="category-product-grid-list grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
-        {products.map((product) => (
-          <div className="trace-card" key={product.product_id || product.id}>
-            <Card
-              className="category-product-card trace-card-inner product-card !h-full !rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300"
-              onClick={() => {
-                const id = product.product_id || product.id;
-                if (!id) return;
-                navigate(`/products/${id}`);
-              }}
-            >
+        {products.map((product) => {
+          const discount = getDiscountDetails(product);
+
+          return (
+            <div className="trace-card" key={product.product_id || product.id}>
+              <Card
+                className={`category-product-card trace-card-inner product-card !h-full !rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 ${
+                  darkMode
+                    ? "bg-[#151e22] border border-[#1f2933] text-slate-200"
+                    : "bg-white border border-gray-100 text-gray-800"
+                }`}
+                onClick={() => {
+                  const id = product.product_id || product.id;
+                  if (!id) return;
+                  navigate(`/products/${id}`);
+                }}
+              >
               <div className="flex h-full min-h-[280px] flex-col">
-                <div className="category-product-media product-image-wrap h-32 w-full bg-red-200">
+                <div
+                  className={`category-product-media product-image-wrap relative h-32 w-full overflow-hidden ${
+                    darkMode ? "bg-[#0f161a]" : "bg-gray-100"
+                  }`}
+                >
                   {product.image_url ? (
                     <img
                       src={product.image_url}
                       alt={product.display_name || product.name || "Product"}
-                      className="product-image-el h-full w-full object-cover"
+                      className="product-image-el h-full w-full object-cover transition-transform duration-300 hover:scale-110"
                     />
+                  ) : null}
+                  {discount ? (
+                    <span className="absolute left-2 top-2 rounded-md bg-red-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                      {discount.percent}% OFF
+                    </span>
                   ) : null}
                 </div>
 
                 <div className="product-card-content">
-                  <h4 className="h-10 overflow-hidden text-sm font-semibold leading-5">
+                  <h4
+                    className={`h-10 overflow-hidden text-sm font-semibold leading-5 ${
+                      darkMode ? "text-slate-200" : "text-gray-800"
+                    }`}
+                  >
                     {product.display_name || product.name || "Product"}
                   </h4>
+
+                  {(() => {
+                    const rating = getRatingDetails(product);
+                    const averageRating = Number(rating?.average_rating ?? 0);
+                    const totalRatings = Number(rating?.total_ratings ?? 0);
+                    const filledCount = Math.round(averageRating);
+
+                    return (
+                      <div className="mt-1 flex items-center gap-1 text-xs">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <i
+                            key={index}
+                            className={`pi ${
+                              index < filledCount
+                                ? "pi-star-fill"
+                                : "pi-star"
+                            } text-yellow-400`}
+                          />
+                        ))}
+                        <span
+                          className={`ml-1 ${
+                            darkMode ? "text-slate-400" : "text-gray-500"
+                          }`}
+                        >
+                          ({totalRatings})
+                        </span>
+                      </div>
+                    );
+                  })()}
 
                   {/* UPDATED PRICE SECTION (old logic preserved) */}
                   <div className="mt-1 min-h-[32px]">
                     {(() => {
-                      const discount = getDiscountDetails(product);
-
                       if (!discount) {
                         return (
                           <p className="font-bold text-amber-600">
@@ -97,7 +203,11 @@ function ProductGrid({
                             {discount.discounted.toLocaleString("en-IN")}
                           </p>
 
-                          <p className="text-xs text-gray-400 line-through">
+                          <p
+                            className={`text-xs line-through ${
+                              darkMode ? "text-slate-500" : "text-gray-400"
+                            }`}
+                          >
                             {"\u20B9"}
                             {discount.original.toLocaleString("en-IN")}
                           </p>
@@ -158,7 +268,8 @@ function ProductGrid({
               />
             </svg>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {paginator?.enabled ? (

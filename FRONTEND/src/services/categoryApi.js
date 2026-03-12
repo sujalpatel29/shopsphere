@@ -28,3 +28,9 @@ export const getCategoryProductsPriceRange = (params = {}) =>
 
 export const searchCategoriesByName = (params = {}) =>
   API.get("/api/category", { params });
+
+export const getProductRatingSummary = (productId) =>
+  API.get(`/api/review/product/${productId}/summary`);
+
+export const getProductRatingSummariesBulk = (productIds = []) =>
+  API.post("/api/review/product/summary/bulk", { product_ids: productIds });
