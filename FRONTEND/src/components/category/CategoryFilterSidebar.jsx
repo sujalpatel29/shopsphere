@@ -180,12 +180,12 @@ function CategoryFilterSidebar({
 
   const rangeMax = Math.max(minPrice, maxPrice);
 
-  const mapTreeForPrime = (nodes = []) =>
+  const mapTreeForPrime = (nodes = [],depth = 0) =>
     nodes.map((n) => ({
       key: String(n.category_id),
       label: n.category_name,
       data: n,
-      children: mapTreeForPrime(n.children || []),
+      children: depth < 1 ? mapTreeForPrime(n.children || [], depth + 1) : [],
     }));
 
   const treeNodes = useMemo(

@@ -11,7 +11,7 @@ import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import CheckoutPage from "../pages/customer/CheckoutPage";
 import PaymentPage from "../pages/customer/PaymentPage";
 import CategoryPage from "../pages/customer/categoryPage";
-import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPlaceholder";
+import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPage";
 import ItemsPage from "../pages/customer/ItemsPage";
 
 /** Redirect admin users to their dashboard â€” prevents admins from browsing customer pages */

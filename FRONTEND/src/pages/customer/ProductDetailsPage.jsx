@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 
-function ProductDetailsPlaceholder() {
+function ProductDetailsPage() {
   const { id } = useParams();
 
   return (
@@ -17,4 +17,4 @@ function ProductDetailsPlaceholder() {
   );
 }
 
-export default ProductDetailsPlaceholder;
+export default ProductDetailsPage;
