@@ -17,7 +17,7 @@
 --           (product 39 has portions; product_portion_id must be set).
 --   [Fix 5] order_items row 6: total 1413.46 -> 1213.46
 --           (correct formula: 2x599 - 200 + 215.46 = 1213.46).
---   [Fix 6] order_items row 6: tax 215.46 -> 179.64
+--   [Fix 6] order_items row 6: tax 215.46 -> 179.64  
 --           (18% x (2x599 - 200) = 179.64; total 1213.46 -> 1177.64).
 --   [Fix 7] order_master row 12: subtotal 61999 -> 62498,
 --           tax_amount 11159.82 -> 11249.64, total_amount 73158.82 -> 73747.64
