@@ -5,19 +5,17 @@ import { Divider } from "primereact/divider";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 
-function EditProfileForm({ initialValues, loading, onSubmit }) {
+function EditProfileForm({ initialValues, loading, onSubmit, onValidationError }) {
   const [form, setForm] = useState({
     name: initialValues?.name || "",
-    email: initialValues?.email || "",
   });
   const [error, setError] = useState("");
 
   useEffect(() => {
     setForm({
       name: initialValues?.name || "",
-      email: initialValues?.email || "",
     });
-  }, [initialValues?.email, initialValues?.name]);
+  }, [initialValues?.name]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -25,13 +23,8 @@ function EditProfileForm({ initialValues, loading, onSubmit }) {
   };
 
   const validate = () => {
-    if (!form.name.trim() || !form.email.trim()) {
-      return "Name and email are required.";
-    }
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(form.email.trim())) {
-      return "Please enter a valid email address.";
+    if (!form.name.trim()) {
+      return "Name is required.";
     }
 
     return "";
@@ -44,12 +37,12 @@ function EditProfileForm({ initialValues, loading, onSubmit }) {
     const validationError = validate();
     if (validationError) {
       setError(validationError);
+      onValidationError?.(validationError);
       return;
     }
 
     await onSubmit({
       name: form.name.trim(),
-      email: form.email.trim(),
     });
   };
 
@@ -60,9 +53,7 @@ function EditProfileForm({ initialValues, loading, onSubmit }) {
         <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">Edit Profile</h3>
       </div>
       <Divider className="!my-3" />
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Keep your account information up to date.
-      </p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">Update your display name.</p>
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         <div className="space-y-1.5">
           <label
@@ -75,22 +66,6 @@ function EditProfileForm({ initialValues, loading, onSubmit }) {
             id="profile_name"
             name="name"
             value={form.name}
-            onChange={handleChange}
-            className="w-full !rounded-xl !border-slate-300 !bg-slate-100 !px-3 !py-2.5 !text-slate-900 placeholder:!text-slate-500 focus:!border-amber-500 focus:!shadow-none dark:!border-slate-600 dark:!bg-slate-800 dark:!text-slate-100 dark:placeholder:!text-slate-400"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label
-            htmlFor="profile_email"
-            className="text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Email
-          </label>
-          <InputText
-            id="profile_email"
-            name="email"
-            value={form.email}
             onChange={handleChange}
             className="w-full !rounded-xl !border-slate-300 !bg-slate-100 !px-3 !py-2.5 !text-slate-900 placeholder:!text-slate-500 focus:!border-amber-500 focus:!shadow-none dark:!border-slate-600 dark:!bg-slate-800 dark:!text-slate-100 dark:placeholder:!text-slate-400"
           />

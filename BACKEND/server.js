@@ -1,5 +1,5 @@
 import express from "express";
-import dotenv from "dotenv";
+import "./configs/env.js";
 import categoryRoutes from "./routes/category.routes.js";
 // Import Routes
 import paymentRoutes from "./routes/payments.route.js";
@@ -15,45 +15,30 @@ import cors from 'cors'
 import productRoutes from "./routes/product.route.js";
 import productImageRoutes from "./routes/productImage.route.js";
 
-
-// Load environment variables
-dotenv.config();
-
 // Initialize Express app
 const app = express();
 
-const allowedOrigins = new Set([
+const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-]);
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+];
 
 const corsOptions = {
   origin(origin, callback) {
-    // Allow non-browser tools like Postman/cURL (no origin header)
-    if (!origin) {
-      callback(null, true);
-      return;
+    // Allow non-browser clients (no Origin header), and allowed frontend origins.
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
-
-    if (allowedOrigins.has(origin)) {
-      callback(null, true);
-      return;
-    }
-
-    callback(new Error("CORS origin not allowed"));
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   credentials: true,
-  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 204,
 };
 
-app.use(
-  cors(corsOptions),
-);
-
-// Ensure all routes respond properly to preflight requests.
-app.options(/.*/, cors(corsOptions));
+app.use(cors(corsOptions));
 const port = process.env.PORT || 3000;
 
 // ============================================================================

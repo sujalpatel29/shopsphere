@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { dashboardPlaceholderContent } from "../constants";
 import AddressesSection from "./AddressesSection";
 import DashboardLoadingState from "./DashboardLoadingState";
@@ -5,29 +6,93 @@ import OffersPage from "./OffersPage";
 import OrdersPage from "./OrdersPage";
 import PaymentsPage from "./PaymentsPage";
 import PlaceholderSection from "./PlaceholderSection";
+import SecuritySettingsPage from "./SecuritySettingsPage";
 import UserDashboardHome from "./UserDashboardHome";
 import UserProfilePage from "./UserProfilePage";
 import UserReviewsPage from "./UserReviewsPage";
 
-function DashboardContent({ currentUser, dashboard }) {
+function DashboardContent({ currentUser, dashboard, showToast }) {
+  const toastTrackerRef = useRef({
+    dashboardError: "",
+    orderItemsError: "",
+    addressFormError: "",
+    addressActionError: "",
+    addressSuccess: "",
+  });
+
+  useEffect(() => {
+    const message = dashboard.error || "";
+
+    if (!message || toastTrackerRef.current.dashboardError === message) {
+      return;
+    }
+
+    toastTrackerRef.current.dashboardError = message;
+    showToast?.("error", "Error", message);
+  }, [dashboard.error, showToast]);
+
+  useEffect(() => {
+    const message = dashboard.orderItemsError || "";
+
+    if (!message || toastTrackerRef.current.orderItemsError === message) {
+      return;
+    }
+
+    toastTrackerRef.current.orderItemsError = message;
+    showToast?.("error", "Error", message);
+  }, [dashboard.orderItemsError, showToast]);
+
+  useEffect(() => {
+    const message = dashboard.addressFormError || "";
+
+    if (!message || toastTrackerRef.current.addressFormError === message) {
+      return;
+    }
+
+    toastTrackerRef.current.addressFormError = message;
+    showToast?.("error", "Error", message);
+  }, [dashboard.addressFormError, showToast]);
+
+  useEffect(() => {
+    const message = dashboard.addressActionError || "";
+
+    if (!message || toastTrackerRef.current.addressActionError === message) {
+      return;
+    }
+
+    toastTrackerRef.current.addressActionError = message;
+    showToast?.("error", "Error", message);
+  }, [dashboard.addressActionError, showToast]);
+
+  useEffect(() => {
+    const message = dashboard.addressFormSuccess || "";
+
+    if (!message || toastTrackerRef.current.addressSuccess === message) {
+      return;
+    }
+
+    toastTrackerRef.current.addressSuccess = message;
+    showToast?.("success", "Success", message);
+  }, [dashboard.addressFormSuccess, showToast]);
+
   if (dashboard.loading) {
     return <DashboardLoadingState />;
   }
 
   if (dashboard.activeTab === "dashboard") {
-    return <UserDashboardHome />;
+    return <UserDashboardHome showToast={showToast} />;
   }
 
   if (dashboard.activeTab === "profile") {
-    return <UserProfilePage currentUser={currentUser} />;
+    return <UserProfilePage currentUser={currentUser} showToast={showToast} />;
   }
 
   if (dashboard.activeTab === "orders") {
-    return <OrdersPage />;
+    return <OrdersPage showToast={showToast} />;
   }
 
   if (dashboard.activeTab === "payments") {
-    return <PaymentsPage />;
+    return <PaymentsPage showToast={showToast} />;
   }
 
   if (dashboard.activeTab === "addresses") {
@@ -55,11 +120,21 @@ function DashboardContent({ currentUser, dashboard }) {
   }
 
   if (dashboard.activeTab === "reviews") {
-    return <UserReviewsPage />;
+    return <UserReviewsPage showToast={showToast} />;
   }
 
   if (dashboard.activeTab === "wallet") {
-    return <OffersPage />;
+    return <OffersPage showToast={showToast} />;
+  }
+
+  if (dashboard.activeTab === "security") {
+    return (
+      <SecuritySettingsPage
+        currentUser={currentUser}
+        onProfileRefresh={dashboard.loadDashboardData}
+        showToast={showToast}
+      />
+    );
   }
 
   const activeContent = dashboardPlaceholderContent[dashboard.activeTab];

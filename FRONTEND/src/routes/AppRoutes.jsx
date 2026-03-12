@@ -4,6 +4,7 @@ import AppLayout from "../components/layout/AppLayout";
 import AdminLayout from "../components/layout/AdminLayout";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import HomePage from "../pages/customer/HomePage";
 import DashboardPage from "../pages/customer/DashboardPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
@@ -39,6 +40,14 @@ function AppRoutes() {
       {/* Login / Register — redirect admin to dashboard if already logged in */}
       <Route path="/login" element={<RedirectIfAdmin><LoginPage /></RedirectIfAdmin>} />
       <Route path="/register" element={<RedirectIfAdmin><RegisterPage /></RedirectIfAdmin>} />
+      <Route
+        path="/forgot-password"
+        element={
+          <RedirectIfAdmin>
+            <ForgotPasswordPage />
+          </RedirectIfAdmin>
+        }
+      />
 
       {/* Public Routes with Layout — admin gets redirected to dashboard */}
       <Route element={<RedirectIfAdmin />}>
@@ -71,6 +80,3 @@ function AppRoutes() {
 }
 
 export default AppRoutes;
-
-
-

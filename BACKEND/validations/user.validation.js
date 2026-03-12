@@ -15,6 +15,64 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+/* ================= OTP FLOWS ================= */
+
+export const registerOtpRequestSchema = registerSchema;
+
+export const registerOtpVerifySchema = z.object({
+  otp: z.string().regex(/^\d{6}$/, "OTP must be 6 digits"),
+  otpToken: z.string().min(1, "otpToken is required"),
+});
+
+export const forgotPasswordOtpRequestSchema = z.object({
+  email: z.string().email("Invalid email"),
+});
+
+export const forgotPasswordOtpVerifySchema = z.object({
+  email: z.string().email("Invalid email"),
+  otp: z.string().regex(/^\d{6}$/, "OTP must be 6 digits"),
+  otpToken: z.string().min(1, "otpToken is required"),
+});
+
+export const emailChangeOtpRequestSchema = z.object({
+  newEmail: z.string().email("Invalid email"),
+});
+
+export const emailChangeOtpVerifySchema = z.object({
+  newEmail: z.string().email("Invalid email"),
+  otp: z.string().regex(/^\d{6}$/, "OTP must be 6 digits"),
+  otpToken: z.string().min(1, "otpToken is required"),
+});
+
+export const deleteAccountOtpRequestSchema = z.object({
+  email: z.string().email("Invalid email"),
+});
+
+export const deleteAccountOtpVerifySchema = z.object({
+  email: z.string().email("Invalid email"),
+  otp: z.string().regex(/^\d{6}$/, "OTP must be 6 digits"),
+  otpToken: z.string().min(1, "otpToken is required"),
+});
+
+export const resetPasswordWithTokenSchema = z
+  .object({
+    resetToken: z.string().min(1, "resetToken is required"),
+    newPassword: z.string().min(8, "New password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "confirmPassword is required"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+/* ================= ADMIN CREATE USER ================= */
+
+export const adminCreateUserSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().min(1, "Email is required").email("Invalid email format"),
+  role: z.enum(["admin", "customer"]).optional(),
+});
+
 /* ================= UPDATE PROFILE ================= */
 
 export const updateProfileSchema = z

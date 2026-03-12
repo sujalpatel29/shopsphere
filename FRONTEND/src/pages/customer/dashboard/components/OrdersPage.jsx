@@ -31,7 +31,7 @@ const escapeHtml = (value) =>
     return map[match] || match;
   });
 
-function OrdersPage() {
+function OrdersPage({ showToast }) {
   const productImageCacheRef = useRef(new Map());
 
   const [orders, setOrders] = useState([]);
@@ -181,6 +181,30 @@ function OrdersPage() {
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  useEffect(() => {
+    if (!successMessage) {
+      return;
+    }
+
+    showToast?.("success", "Success", successMessage);
+  }, [showToast, successMessage]);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    showToast?.("error", "Error", error);
+  }, [error, showToast]);
+
+  useEffect(() => {
+    if (!detailsError) {
+      return;
+    }
+
+    showToast?.("error", "Error", detailsError);
+  }, [detailsError, showToast]);
 
   const loadOrderDetails = useCallback(async (order) => {
     const orderId = Number(order?.order_id);

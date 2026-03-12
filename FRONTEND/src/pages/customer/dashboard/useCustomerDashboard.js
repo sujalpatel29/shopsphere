@@ -207,9 +207,17 @@ export function useCustomerDashboard() {
     } catch (patchError) {
       const patchMessage = extractErrorMessage(patchError, "");
       const patchMessageText = String(patchMessage).toLowerCase();
+      const patchErrorText = String(patchError?.message || "").toLowerCase();
+      const patchStatus = patchError?.response?.status;
+      const isNetworkLevelFailure =
+        !patchError?.response &&
+        (patchErrorText.includes("network") ||
+          patchErrorText.includes("cors") ||
+          patchErrorText.includes("failed"));
       const shouldFallbackToPost =
-        patchError?.response?.status === 405 ||
-        (patchError?.response?.status === 404 &&
+        isNetworkLevelFailure ||
+        patchStatus === 405 ||
+        (patchStatus === 404 &&
           (patchMessageText.includes("route") ||
             patchMessageText.includes("method")));
 

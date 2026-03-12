@@ -163,7 +163,7 @@ export const AllOrder = async (req, res) => {
     const userId = req.user.id;
     const orders = await getAllOrder(userId);
     if (orders.length == 0) {
-      return notFound(res, "Orders not found")
+      return ok(res, "No orders found", []);
     }
     return ok(res, "Orders found Successfully", orders)
   } catch (error) {

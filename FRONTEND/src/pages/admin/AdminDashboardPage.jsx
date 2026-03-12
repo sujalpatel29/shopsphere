@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { logout } from "../../redux/slices/authSlice";
+import { logoutUser } from "../../redux/slices/authSlice";
 import { useTheme } from "../../context/ThemeContext";
 import "./AdminDashboard.css";
 
@@ -64,7 +64,8 @@ const adminNav = [
 const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
 const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
 const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
-// const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
+const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
+const AdminUsersTab = lazy(() => import("./AdminUsersTab"));
 
 // Collect all valid tab keys for hash validation
 const validTabKeys = new Set(
@@ -130,7 +131,7 @@ function AdminDashboardPage() {
   }, []);
 
   const handleLogout = useCallback(() => {
-    dispatch(logout());
+    dispatch(logoutUser());
     navigate("/login");
   }, [dispatch, navigate]);
 
@@ -292,7 +293,9 @@ function AdminDashboardPage() {
           </div>
 
           <Suspense fallback={<TabLoader />}>
-            {activeTab === "products-list" ? (
+            {activeTab === "users" ? (
+              <AdminUsersTab />
+            ) : activeTab === "products-list" ? (
               <AdminProductsTab />
             ) : activeTab === "products-portions" ? (
               <AdminPortionsTab />

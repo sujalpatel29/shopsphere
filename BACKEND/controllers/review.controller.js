@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import "../configs/env.js";
 import {
   badRequest,
   conflict,
@@ -18,8 +18,6 @@ import {
   toggleHelpful,
   updateReview,
 } from "../models/review.model.js";
-
-dotenv.config();
 
 // Normalize user id from JWT payload formats.
 const resolveAuthUserId = (req) => {

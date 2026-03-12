@@ -43,7 +43,7 @@ function OfferCardSkeleton() {
   );
 }
 
-function OffersPage() {
+function OffersPage({ showToast }) {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -71,6 +71,22 @@ function OffersPage() {
   useEffect(() => {
     loadOffers();
   }, [loadOffers]);
+
+  useEffect(() => {
+    if (!successMessage) {
+      return;
+    }
+
+    showToast?.("success", "Success", successMessage);
+  }, [showToast, successMessage]);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    showToast?.("error", "Error", error);
+  }, [error, showToast]);
 
   const handleApplyOffer = useCallback(async (offer) => {
     const offerName = offer?.offer_name;

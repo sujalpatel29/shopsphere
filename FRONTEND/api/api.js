@@ -32,24 +32,23 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (!refreshToken) {
-          throw new Error("Refresh token missing");
+        const storedRefreshToken = localStorage.getItem("refreshToken");
+        if (!storedRefreshToken) {
+          throw new Error("No refresh token available");
         }
 
-        const res = await api.post("/users/refresh-token", { refreshToken });
+        const res = await api.post("/users/refresh-token", {
+          refreshToken: storedRefreshToken,
+        });
 
-        const newAccessToken =
-          res?.data?.data?.accessToken || res?.data?.accessToken;
+        const newAccessToken = res.data?.data?.accessToken;
         if (!newAccessToken) {
-          throw new Error("Access token refresh failed");
+          throw new Error("Refresh endpoint did not return access token");
         }
 
         localStorage.setItem("token", newAccessToken);
 
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization =
-          "Bearer " + newAccessToken;
+        originalRequest.headers.Authorization = "Bearer " + newAccessToken;
 
         return api(originalRequest);
       } catch (refreshError) {
@@ -65,7 +64,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

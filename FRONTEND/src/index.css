@@ -192,3 +192,201 @@ html:not(.dark)
   background: #1f2933 !important;
   color: #e2e8f0 !important;
 }
+
+/* Admin users table */
+.admin-user-table-wrap {
+  border: 1px solid #e6d9c2;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fffaf1;
+}
+
+.admin-user-table .p-datatable-header {
+  background: #f8efdf !important;
+  border: 0 !important;
+  border-bottom: 1px solid #eadcc6 !important;
+  padding: 1rem !important;
+}
+
+.admin-user-table .p-datatable-thead > tr > th {
+  background: #fffaf1 !important;
+  border-color: #eadcc6 !important;
+  color: #334155 !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.85rem 0.9rem;
+}
+
+.admin-user-table .p-datatable-tbody > tr > td {
+  border-color: #f1e7d7 !important;
+  padding: 0.85rem 0.9rem;
+  background: #fffdf8 !important;
+}
+
+.admin-user-table .p-datatable-tbody > tr:hover > td {
+  background: #fff6e7 !important;
+}
+
+.admin-user-table .p-paginator {
+  background: #fffaf1 !important;
+  border: 0 !important;
+  border-top: 1px solid #eadcc6 !important;
+  padding: 0.65rem 0.9rem;
+}
+
+.admin-table-toolbar .p-button.p-button-outlined {
+  border-color: #d8c4a0 !important;
+  color: #5c4427 !important;
+  height: 2.75rem;
+  border-radius: 10px !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-table-toolbar .p-button.p-button-outlined:hover {
+  background: #ffefd3 !important;
+  border-color: #c9a976 !important;
+}
+
+.admin-toolbar-select {
+  min-width: 8.5rem;
+}
+
+.admin-toolbar-select.p-dropdown {
+  border: 1px solid #d6c7ae !important;
+  border-radius: 10px !important;
+  background: #fff9f0 !important;
+  height: 2.75rem;
+}
+
+.admin-toolbar-select .p-dropdown-label {
+  line-height: 2.75rem !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  color: #1f2937 !important;
+}
+
+.admin-search {
+  display: block;
+  position: relative;
+}
+
+.admin-search .p-inputtext {
+  width: 100%;
+  height: 2.75rem;
+  border: 1px solid #d6c7ae !important;
+  background: #fff9f0 !important;
+  border-radius: 10px !important;
+  color: #1f2937 !important;
+  padding-left: 2rem !important;
+}
+
+.admin-search .pi {
+  color: #6b7280;
+  left: 0.65rem !important;
+  top: 50% !important;
+  transform: translateY(-50%);
+  margin-top: 0 !important;
+}
+
+.admin-badge {
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  line-height: 1 !important;
+  padding: 0.35rem 0.55rem !important;
+  border: none !important;
+  font-weight: 600 !important;
+}
+
+.admin-badge--role {
+  background: #d9ecff !important;
+  color: #0f5f99 !important;
+}
+
+.admin-badge--active {
+  background: #d6f5df !important;
+  color: #146c3b !important;
+}
+
+.admin-badge--blocked {
+  background: #fde2e2 !important;
+  color: #b42318 !important;
+}
+
+.dark .admin-user-table-wrap {
+  background: #10181d;
+  border-color: #2a3945;
+}
+
+.dark .admin-user-table .p-datatable-header {
+  background: #162126 !important;
+  border-bottom-color: #2a3945 !important;
+}
+
+.dark .admin-user-table .p-datatable-thead > tr > th {
+  background: #121b20 !important;
+  border-color: #2a3945 !important;
+  color: #d7e1ea !important;
+}
+
+.dark .admin-user-table .p-datatable-tbody > tr > td {
+  border-color: #2a3945 !important;
+  background: #151f24 !important;
+  color: #d7e1ea !important;
+}
+
+.dark .admin-user-table .p-datatable-tbody > tr:hover > td {
+  background: #1b2830 !important;
+}
+
+.dark .admin-user-table .p-paginator {
+  background: #121b20 !important;
+  border-top-color: #2a3945 !important;
+}
+
+.dark .admin-toolbar-select.p-dropdown {
+  background: #1a262d !important;
+  border-color: #32424f !important;
+}
+
+.dark .admin-toolbar-select .p-dropdown-label,
+.dark .admin-toolbar-select .p-dropdown-trigger {
+  color: #dbe4ed !important;
+}
+
+.dark .admin-search .p-inputtext {
+  background: #1a262d !important;
+  border-color: #32424f !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .admin-table-toolbar .p-button.p-button-outlined {
+  border-color: #476179 !important;
+  color: #c6d4e1 !important;
+}
+
+.dark .admin-table-toolbar .p-button.p-button-outlined:hover {
+  background: #20313d !important;
+  border-color: #5d7790 !important;
+}
+
+/* Keep customer dashboard toast visible above sticky navbar/header. */
+.customer-dashboard-toast.p-toast {
+  top: 7.5rem !important;
+  z-index: 13000 !important;
+}
+
+@media (max-width: 767px) {
+  .customer-dashboard-toast.p-toast {
+    top: 10rem !important;
+    right: 0.75rem !important;
+    left: 0.75rem !important;
+    width: auto !important;
+  }
+}
+
+/* Dashboard should use toast-only notifications (hide inline Message boxes). */
+body.dashboard-toast-only .p-message,
+body.dashboard-toast-only .p-inline-message {
+  display: none !important;
+}

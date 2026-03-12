@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Avatar } from "primereact/avatar";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Chip } from "primereact/chip";
 import { Divider } from "primereact/divider";
 import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import api from "../../../../../api/api";
-import ChangePasswordForm from "./ChangePasswordForm";
-import DeleteAccountModal from "./DeleteAccountModal";
 import EditProfileForm from "./EditProfileForm";
 
 const extractData = (response) => response?.data?.data ?? null;
@@ -72,15 +69,12 @@ function ProfileInfoTile({ icon, label, value }) {
   );
 }
 
-function UserProfilePage({ currentUser }) {
+function UserProfilePage({ currentUser, showToast }) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [infoMessage, setInfoMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [updatingProfile, setUpdatingProfile] = useState(false);
-  const [updatingPassword, setUpdatingPassword] = useState(false);
-  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -106,6 +100,22 @@ function UserProfilePage({ currentUser }) {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (!infoMessage) {
+      return;
+    }
+
+    showToast?.("success", "Success", infoMessage);
+  }, [infoMessage, showToast]);
+
+  useEffect(() => {
+    if (!errorMessage) {
+      return;
+    }
+
+    showToast?.("error", "Error", errorMessage);
+  }, [errorMessage, showToast]);
 
   const profileSummary = useMemo(
     () => ({
@@ -143,47 +153,6 @@ function UserProfilePage({ currentUser }) {
     },
     [loadProfile],
   );
-
-  const handlePasswordUpdate = useCallback(async (payload) => {
-    setUpdatingPassword(true);
-    setInfoMessage("");
-    setErrorMessage("");
-
-    try {
-      const response = await api.patch("/users/update-password", payload);
-      setInfoMessage(extractMessage(response, "Password updated successfully."));
-      return true;
-    } catch (error) {
-      setErrorMessage(extractErrorMessage(error, "Failed to update password."));
-      return false;
-    } finally {
-      setUpdatingPassword(false);
-    }
-  }, []);
-
-  const handleDeleteAccount = useCallback(async () => {
-    setDeletingAccount(true);
-    setInfoMessage("");
-    setErrorMessage("");
-
-    try {
-      const response = await api.delete("/users/delete");
-      setDeleteDialogVisible(false);
-      setInfoMessage(extractMessage(response, "Account deleted successfully."));
-
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("currentUser");
-
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 900);
-    } catch (error) {
-      setErrorMessage(extractErrorMessage(error, "Failed to delete account."));
-    } finally {
-      setDeletingAccount(false);
-    }
-  }, []);
 
   if (loading) {
     return (
@@ -240,47 +209,16 @@ function UserProfilePage({ currentUser }) {
       {infoMessage && <Message severity="success" text={infoMessage} className="w-full" />}
       {errorMessage && <Message severity="error" text={errorMessage} className="w-full" />}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4">
         <EditProfileForm
           initialValues={{
             name: profileSummary.name === "-" ? "" : profileSummary.name,
-            email: profileSummary.email === "-" ? "" : profileSummary.email,
           }}
           loading={updatingProfile}
           onSubmit={handleProfileUpdate}
-        />
-
-        <ChangePasswordForm
-          loading={updatingPassword}
-          onSubmit={handlePasswordUpdate}
+          onValidationError={setErrorMessage}
         />
       </div>
-
-      <Card className="rounded-2xl border border-red-200/90 bg-red-50 p-6 shadow-[0_18px_34px_-30px_rgba(127,29,29,0.7)] dark:border-red-900 dark:bg-red-950/30">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="font-serif text-xl text-red-700 dark:text-red-300">Delete Account</h3>
-          <i className="pi pi-exclamation-triangle text-red-600 dark:text-red-300" />
-        </div>
-        <Divider className="!my-3" />
-        <p className="text-sm text-red-700/90 dark:text-red-200">
-          Permanently remove your account and personal data from the platform.
-        </p>
-        <Button
-          type="button"
-          label="Delete My Account"
-          icon="pi pi-trash"
-          severity="danger"
-          className="!mt-4 !w-full !rounded-xl !px-4 !py-2 !font-semibold sm:!w-auto"
-          onClick={() => setDeleteDialogVisible(true)}
-        />
-      </Card>
-
-      <DeleteAccountModal
-        visible={deleteDialogVisible}
-        loading={deletingAccount}
-        onHide={() => setDeleteDialogVisible(false)}
-        onConfirm={handleDeleteAccount}
-      />
     </div>
   );
 }

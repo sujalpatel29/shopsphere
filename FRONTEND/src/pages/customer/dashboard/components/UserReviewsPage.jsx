@@ -27,7 +27,7 @@ const normalizeProfilePayload = (payload) =>
 
 const normalizeName = (value) => String(value || "").trim().toLowerCase();
 
-function UserReviewsPage() {
+function UserReviewsPage({ showToast }) {
   const { currentUser } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -196,6 +196,30 @@ function UserReviewsPage() {
     loadReviews();
   }, [loadReviews]);
 
+  useEffect(() => {
+    if (!successMessage) {
+      return;
+    }
+
+    showToast?.("success", "Success", successMessage);
+  }, [showToast, successMessage]);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    showToast?.("error", "Error", error);
+  }, [error, showToast]);
+
+  useEffect(() => {
+    if (!modalError) {
+      return;
+    }
+
+    showToast?.("error", "Error", modalError);
+  }, [modalError, showToast]);
+
   const openEditModal = useCallback((review) => {
     setModalMode("edit");
     setSelectedReview(review);
@@ -300,6 +324,11 @@ function UserReviewsPage() {
       const payload = extractData(response);
       const action = payload?.action || "";
       const helpfulCount = Number(payload?.helpful_count) || 0;
+      setSuccessMessage(
+        action === "liked"
+          ? "Review marked as helpful."
+          : "Helpful mark removed successfully.",
+      );
 
       setReviews((prev) =>
         prev.map((item) =>

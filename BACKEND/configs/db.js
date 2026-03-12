@@ -1,7 +1,5 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-
-dotenv.config();
+import "./env.js";
 
 const dbPort = Number.parseInt(process.env.DB_PORT, 10) || 3306;
 

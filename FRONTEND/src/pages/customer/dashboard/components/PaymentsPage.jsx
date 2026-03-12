@@ -15,7 +15,7 @@ const extractErrorMessage = (apiError, fallback) => {
   return fallback;
 };
 
-function PaymentsPage() {
+function PaymentsPage({ showToast }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [payments, setPayments] = useState([]);
@@ -71,6 +71,22 @@ function PaymentsPage() {
   useEffect(() => {
     loadPayments();
   }, [loadPayments]);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    showToast?.("error", "Error", error);
+  }, [error, showToast]);
+
+  useEffect(() => {
+    if (!detailsError) {
+      return;
+    }
+
+    showToast?.("error", "Error", detailsError);
+  }, [detailsError, showToast]);
 
   const openDetails = useCallback(async (payment) => {
     setSelectedPayment(payment);

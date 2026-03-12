@@ -7,7 +7,7 @@ import RecentOrdersList from "./RecentOrdersList";
 const toArray = (value) => (Array.isArray(value) ? value : []);
 const extractData = (response) => response?.data?.data ?? null;
 
-function UserDashboardHome() {
+function UserDashboardHome({ showToast }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [orders, setOrders] = useState([]);
@@ -65,6 +65,14 @@ function UserDashboardHome() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    showToast?.("error", "Error", error);
+  }, [error, showToast]);
 
   const summary = useMemo(
     () => ({
