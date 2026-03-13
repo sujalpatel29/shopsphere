@@ -9,6 +9,9 @@ import {
   idParamSchema,
   searchQuerySchema,
   multiCategoryQuerySchema,
+  multiCategoryProductsQuerySchema,
+  categoryProductFilterQuerySchema,
+  categoryProductFilterBodySchema,
   createCategorySchema,
   updateCategorySchema,
 } from "../validations/category.validation.js";
@@ -28,6 +31,39 @@ router.get(
   validate(multiCategoryQuerySchema, "query"),
   categoryController.getCategoriesByIds,
 );
+
+router.get(
+  "/bulk/products",
+  validate(multiCategoryProductsQuerySchema, "query"),
+  categoryController.getProductsByCategories,
+);
+
+router.get(
+  "/filter/products",
+  validate(categoryProductFilterQuerySchema, "query"),
+  categoryController.getProductsByCategoryFilters,
+);
+
+router.get(
+  "/filter/products/price-range",
+  validate(categoryProductFilterQuerySchema, "query"),
+  categoryController.getProductsPriceRangeByFilters,
+);
+
+router.post(
+  "/filter/products",
+  validate(categoryProductFilterBodySchema, "body"),
+  categoryController.getProductsByCategoryFilters,
+);
+
+router.post(
+  "/filter/products/price-range",
+  validate(categoryProductFilterBodySchema, "body"),
+  categoryController.getProductsPriceRangeByFilters,
+);
+
+router.get("/tree", categoryController.getCategoryTree);
+
 
 router.get(
   "/:id",

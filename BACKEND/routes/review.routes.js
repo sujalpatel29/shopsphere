@@ -3,6 +3,7 @@ import { auth as authMiddleware } from "../middlewares/auth.middleware.js";
 import { reviewController } from "../controllers/review.controller.js";
 import {
   createReviewSchema,
+  bulkProductSummarySchema,
   getReviewsQuerySchema,
   productIdParamSchema,
   reviewIdParamSchema,
@@ -24,6 +25,13 @@ router.get(
   "/product/:product_id/summary",
   validateParams(productIdParamSchema),
   reviewController.getSummary,
+);
+
+// Product rating summaries bulk (public).
+router.post(
+  "/product/summary/bulk",
+  validateBody(bulkProductSummarySchema),
+  reviewController.getBulkSummary,
 );
 
 // Product reviews listing with filters/sort/pagination (public).

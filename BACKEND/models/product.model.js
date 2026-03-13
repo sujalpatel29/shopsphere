@@ -103,7 +103,6 @@ const Product = {
     let baseSql = `
       FROM product_master p
       LEFT JOIN category_master c ON p.category_id = c.category_id
-      LEFT JOIN product_images pi ON pi.product_id = p.product_id AND pi.is_primary = 1 AND pi.image_level = 'PRODUCT' AND pi.is_deleted = 0
       LEFT JOIN (
         SELECT pp.product_id,
                COUNT(*) AS portion_count,
@@ -156,8 +155,19 @@ const Product = {
 
     // Search by name or display name
     if (filters.search) {
-      conditions.push("(p.name LIKE ? OR p.display_name LIKE ?)");
-      values.push(`%${filters.search}%`, `%${filters.search}%`);
+      const normalizedSearch = String(filters.search)
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, "")
+        .replace(/\s+/g, "");
+
+      conditions.push(`(
+        LOWER(REPLACE(COALESCE(p.name, ''), ' ', '')) LIKE ?
+        OR LOWER(REPLACE(COALESCE(p.display_name, ''), ' ', '')) LIKE ?
+        OR LOWER(REPLACE(COALESCE(p.description, ''), ' ', '')) LIKE ?
+      )`);
+      values.push(`%${normalizedSearch}%`);
+      values.push(`%${normalizedSearch}%`);
+      values.push(`%${normalizedSearch}%`);
     }
 
     // Status filter
@@ -198,7 +208,7 @@ const Product = {
     }
 
     const dataSql = `
-      SELECT DISTINCT p.*, c.category_name, pi.image_url,
+      SELECT DISTINCT p.*, c.category_name,
              COALESCE(ptc.portion_count, 0) AS portion_count,
              ptc.portion_values,
              ptc.portion_details,

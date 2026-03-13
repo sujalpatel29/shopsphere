@@ -301,6 +301,112 @@ export const getProductRatingSummary = async (product_id) => {
   };
 };
 
+// Get rating summaries for multiple products.
+export const getProductRatingSummariesBulk = async (product_ids) => {
+  const uniqueIds = Array.from(
+    new Set(
+      (product_ids || [])
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id) && id > 0),
+    ),
+  );
+
+  if (!uniqueIds.length) {
+    return {};
+  }
+
+  const [validRows] = await pool.query(
+    `
+      SELECT product_id
+      FROM product_master
+      WHERE product_id IN (?)
+        AND is_deleted = 0
+        AND is_active = 1
+    `,
+    [uniqueIds],
+  );
+
+  const validIds = validRows.map((row) => Number(row.product_id));
+  if (!validIds.length) {
+    return {};
+  }
+
+  const summaryQuery = `
+    SELECT
+      product_id,
+      ROUND(AVG(rating), 1) AS average_rating,
+      COUNT(*) AS total_ratings,
+      SUM(CASE WHEN review_text IS NOT NULL AND TRIM(review_text) <> '' THEN 1 ELSE 0 END) AS total_reviews
+    FROM product_reviews
+    WHERE product_id IN (?)
+      AND is_deleted = 0
+    GROUP BY product_id
+  `;
+
+  const breakdownQuery = `
+    SELECT product_id, rating, COUNT(*) AS count
+    FROM product_reviews
+    WHERE product_id IN (?)
+      AND is_deleted = 0
+    GROUP BY product_id, rating
+  `;
+
+  const [[summaryRows], [breakdownRows]] = await Promise.all([
+    pool.query(summaryQuery, [validIds]),
+    pool.query(breakdownQuery, [validIds]),
+  ]);
+
+  const summaries = {};
+  const emptyBreakdown = () => ({
+    "5": { count: 0, percentage: 0 },
+    "4": { count: 0, percentage: 0 },
+    "3": { count: 0, percentage: 0 },
+    "2": { count: 0, percentage: 0 },
+    "1": { count: 0, percentage: 0 },
+  });
+
+  validIds.forEach((productId) => {
+    summaries[productId] = {
+      product_id: productId,
+      average_rating: 0,
+      total_ratings: 0,
+      total_reviews: 0,
+      rating_breakdown: emptyBreakdown(),
+    };
+  });
+
+  summaryRows.forEach((row) => {
+    const productId = Number(row.product_id);
+    if (!summaries[productId]) return;
+    const totalRatings = Number(row.total_ratings || 0);
+    summaries[productId].average_rating = Number(row.average_rating || 0);
+    summaries[productId].total_ratings = totalRatings;
+    summaries[productId].total_reviews = Number(row.total_reviews || 0);
+  });
+
+  breakdownRows.forEach((row) => {
+    const productId = Number(row.product_id);
+    if (!summaries[productId]) return;
+    const key = String(row.rating);
+    const count = Number(row.count || 0);
+    summaries[productId].rating_breakdown[key] = {
+      count,
+      percentage: 0,
+    };
+  });
+
+  Object.values(summaries).forEach((summary) => {
+    const totalRatings = Number(summary.total_ratings || 0);
+    Object.keys(summary.rating_breakdown).forEach((key) => {
+      const entry = summary.rating_breakdown[key];
+      entry.percentage =
+        totalRatings > 0 ? Math.round((entry.count / totalRatings) * 100) : 0;
+    });
+  });
+
+  return summaries;
+};
+
 // Fetch single review by id.
 export const getReviewById = async (review_id) => {
   const query = `
