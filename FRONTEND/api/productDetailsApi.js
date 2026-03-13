@@ -45,9 +45,18 @@ export const toggleReviewHelpful = async (reviewId) => {
   return response.data?.data || null;
 };
 
-export const getActiveOffers = async () => {
-  const response = await api.get("/offer/active");
-  return response.data?.data || [];
+export const getVisibleProductOffers = async (productId) => {
+  const response = await api.get(`/offer/product/${productId}/visible`);
+  const payload = response.data?.data || {};
+  const merged = [
+    ...(payload.product_offers || []),
+    ...(payload.category_offers || []),
+  ];
+
+  // The backend can return the same offer via multiple category mappings.
+  return Array.from(
+    new Map(merged.map((offer) => [Number(offer.offer_id), offer])).values()
+  );
 };
 
 export const getCategories = async () => {

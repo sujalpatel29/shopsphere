@@ -11,13 +11,13 @@ import {
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
+import { Dialog } from "primereact/dialog";
 import { Skeleton } from "primereact/skeleton";
 import { Toast } from "primereact/toast";
 import { useSelector } from "react-redux";
 import { useTheme } from "../../context/ThemeContext";
 import {
   addCartItem,
-  getActiveOffers,
   getCart,
   getCategories,
   getModifiersByPortion,
@@ -28,6 +28,7 @@ import {
   getRelatedProducts,
   getReviews,
   getReviewSummary,
+  getVisibleProductOffers,
   toggleReviewHelpful,
 } from "../../../api/productDetailsApi";
 
@@ -68,16 +69,36 @@ const metaUpsert = (selector, attributes) => {
   });
 };
 
-const isOfferCurrentlyActive = (offer) => {
-  const now = new Date();
-  const start = new Date(offer.start_date);
-  const end = new Date(offer.end_date);
-  if (now < start || now > end) return false;
-  if (!offer.start_time || !offer.end_time) return true;
+const renderCompactStars = (ratingValue) => {
+  const normalized = Number(ratingValue || 0);
+  return Array.from({ length: 5 }).map((_, idx) => (
+    <Star
+      key={idx}
+      className={`h-3.5 w-3.5 ${idx < Math.round(normalized) ? "fill-current" : ""}`}
+    />
+  ));
+};
 
-  const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  if (offer.start_time <= offer.end_time) return hhmm >= offer.start_time && hhmm <= offer.end_time;
-  return hhmm >= offer.start_time || hhmm <= offer.end_time;
+const formatOfferDate = (value) => {
+  if (!value) return "N/A";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  return parsed.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatOfferTime = (value) => {
+  if (!value) return "All day";
+  const [hours = "0", minutes = "0"] = String(value).split(":");
+  const parsed = new Date();
+  parsed.setHours(Number(hours), Number(minutes), 0, 0);
+  return parsed.toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 };
 
 function ProductDetailsPage() {
@@ -88,6 +109,8 @@ function ProductDetailsPage() {
   const toastRef = useRef(null);
   const ctaAnchorRef = useRef(null);
   const bottomSentinelRef = useRef(null);
+  const recentlyViewedRef = useRef(null);
+  const relatedProductsRef = useRef(null);
   const touchStartXRef = useRef(0);
 
   const [loading, setLoading] = useState(true);
@@ -96,6 +119,7 @@ function ProductDetailsPage() {
   const [images, setImages] = useState([]);
   const [categories, setCategories] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [selectedOffer, setSelectedOffer] = useState(null);
   const [portions, setPortions] = useState([]);
   const [selectedPortionId, setSelectedPortionId] = useState(null);
   const [modifierGroups, setModifierGroups] = useState([]);
@@ -211,7 +235,7 @@ function ProductDetailsPage() {
         getProductImages(productId).catch(() => []),
         getProductPortions(productId).catch(() => []),
         getReviewSummary(productId).catch(() => null),
-        getActiveOffers().catch(() => []),
+        getVisibleProductOffers(productId).catch(() => []),
         getCategories().catch(() => []),
         getCart().catch(() => null),
       ]);
@@ -229,7 +253,7 @@ function ProductDetailsPage() {
         activePortions.find((item) => Number(item.is_default) === 1) || activePortions[0] || null;
       setSelectedPortionId(defaultPortion?.product_portion_id || null);
       setSummary(reviewSummaryData);
-      setOffers((offerData || []).filter(isOfferCurrentlyActive));
+      setOffers(offerData || []);
       setCategories(categoriesData || []);
 
       const cartItems = cartData?.items || [];
@@ -249,7 +273,9 @@ function ProductDetailsPage() {
       const currentEntry = {
         product_id: productData.product_id,
         display_name: productData.display_name || productData.name,
-        price: getEffectivePrice(productData),
+        price: Number(productData.price || 0),
+        discounted_price: Number(productData.discounted_price || 0),
+        average_rating: Number(reviewSummaryData?.average_rating || 0),
         image_url: imageData?.[0]?.image_url || "",
       };
 
@@ -516,6 +542,17 @@ function ProductDetailsPage() {
     setTapZoom(false);
   };
 
+  const scrollRailByCard = (railRef, direction) => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const card = rail.firstElementChild;
+    const cardWidth = card ? card.getBoundingClientRect().width : 240;
+    rail.scrollBy({
+      left: direction * (cardWidth + 12) * 2,
+      behavior: "smooth",
+    });
+  };
+
   if (loading) {
     return (
       <div className="space-y-5">
@@ -559,6 +596,96 @@ function ProductDetailsPage() {
   return (
     <div className="space-y-8">
       <Toast ref={toastRef} position="top-right" />
+      <Dialog
+        visible={Boolean(selectedOffer)}
+        onHide={() => setSelectedOffer(null)}
+        header={selectedOffer?.offer_name || "Offer Details"}
+        draggable={false}
+        resizable={false}
+        dismissableMask
+        className="w-[92vw] max-w-2xl"
+        contentClassName={darkMode ? "bg-[#151e22] text-slate-100" : "bg-[#fff8ee] text-gray-900"}
+      >
+        {selectedOffer && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-amber-200/60 bg-amber-50/70 p-4 dark:border-amber-600/30 dark:bg-amber-500/5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">Offer Code</p>
+                  <p className="mt-1 font-accent text-2xl font-semibold text-amber-700">
+                    {selectedOffer.offer_name}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  label="Copy Code"
+                  className="!rounded-xl !bg-amber-600 !px-4 !py-2 !text-xs !font-semibold !text-white hover:!bg-amber-700"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(selectedOffer.offer_name || "");
+                      showToast("success", "Copied", "Offer code copied to clipboard.");
+                    } catch {
+                      showToast("error", "Copy Failed", "Could not copy offer code.");
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-gray-200 p-4 dark:border-[#1f2933]">
+                <p className="text-xs uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">Discount</p>
+                <p className="mt-1 text-sm font-medium">
+                  {selectedOffer.discount_type === "percentage"
+                    ? `${selectedOffer.discount_value}% off`
+                    : `${formatINR(selectedOffer.discount_value)} off`}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-200 p-4 dark:border-[#1f2933]">
+                <p className="text-xs uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">Offer Type</p>
+                <p className="mt-1 text-sm font-medium">{selectedOffer.offer_type || "General"}</p>
+              </div>
+              <div className="rounded-xl border border-gray-200 p-4 dark:border-[#1f2933]">
+                <p className="text-xs uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">Valid Dates</p>
+                <p className="mt-1 text-sm font-medium">
+                  {formatOfferDate(selectedOffer.start_date)} to {formatOfferDate(selectedOffer.end_date)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-200 p-4 dark:border-[#1f2933]">
+                <p className="text-xs uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">Valid Time</p>
+                <p className="mt-1 text-sm font-medium">
+                  {selectedOffer.start_time || selectedOffer.end_time
+                    ? `${formatOfferTime(selectedOffer.start_time)} to ${formatOfferTime(selectedOffer.end_time)}`
+                    : "All day"}
+                </p>
+              </div>
+            </div>
+
+            {selectedOffer.description && (
+              <div className="rounded-xl border border-gray-200 p-4 dark:border-[#1f2933]">
+                <p className="text-xs uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">Details</p>
+                <p className="mt-2 text-sm text-gray-700 dark:text-slate-300">
+                  {selectedOffer.description}
+                </p>
+              </div>
+            )}
+
+            {(selectedOffer.min_purchase_amount || selectedOffer.maximum_discount_amount) && (
+              <div className="rounded-xl border border-gray-200 p-4 dark:border-[#1f2933]">
+                <p className="text-xs uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">Conditions</p>
+                <div className="mt-2 space-y-1 text-sm text-gray-700 dark:text-slate-300">
+                  {selectedOffer.min_purchase_amount ? (
+                    <p>Minimum purchase: {formatINR(selectedOffer.min_purchase_amount)}</p>
+                  ) : null}
+                  {selectedOffer.maximum_discount_amount ? (
+                    <p>Maximum discount: {formatINR(selectedOffer.maximum_discount_amount)}</p>
+                  ) : null}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Dialog>
 
       <nav aria-label="Breadcrumb" className="text-sm">
         <ol className="flex flex-wrap items-center gap-2 text-gray-500 dark:text-slate-400">
@@ -708,12 +835,22 @@ function ProductDetailsPage() {
               </h2>
               <div className="mt-3 space-y-2">
                 {offers.slice(0, 4).map((offer) => (
-                  <p key={offer.offer_id} className="text-sm text-gray-700 dark:text-slate-300">
-                    Use code <span className="font-semibold text-amber-700">{offer.offer_name}</span> for{" "}
-                    {offer.discount_type === "percentage"
-                      ? `${offer.discount_value}% off`
-                      : `${formatINR(offer.discount_value)} off`}
-                  </p>
+                  <button
+                    key={offer.offer_id}
+                    type="button"
+                    onClick={() => setSelectedOffer(offer)}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-left transition hover:border-amber-300 hover:bg-amber-50 dark:border-[#1f2933] dark:bg-[#10171b] dark:hover:border-amber-500/40 dark:hover:bg-amber-500/5"
+                  >
+                    <p className="text-sm text-gray-700 dark:text-slate-300">
+                      Use code <span className="font-semibold text-amber-700">{offer.offer_name}</span> for{" "}
+                      {offer.discount_type === "percentage"
+                        ? `${offer.discount_value}% off`
+                        : `${formatINR(offer.discount_value)} off`}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                      Tap to view offer details
+                    </p>
+                  </button>
                 ))}
               </div>
             </div>
@@ -918,22 +1055,75 @@ function ProductDetailsPage() {
       {recentlyViewed.length > 0 && (
         <Card className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
           <h2 className="font-serif text-2xl text-gray-900 dark:text-slate-100">Recently Viewed</h2>
-          <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-            {recentlyViewed.map((item) => (
-              <Link
-                key={`recent-${item.product_id}`}
-                to={`/products/${item.product_id}`}
-                className="w-48 shrink-0 rounded-xl border border-gray-200 p-3 dark:border-[#1f2933]"
-              >
-                <div className="h-28 overflow-hidden rounded-lg bg-gray-100 dark:bg-[#10171b]">
-                  {item.image_url && (
-                    <img src={item.image_url} alt={item.display_name} className="h-full w-full object-cover" />
-                  )}
-                </div>
-                <p className="mt-2 line-clamp-2 text-sm font-medium text-gray-900 dark:text-slate-100">{item.display_name}</p>
-                <p className="mt-1 text-sm text-amber-700">{formatINR(item.price)}</p>
-              </Link>
-            ))}
+          <div className="relative mt-4">
+            <button
+              type="button"
+              onClick={() => scrollRailByCard(recentlyViewedRef, -1)}
+              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border border-gray-200 bg-white/95 p-2 text-gray-700 shadow-sm transition hover:border-amber-300 hover:text-amber-700 dark:border-[#1f2933] dark:bg-[#151e22]/95 dark:text-slate-300"
+              aria-label="Scroll recently viewed left"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollRailByCard(recentlyViewedRef, 1)}
+              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border border-gray-200 bg-white/95 p-2 text-gray-700 shadow-sm transition hover:border-amber-300 hover:text-amber-700 dark:border-[#1f2933] dark:bg-[#151e22]/95 dark:text-slate-300"
+              aria-label="Scroll recently viewed right"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <div
+              ref={recentlyViewedRef}
+              className="flex gap-3 overflow-x-auto px-10 pb-2 [&::-webkit-scrollbar]:hidden"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {recentlyViewed.map((item) => (
+                (() => {
+                  const regularPrice = Number(item.price || 0);
+                  const discountedPrice = Number(item.discounted_price || regularPrice);
+                  const effectiveCardPrice =
+                    discountedPrice > 0 && discountedPrice < regularPrice
+                      ? discountedPrice
+                      : regularPrice;
+                  const cardSavingsPct = getSavingsPct(regularPrice, effectiveCardPrice);
+                  const cardRating = Number(item.average_rating || item.rating || 0);
+
+                  return (
+                    <Link
+                      key={`recent-${item.product_id}`}
+                      to={`/products/${item.product_id}`}
+                      className="w-56 shrink-0 rounded-xl border border-gray-200 p-3 dark:border-[#1f2933]"
+                    >
+                      <div className="h-64 w-45 overflow-hidden rounded-lg bg-gray-100 dark:bg-[#10171b]">
+                        {item.image_url && (
+                          <img src={item.image_url} alt={item.display_name} className="h-full w-full object-cover" />
+                        )}
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm font-medium text-gray-900 dark:text-slate-100">{item.display_name}</p>
+                      <div className="mt-2 flex items-center gap-1 text-amber-500">
+                        <div className="flex items-center gap-0.5">
+                          {cardRating ? renderCompactStars(cardRating) : null}
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-slate-300">
+                          {cardRating ? cardRating.toFixed(1) : null}
+                        </span>
+                      </div>
+                      <div className="mt-2">
+                        <p className="text-sm font-semibold text-amber-700">{formatINR(effectiveCardPrice)}</p>
+                        {effectiveCardPrice < regularPrice && (
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-gray-500 line-through">{formatINR(regularPrice)}</span>
+                            <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                              Save {cardSavingsPct}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })()
+              ))}
+            </div>
           </div>
         </Card>
       )}
@@ -941,26 +1131,78 @@ function ProductDetailsPage() {
       {relatedProducts.length > 0 && (
         <Card className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
           <h2 className="font-serif text-2xl text-gray-900 dark:text-slate-100">You May Also Like</h2>
-          <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-            {relatedProducts.map((item) => (
-              <Link
-                key={item.product_id}
-                to={`/products/${item.product_id}`}
-                className="w-56 shrink-0 rounded-xl border border-gray-200 p-3 dark:border-[#1f2933]"
-              >
-                <div className="h-32 overflow-hidden rounded-lg bg-gray-100 dark:bg-[#10171b]">
-                  {(item.image_url || "").length > 0 && (
-                    <img src={item.image_url} alt={item.display_name || item.name} className="h-full w-full object-cover" />
-                  )}
-                </div>
-                <p className="mt-2 line-clamp-2 text-sm font-medium text-gray-900 dark:text-slate-100">
-                  {item.display_name || item.name}
-                </p>
-                <p className="mt-1 text-sm text-amber-700">
-                  {formatINR(getEffectivePrice(item))}
-                </p>
-              </Link>
-            ))}
+          <div className="relative mt-4">
+            <button
+              type="button"
+              onClick={() => scrollRailByCard(relatedProductsRef, -1)}
+              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border border-gray-200 bg-white/95 p-2 text-gray-700 shadow-sm transition hover:border-amber-300 hover:text-amber-700 dark:border-[#1f2933] dark:bg-[#151e22]/95 dark:text-slate-300"
+              aria-label="Scroll related products left"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollRailByCard(relatedProductsRef, 1)}
+              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border border-gray-200 bg-white/95 p-2 text-gray-700 shadow-sm transition hover:border-amber-300 hover:text-amber-700 dark:border-[#1f2933] dark:bg-[#151e22]/95 dark:text-slate-300"
+              aria-label="Scroll related products right"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <div
+              ref={relatedProductsRef}
+              className="flex gap-3 overflow-x-auto px-10 pb-2 [&::-webkit-scrollbar]:hidden"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {relatedProducts.map((item) => (
+                (() => {
+                  const regularPrice = Number(item.price || 0);
+                  const discountedPrice = Number(item.discounted_price || regularPrice);
+                  const effectiveCardPrice =
+                    discountedPrice > 0 && discountedPrice < regularPrice
+                      ? discountedPrice
+                      : regularPrice;
+                  const cardSavingsPct = getSavingsPct(regularPrice, effectiveCardPrice);
+                  const cardRating = Number(item.average_rating || item.rating || 0);
+
+                  return (
+                    <Link
+                      key={item.product_id}
+                      to={`/products/${item.product_id}`}
+                      className="w-56 shrink-0 rounded-xl border border-gray-200 p-3 dark:border-[#1f2933]"
+                    >
+                      <div className="h-64 w-45 overflow-hidden rounded-lg bg-gray-100 dark:bg-[#10171b]">
+                        {(item.image_url || "").length > 0 && (
+                          <img src={item.image_url} alt={item.display_name || item.name} className="h-full w-full object-cover" />
+                        )}
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm font-medium text-gray-900 dark:text-slate-100">
+                        {item.display_name || item.name}
+                      </p>
+                      <div className="mt-2 flex items-center gap-1 text-amber-500">
+                        <div className="flex items-center gap-0.5">
+                          {renderCompactStars(cardRating)}
+                          
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-slate-300">
+                          {cardRating ? cardRating.toFixed(1) : "New"}
+                        </span>
+                      </div>
+                      <div className="mt-2">
+                        <p className="text-sm font-semibold text-amber-700">{formatINR(effectiveCardPrice)}</p>
+                        {effectiveCardPrice < regularPrice && (
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-gray-500 line-through">{formatINR(regularPrice)}</span>
+                            <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                              Save {cardSavingsPct}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })()
+              ))}
+            </div>
           </div>
         </Card>
       )}

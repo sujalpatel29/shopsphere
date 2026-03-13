@@ -64,7 +64,7 @@ const adminNav = [
 const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
 const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
 const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
-const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
+// const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
 const AdminOffersTab = lazy(() => import("./AdminOffersTab"));
 
 // Collect all valid tab keys for hash validation
