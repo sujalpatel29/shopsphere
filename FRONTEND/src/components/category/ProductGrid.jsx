@@ -117,8 +117,8 @@ function ProductGrid({
               <Card
                 className={`category-product-card trace-card-inner product-card !h-full !rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 ${
                   darkMode
-                    ? "bg-[#151e22] border border-[#1f2933] text-slate-200"
-                    : "bg-white border border-gray-100 text-gray-800"
+                    ? "bg-red-900 border border-red-800 text-[#ffecec]"
+                    : "bg-red-100 border border-red-200 text-red-900"
                 }`}
                 onClick={() => {
                   const id = product.product_id || product.id;
@@ -129,7 +129,7 @@ function ProductGrid({
               <div className="flex h-full min-h-[280px] flex-col">
                 <div
                   className={`category-product-media product-image-wrap relative h-32 w-full overflow-hidden ${
-                    darkMode ? "bg-[#0f161a]" : "bg-gray-100"
+                    darkMode ? "bg-[#1b242b]" : "bg-gray-100"
                   }`}
                 >
                   {product.image_url ? (
@@ -149,7 +149,7 @@ function ProductGrid({
                 <div className="product-card-content">
                   <h4
                     className={`h-10 overflow-hidden text-sm font-semibold leading-5 ${
-                      darkMode ? "text-slate-200" : "text-gray-800"
+                      darkMode ? "text-[#f2f5f7]" : "text-gray-800"
                     }`}
                   >
                     {product.display_name || product.name || "Product"}
@@ -175,7 +175,7 @@ function ProductGrid({
                         ))}
                         <span
                           className={`ml-1 ${
-                            darkMode ? "text-slate-400" : "text-gray-500"
+                            darkMode ? "text-[#9fb2bf]" : "text-gray-500"
                           }`}
                         >
                           ({totalRatings})
@@ -205,7 +205,7 @@ function ProductGrid({
 
                           <p
                             className={`text-xs line-through ${
-                              darkMode ? "text-slate-500" : "text-gray-400"
+                              darkMode ? "text-[#94a6b1]" : "text-gray-400"
                             }`}
                           >
                             {"\u20B9"}
@@ -241,32 +241,7 @@ function ProductGrid({
               </div>
             </Card>
 
-            <svg
-              className="trace-svg"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-            >
-              <rect
-                className="trace-base"
-                x="0.75"
-                y="0.75"
-                width="98.5"
-                height="98.5"
-                rx="4.1"
-                ry="4.1"
-                pathLength="100"
-              />
-              <rect
-                className="trace-run"
-                x="0.75"
-                y="0.75"
-                width="98.5"
-                height="98.5"
-                rx="4.1"
-                ry="4.1"
-                pathLength="100"
-              />
-            </svg>
+            
           </div>
         );
         })}
@@ -281,7 +256,9 @@ function ProductGrid({
             rowsPerPageOptions={paginator.rowsPerPageOptions || [5, 10, 25, 50]}
             onPageChange={onPageChange}
             template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-            className="customer-product-paginator"
+            className={`customer-product-paginator ${
+              darkMode ? "customer-product-paginator-dark" : ""
+            }`}
             pt={{
               pageButton: ({ context }) => ({
                 className: context.active
@@ -299,6 +276,32 @@ function ProductGrid({
               background: var(--primary-color) !important;
               border-color: var(--primary-color) !important;
               color: #fff !important;
+            }
+            .customer-product-paginator.customer-product-paginator-dark {
+              background: #151e22;
+              border: 1px solid #1f2933;
+              color: #e2e8f0;
+            }
+            .customer-product-paginator.customer-product-paginator-dark .p-paginator-page.customer-page-btn {
+              color: #e2e8f0;
+            }
+            .customer-product-paginator.customer-product-paginator-dark .p-paginator-first,
+            .customer-product-paginator.customer-product-paginator-dark .p-paginator-prev,
+            .customer-product-paginator.customer-product-paginator-dark .p-paginator-next,
+            .customer-product-paginator.customer-product-paginator-dark .p-paginator-last,
+            .customer-product-paginator.customer-product-paginator-dark .p-paginator-rpp-options {
+              color: #e2e8f0;
+            }
+            .customer-product-paginator.customer-product-paginator-dark .p-dropdown {
+              background: #0f161a;
+              border: 1px solid #223038;
+              color: #e2e8f0;
+            }
+            .customer-product-paginator.customer-product-paginator-dark .p-dropdown .p-dropdown-label {
+              color: #e2e8f0;
+            }
+            .customer-product-paginator.customer-product-paginator-dark .p-dropdown .p-dropdown-trigger {
+              color: #e2e8f0;
             }
           `}</style>
         </>

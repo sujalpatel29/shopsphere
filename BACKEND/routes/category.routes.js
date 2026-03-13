@@ -11,6 +11,7 @@ import {
   multiCategoryQuerySchema,
   multiCategoryProductsQuerySchema,
   categoryProductFilterQuerySchema,
+  categoryProductFilterBodySchema,
   createCategorySchema,
   updateCategorySchema,
 } from "../validations/category.validation.js";
@@ -46,6 +47,18 @@ router.get(
 router.get(
   "/filter/products/price-range",
   validate(categoryProductFilterQuerySchema, "query"),
+  categoryController.getProductsPriceRangeByFilters,
+);
+
+router.post(
+  "/filter/products",
+  validate(categoryProductFilterBodySchema, "body"),
+  categoryController.getProductsByCategoryFilters,
+);
+
+router.post(
+  "/filter/products/price-range",
+  validate(categoryProductFilterBodySchema, "body"),
   categoryController.getProductsPriceRangeByFilters,
 );
 

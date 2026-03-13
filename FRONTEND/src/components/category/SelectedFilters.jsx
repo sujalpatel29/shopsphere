@@ -1,4 +1,5 @@
 import { Chip } from "primereact/chip";
+import { useTheme } from "../../context/ThemeContext";
 
 function SelectedFilters({
   isLoading = false,
@@ -9,6 +10,7 @@ function SelectedFilters({
   onClearSearch,
   onClearPrice,
 }) {
+  const { darkMode } = useTheme();
   if (isLoading) return null;
 
   const hasAny =
@@ -23,6 +25,7 @@ function SelectedFilters({
           label={tag.label}
           removable
           onRemove={() => onRemoveCategory?.(tag.id)}
+          className={darkMode ? "selected-filter-chip selected-filter-chip-dark" : "selected-filter-chip"}
         />
       ))}
 
@@ -31,6 +34,7 @@ function SelectedFilters({
           label={`Search: ${searchText}`}
           removable
           onRemove={() => onClearSearch?.()}
+          className={darkMode ? "selected-filter-chip selected-filter-chip-dark" : "selected-filter-chip"}
         />
       ) : null}
 
@@ -39,6 +43,7 @@ function SelectedFilters({
           label={priceTag}
           removable
           onRemove={() => onClearPrice?.()}
+          className={darkMode ? "selected-filter-chip selected-filter-chip-dark" : "selected-filter-chip"}
         />
       ) : null}
     </div>

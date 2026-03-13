@@ -173,6 +173,26 @@
   background: rgba(47, 122, 111, 0.04) !important;
 }
 
+.dark .p-dropdown-panel {
+  background: #0f161a !important;
+  border-color: #223038 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .p-dropdown-panel .p-dropdown-item {
+  color: #e2e8f0 !important;
+}
+
+.dark .p-dropdown-panel .p-dropdown-item.p-highlight {
+  color: #e2e8f0 !important;
+  background: rgba(47, 122, 111, 0.18) !important;
+}
+
+.dark .p-dropdown-panel .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+  color: #e2e8f0 !important;
+  background: rgba(47, 122, 111, 0.14) !important;
+}
+
 /* ================================================= */
 /*                PrimeReact DataTable               */
 /* ================================================= */
@@ -390,15 +410,29 @@ html:not(.dark)
   backdrop-filter: blur(12px) saturate(120%);
   -webkit-backdrop-filter: blur(12px) saturate(120%);
   position: relative;
+  z-index: 2;
+}
+
+.trace-card-inner.p-card .p-card-body,
+.trace-card-inner.p-card .p-card-content {
+  position: relative;
+  z-index: 4;
+}
+
+.dark .trace-card-inner.p-card {
+  background: #0f161a !important;
+  border: 1px solid #1f2a33 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .trace-svg {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
 }
 
 .trace-base {
@@ -406,6 +440,7 @@ html:not(.dark)
   stroke: rgba(8, 154, 127, 0.3);
   stroke-width: 1.6;
   vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
 }
 
 .trace-run {
@@ -413,7 +448,7 @@ html:not(.dark)
   stroke: rgba(11, 131, 97, 0.9);
   stroke-width: 1.8;
   vector-effect: non-scaling-stroke;
-  stroke-linecap: butt;
+  stroke-linecap: round;
  stroke-dasharray: 128 28 128 28;
   stroke-dashoffset: 100;
   opacity: 0;
@@ -470,6 +505,20 @@ html:not(.dark)
     0 18px 36px rgba(0, 0, 0, 0.12);
 }
 
+.selected-filter-chip {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.selected-filter-chip-dark {
+  background: #0f161a !important;
+  border-color: #223038 !important;
+  color: #e2e8f0 !important;
+}
+
+.selected-filter-chip-dark .p-chip-text {
+  color: #e2e8f0 !important;
+}
+
 .category-product-grid {
   position: relative;
 }
@@ -478,8 +527,12 @@ html:not(.dark)
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
-.category-product-card:hover {
+.trace-card:hover .trace-card-inner.p-card {
   transform: translateY(-2px);
+  box-shadow:
+    0 4px 0 0 rgba(47, 122, 111, 0.9),
+    0 18px 36px rgba(47, 122, 111, 0.22),
+    0 0 36px rgba(47, 122, 111, 0.35) !important;
 }
 
 .category-product-media {
@@ -526,7 +579,7 @@ html:not(.dark)
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 3;
+  z-index: 1;
 }
 
 /* make sure this class is on Card: className="trace-card-inner product-card ..." */
@@ -563,6 +616,7 @@ html:not(.dark)
   position: relative;
   border-radius: var(--trace-radius);
   overflow: hidden;
+  z-index: 0;
 }
 
 /* image top radius */
