@@ -39,6 +39,7 @@ import {
 } from "../models/offer.model.js";
 
 import { getRootCategoryId } from "../models/Order_master.model.js";
+import { getDefaultAddressModel } from "../models/user.address.model.js";
 
 import {
 
@@ -82,6 +83,61 @@ function parsePositiveInt(value) {
 
 }
 
+// Cart limits constants
+const CART_LIMITS = {
+  MAX_ITEMS: 20,
+  MAX_TOTAL_VALUE: 1000000, // 10 lakh in rupees
+  MAX_QUANTITY_PER_PRODUCT: 5 // Max 5 of same product
+};
+
+/**
+ * Validate cart limits before adding/updating items
+ * @param {number} cartId - Cart ID
+ * @param {number} additionalQuantity - Quantity being added (for item count check)
+ * @param {number} valueToAdd - Total value to add to cart
+ * @param {number} excludeCartItemId - Cart item ID to exclude (for updates)
+ * @returns {Object} { valid, error, currentItemCount, currentTotal }
+ */
+async function validateCartLimits(cartId, additionalQuantity, valueToAdd, excludeCartItemId = null) {
+  const [rows] = await pool.query(
+    `SELECT 
+      COUNT(*) as item_count,
+      SUM(ci.quantity * ci.price) as total_value
+    FROM cart_items ci
+    WHERE ci.cart_id = ? AND ci.is_deleted = 0
+      ${excludeCartItemId ? 'AND ci.cart_item_id != ?' : ''}`,
+    excludeCartItemId ? [cartId, excludeCartItemId] : [cartId]
+  );
+
+  const currentItemCount = Number(rows[0].item_count) || 0;
+  const currentTotal = Number(rows[0].total_value) || 0;
+  const newTotal = currentTotal + valueToAdd;
+
+  console.log('Cart limit check:', { cartId, currentItemCount, currentTotal, valueToAdd, newTotal, excludeCartItemId });
+
+  // Check item count limit (count unique items, not total quantity)
+  if (!excludeCartItemId && currentItemCount >= CART_LIMITS.MAX_ITEMS) {
+    return {
+      valid: false,
+      error: `Cart cannot have more than ${CART_LIMITS.MAX_ITEMS} different items`,
+      currentItemCount,
+      currentTotal
+    };
+  }
+
+  // Check total value limit
+  if (newTotal > CART_LIMITS.MAX_TOTAL_VALUE) {
+    return {
+      valid: false,
+      error: `Cart total cannot exceed ₹${(CART_LIMITS.MAX_TOTAL_VALUE / 100000).toFixed(1)} lakh. Current: ₹${(currentTotal/100000).toFixed(1)} lakh, Adding: ₹${(valueToAdd/100000).toFixed(1)} lakh`,
+      currentItemCount,
+      currentTotal
+    };
+  }
+
+  return { valid: true, currentItemCount, currentTotal };
+}
+
 // Find root category ID for tax calculation
 const findRootCategory = async (categoryId) => {
   const rows = await getRootCategoryId(categoryId);
@@ -99,6 +155,11 @@ const getTaxPercent = (rootCategoryId) => {
 
 // Calculate tax for cart items
 const calculateCartTax = async (items) => {
+  // Return empty result if no items
+  if (!items || items.length === 0) {
+    return { items: [], totalTax: 0 };
+  }
+  
   // Get unique product IDs with their categories
   const productIds = [...new Set(items.map(item => item.product_id))];
   
@@ -203,7 +264,20 @@ function calculateDiscount(offer, subtotal) {
 
  */
 
-async function buildCartResponse(cartId, items, cartOffer = null) {
+async function buildCartResponse(cartId, items, cartOffer = null, userId = null) {
+  // Get user's default address if userId provided
+  let address = null;
+  if (userId) {
+    try {
+      const addressResult = await getDefaultAddressModel(userId);
+      if (addressResult && addressResult.length > 0) {
+        address = addressResult[0];
+      }
+    } catch (addrError) {
+      console.error("Error fetching default address:", addrError);
+      // Continue without address - don't fail the whole cart
+    }
+  }
 
   // Calculate tax for items first
   const { items: itemsWithTax, totalTax } = await calculateCartTax(items);
@@ -360,7 +434,9 @@ async function buildCartResponse(cartId, items, cartOffer = null) {
 
     total: Math.round(total * 100) / 100,
 
-    appliedCartOffer
+    appliedCartOffer,
+
+    address
 
   };
 
@@ -387,6 +463,7 @@ async function getCart(req, res) {
     // Cart is attached by validateCart middleware
     const cartId = req.cart.cart_id;
     const userId = req.user.id;
+    console.log("getCart called - cartId:", cartId, "userId:", userId);
 
     // Get cart with offer details
     const cartData = await getCartWithOffer(cartId);
@@ -407,11 +484,12 @@ async function getCart(req, res) {
       usage_limit_per_user: cart.usage_limit_per_user
     } : null;
 
-    const response = await buildCartResponse(cartId, items, cartOffer);
+    const response = await buildCartResponse(cartId, items, cartOffer, userId);
 
     return ok(res, "Cart retrieved successfully", response);
   } catch (err) {
     console.error("Error in getCart:", err);
+    console.error("Error stack:", err.stack);
     return serverError(res, "Internal server error");
   }
 }
@@ -532,14 +610,47 @@ async function addItemToCart(req, res) {
     const existingItem = await findCartItem(req.cart.cart_id, parsedProductId, finalPortionId, parsedModifierId);
 
 
+    // Validate cart limits
+    // Calculate the additional value being added
+    let additionalValue = parsedQuantity * itemPrice;
+    let excludeCartItemId = null;
+    
+    if (existingItem) {
+      // If updating existing item, we need to account for the difference
+      // Exclude existing item from current total, then add the NEW total value
+      excludeCartItemId = existingItem.cart_item_id;
+      const newQuantity = existingItem.quantity + parsedQuantity;
+      additionalValue = newQuantity * itemPrice; // Full new value, not just additional
+    }
+    
+    const limitCheck = await validateCartLimits(
+      req.cart.cart_id,
+      1, // quantity is 1 "item" conceptually
+      additionalValue, // pass the full value to add
+      excludeCartItemId
+    );
+
+    if (!limitCheck.valid) {
+      return badRequest(res, limitCheck.error);
+    }
 
     if (existingItem) {
 
       const newQuantity = existingItem.quantity + parsedQuantity;
+      
+      // Check max quantity per product limit
+      if (newQuantity > CART_LIMITS.MAX_QUANTITY_PER_PRODUCT) {
+        return badRequest(res, `Cannot add more than ${CART_LIMITS.MAX_QUANTITY_PER_PRODUCT} units of the same product`);
+      }
 
       await updateCartItemQuantity(existingItem.cart_item_id, newQuantity, userId);
 
     } else {
+      
+      // Check max quantity per product limit for new item
+      if (parsedQuantity > CART_LIMITS.MAX_QUANTITY_PER_PRODUCT) {
+        return badRequest(res, `Cannot add more than ${CART_LIMITS.MAX_QUANTITY_PER_PRODUCT} units of the same product`);
+      }
 
       await insertCartItem({
 
@@ -565,7 +676,7 @@ async function addItemToCart(req, res) {
 
     const items = await getCartItemsWithOffer(req.cart.cart_id);
 
-    const response = await buildCartResponse(req.cart.cart_id, items);
+    const response = await buildCartResponse(req.cart.cart_id, items, null, req.user.id);
 
     return created(res, "Item added to cart", response);
 
@@ -633,6 +744,30 @@ async function updateCartItem(req, res) {
       await deleteCartItem(cartItemId, userId);
 
     } else {
+      // Check max quantity per product limit
+      if (parsedQuantity > CART_LIMITS.MAX_QUANTITY_PER_PRODUCT) {
+        return badRequest(res, `Cannot add more than ${CART_LIMITS.MAX_QUANTITY_PER_PRODUCT} units of the same product`);
+      }
+      
+      // Validate cart limits for quantity update
+      const currentItem = req.cartItem;
+      const quantityDiff = parsedQuantity - currentItem.quantity;
+      
+      if (quantityDiff > 0) {
+        // Calculate the additional value being added
+        const additionalValue = quantityDiff * Number(currentItem.effective_price);
+        
+        const limitCheck = await validateCartLimits(
+          req.cart.cart_id,
+          quantityDiff,
+          additionalValue,
+          cartItemId
+        );
+
+        if (!limitCheck.valid) {
+          return badRequest(res, limitCheck.error);
+        }
+      }
 
       await updateCartItemQuantity(cartItemId, parsedQuantity, userId);
 
@@ -642,7 +777,7 @@ async function updateCartItem(req, res) {
 
     const updatedItems = await getCartItemsWithOffer(req.cart.cart_id);
 
-    const response = await buildCartResponse(req.cart.cart_id, updatedItems);
+    const response = await buildCartResponse(req.cart.cart_id, updatedItems, null, userId);
 
     return ok(res, "Cart item updated", response);
 
@@ -673,35 +808,42 @@ async function updateCartItem(req, res) {
  */
 
 async function removeCartItem(req, res) {
-
   try {
-
     // User ID comes from JWT token (authMiddleware)
     const userId = req.user.id;
-
     // Cart item ownership is validated by middleware
     const cartItemId = req.cartItem.cart_item_id;
-
-
+    console.log("removeCartItem - cartItemId:", cartItemId, "userId:", userId);
 
     await deleteCartItem(cartItemId, userId);
 
-
-
     const updatedItems = await getCartItemsWithOffer(req.cart.cart_id);
+    console.log("Updated items count:", updatedItems?.length || 0);
 
-    const response = await buildCartResponse(req.cart.cart_id, updatedItems);
+    // If cart is empty, return empty cart response
+    if (!updatedItems || updatedItems.length === 0) {
+      return ok(res, "Cart item removed", {
+        cartId: req.cart.cart_id,
+        items: [],
+        subtotal: 0,
+        tax: 0,
+        itemDiscount: 0,
+        cartDiscount: 0,
+        discount: 0,
+        total: 0,
+        appliedCartOffer: null,
+        address: null
+      });
+    }
+
+    const response = await buildCartResponse(req.cart.cart_id, updatedItems, null, userId);
 
     return ok(res, "Cart item removed", response);
-
   } catch (err) {
-
     console.error("Error in removeCartItem:", err);
-
+    console.error("Error stack:", err.stack);
     return serverError(res, "Internal server error");
-
   }
-
 }
 
 
@@ -849,7 +991,7 @@ async function applyCartOffer(req, res) {
 
 
 
-    const response = await buildCartResponse(cartId, updatedItems, cartOfferObj);
+    const response = await buildCartResponse(cartId, updatedItems, cartOfferObj, req.user.id);
 
     return ok(res, "Offer applied to cart successfully", response);
 
@@ -889,7 +1031,7 @@ async function removeCartOffer(req, res) {
 
     const items = await getCartItemsWithOffer(cartId);
 
-    const response = await buildCartResponse(cartId, items);
+    const response = await buildCartResponse(cartId, items, null, req.user.id);
 
     return ok(res, "Offer removed from cart successfully", response);
 
@@ -990,7 +1132,7 @@ async function applyCartItemOffer(req, res) {
 
     const items = await getCartItemsWithOffer(req.cart.cart_id);
 
-    const response = await buildCartResponse(req.cart.cart_id, items);
+    const response = await buildCartResponse(req.cart.cart_id, items, null, req.user.id);
 
     return ok(res, "Offer applied to cart item successfully", response);
 
@@ -1030,7 +1172,7 @@ async function removeCartItemOffer(req, res) {
 
     const items = await getCartItemsWithOffer(req.cart.cart_id);
 
-    const response = await buildCartResponse(req.cart.cart_id, items);
+    const response = await buildCartResponse(req.cart.cart_id, items, null, req.user.id);
 
     return ok(res, "Offer removed from cart item successfully", response);
 

@@ -2,9 +2,7 @@ import pool from "../configs/db.js";
 
 export const addUserAddressModel = async (data) => {
   const sql = `INSERT INTO user_addresses SET ?`;
-
-//   const [result] = await pool.query(sql, [data]);
-
+  const [result] = await pool.query(sql, [data]);
   return result;
 };
 
@@ -28,9 +26,9 @@ export const setDefaultAddressModel = async (userId, addressId) => {
 };
 
 export const getDefaultAddressModel = async (userId) => {
-  const sql = `SELECT full_name, address_line1, city, state, postal_code, country 
+  const sql = `SELECT address_id, full_name, phone, address_line1, address_line2, city, state, postal_code, country, is_default
        FROM user_addresses 
-       WHERE user_id = ? AND is_default = 1`;
+       WHERE user_id = ? AND is_default = 1 AND is_deleted = 0`;
   const [result] = await pool.query(sql, [userId]);
 
   return result;

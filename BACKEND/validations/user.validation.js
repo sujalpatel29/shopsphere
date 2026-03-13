@@ -51,29 +51,23 @@ export const addressSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
   phone: z.string().regex(/^[6-9]\d{9}$/, "Enter valid Indian mobile number"),
   address_line1: z.string().min(5, "Address line 1 is required").max(255),
-
-  address_line2: z.string().max(255).optional(),
-
+  address_line2: z.string().max(255).nullable().optional(),
   city: z
     .string()
     .min(2, "City is required")
     .max(100)
     .regex(/^[a-zA-Z\s]+$/, "City must contain only letters"),
-
   state: z
     .string()
     .min(2, "State is required")
     .max(100)
     .regex(/^[a-zA-Z\s]+$/, "State must contain only letters"),
-
   postal_code: z
     .string()
     .min(4)
     .max(10)
     .regex(/^[0-9A-Za-z\s-]+$/, "Invalid postal code"),
-
   country: z.string().min(2).max(100),
-
   is_default: z.boolean().optional(),
 });
 

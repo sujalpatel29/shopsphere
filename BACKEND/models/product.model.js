@@ -103,6 +103,7 @@ const Product = {
     let baseSql = `
       FROM product_master p
       LEFT JOIN category_master c ON p.category_id = c.category_id
+      LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1 AND pi.is_deleted = 0
       LEFT JOIN (
         SELECT pp.product_id,
                COUNT(*) AS portion_count,
@@ -208,7 +209,7 @@ const Product = {
     }
 
     const dataSql = `
-      SELECT DISTINCT p.*, c.category_name,
+      SELECT DISTINCT p.*, c.category_name, pi.image_url,
              COALESCE(ptc.portion_count, 0) AS portion_count,
              ptc.portion_values,
              ptc.portion_details,

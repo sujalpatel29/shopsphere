@@ -350,7 +350,7 @@
 // export default CategoryPage;
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Toast } from "primereact/toast";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
@@ -364,6 +364,7 @@ import {
   getCategoryProductsPriceRange,
 } from "../../services/categoryApi";
 import api from "../../../api/api";
+import { incrementCart } from "../../redux/slices/cartSlice";
 
 const extractProducts = (res) => {
   const data = res?.data;
@@ -459,6 +460,7 @@ const useDebouncedValue = (value, delayMs = 300) => {
 
 function CategoryPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const toast = useRef(null);
   const { currentUser } = useSelector((state) => state.auth);
   
@@ -822,6 +824,8 @@ function CategoryPage() {
         productId,
         quantity: 1,
       });
+      // Update cart badge count
+      dispatch(incrementCart());
       toast.current?.show({
         severity: "success",
         summary: "Added to Cart",

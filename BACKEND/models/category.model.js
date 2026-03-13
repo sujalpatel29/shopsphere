@@ -91,10 +91,12 @@ WITH RECURSIVE subcategories AS (
         ON cm.parent_id = s.category_id
     WHERE cm.is_deleted = 0
 )
-SELECT DISTINCT pm.*
+SELECT DISTINCT pm.*, pi.image_url
 FROM product_master pm
 JOIN product_categories pc
     ON pm.product_id = pc.product_id
+LEFT JOIN product_images pi
+    ON pm.product_id = pi.product_id AND pi.is_primary = 1 AND pi.is_deleted = 0
 WHERE pc.category_id IN (
     SELECT category_id FROM subcategories
 )
@@ -145,10 +147,12 @@ WITH RECURSIVE subcategories AS (
       ON cm.parent_id = s.category_id
     WHERE cm.is_deleted = 0
 )
-SELECT DISTINCT pm.*
+SELECT DISTINCT pm.*, pi.image_url
 FROM product_master pm
 JOIN product_categories pc
   ON pm.product_id = pc.product_id
+LEFT JOIN product_images pi
+  ON pm.product_id = pi.product_id AND pi.is_primary = 1 AND pi.is_deleted = 0
 WHERE pc.category_id IN (SELECT category_id FROM subcategories)
   AND pm.is_deleted = 0
 ORDER BY pm.product_id DESC
@@ -174,10 +178,12 @@ WITH RECURSIVE subcategories AS (
       ON cm.parent_id = s.category_id
     WHERE cm.is_deleted = 0
 )
-SELECT DISTINCT pm.*
+SELECT DISTINCT pm.*, pi.image_url
 FROM product_master pm
 JOIN product_categories pc
   ON pm.product_id = pc.product_id
+LEFT JOIN product_images pi
+  ON pm.product_id = pi.product_id AND pi.is_primary = 1 AND pi.is_deleted = 0
 WHERE pc.category_id IN (SELECT category_id FROM subcategories)
   AND pm.is_deleted = 0
 ORDER BY pm.product_id DESC;
@@ -325,9 +331,11 @@ export const getProductsByCategoryFilterPaginated = (
     : "";
 
   const query = `
-    SELECT DISTINCT pm.*
+    SELECT DISTINCT pm.*, pi.image_url
     FROM product_master pm
     ${joinClause}
+    LEFT JOIN product_images pi
+      ON pm.product_id = pi.product_id AND pi.is_primary = 1 AND pi.is_deleted = 0
     WHERE ${conditions.join(" AND ")}
     ORDER BY pm.product_id DESC
     LIMIT ?
@@ -370,9 +378,11 @@ export const getProductsByCategoryFilter = (
     : "";
 
   const query = `
-    SELECT DISTINCT pm.*
+    SELECT DISTINCT pm.*, pi.image_url
     FROM product_master pm
     ${joinClause}
+    LEFT JOIN product_images pi
+      ON pm.product_id = pi.product_id AND pi.is_primary = 1 AND pi.is_deleted = 0
     WHERE ${conditions.join(" AND ")}
     ORDER BY pm.product_id DESC
   `;

@@ -20,6 +20,17 @@ import {
 export const addUserAddress = async (req, res) => {
   try {
     const userId = req.user.id;
+    
+    // Debug log to see incoming data
+    console.log("Add address request body:", req.body);
+
+    // Check if user wants to set this as primary/default address
+    const isPrimary = req.body.is_primary || req.body.is_default || false;
+    
+    // If setting as primary, first remove existing default
+    if (isPrimary) {
+      await removeDefaultAddress(userId);
+    }
 
     const data = {
       user_id: userId,
@@ -31,6 +42,7 @@ export const addUserAddress = async (req, res) => {
       state: req.body.state,
       postal_code: req.body.postal_code,
       country: req.body.country || "India",
+      is_default: isPrimary ? 1 : 0,
       created_at: new Date(),
       created_by: userId,
     };
@@ -39,6 +51,7 @@ export const addUserAddress = async (req, res) => {
 
     return created(res, "Address added successfully", {
       address_id: result.insertId,
+      is_default: isPrimary,
     });
   } catch (error) {
     console.error("Add address error:", error);

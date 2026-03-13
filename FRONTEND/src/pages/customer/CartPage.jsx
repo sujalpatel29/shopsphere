@@ -13,6 +13,7 @@ import { EmptyCart } from "../../components/cart/EmptyCart";
 import { CartItemSkeleton } from "../../components/cart/CartItemSkeleton";
 import { ArrowRight } from "lucide-react";
 import api from "../../../api/api";
+import { setCartCount, clearCart } from "../../redux/slices/cartSlice";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -38,6 +39,7 @@ function CartPage() {
   
   // Address states
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [allAddresses, setAllAddresses] = useState([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressForm, setAddressForm] = useState({
     name: "",
@@ -46,7 +48,8 @@ function CartPage() {
     city: "",
     state: "",
     pincode: "",
-    type: "home"
+    type: "home",
+    is_primary: true
   });
   
   // Available offers display
@@ -63,8 +66,48 @@ function CartPage() {
     try {
       setLoading(true);
       const response = await api.get("/cart");
-      // Backend returns { success, message, data: { cartId, items, subtotal, ... } }
-      setCart(response.data.data);
+      // Backend returns { success, message, data: { cartId, items, subtotal, ..., address } }
+      const cartData = response.data.data;
+      setCart(cartData);
+      
+      // Update cart count in Redux
+      const itemCount = cartData.items?.reduce((total, item) => total + item.quantity, 0) || 0;
+      dispatch(setCartCount(itemCount));
+      
+      // Set address from backend if available
+      if (cartData.address) {
+        setSelectedAddress({
+          id: cartData.address.address_id,
+          name: cartData.address.full_name,
+          phone: cartData.address.phone,
+          address: cartData.address.address_line1 + (cartData.address.address_line2 ? ', ' + cartData.address.address_line2 : ''),
+          city: cartData.address.city,
+          state: cartData.address.state,
+          pincode: cartData.address.postal_code,
+          type: 'home',
+          isDefault: cartData.address.is_default
+        });
+      } else {
+        setSelectedAddress(null);
+      }
+      
+      // Fetch all user addresses
+      try {
+        const addressesRes = await api.get('/users/show-addresses');
+        const addresses = addressesRes.data.data || [];
+        setAllAddresses(addresses.map(addr => ({
+          id: addr.address_id,
+          name: addr.full_name,
+          phone: addr.phone,
+          address: addr.address_line1,
+          city: addr.city,
+          state: addr.state,
+          pincode: addr.postal_code,
+          isDefault: addr.is_default === 1
+        })));
+      } catch (addrErr) {
+        console.error('Error fetching addresses:', addrErr);
+      }
       
       // Fetch applicable offers
       const offersRes = await api.get("/cart/offers");
@@ -107,7 +150,11 @@ function CartPage() {
     
     try {
       const response = await api.patch(`/cart/items/${cartItemId}`, { quantity: newQuantity });
-      setCart(response.data.data);
+      const cartData = response.data.data;
+      setCart(cartData);
+      // Update cart count in Redux
+      const itemCount = cartData.items?.reduce((total, item) => total + item.quantity, 0) || 0;
+      dispatch(setCartCount(itemCount));
       toast.current?.show({
         severity: "success",
         summary: "Updated",
@@ -133,12 +180,21 @@ function CartPage() {
       message: `Are you sure you want to remove "${productName}" from your cart?`,
       header: "Remove Item",
       icon: "pi pi-exclamation-triangle",
+      className: "dark:!bg-[#151e22]",
+      contentClassName: "dark:!bg-[#151e22]",
+      headerClassName: "dark:!bg-[#151e22] dark:!text-slate-100",
+      messageClassName: "dark:!bg-[#151e22] dark:!text-slate-300",
+      footerClassName: "dark:!bg-[#151e22]",
       acceptClassName: "!bg-red-500 !border-red-500 !text-white hover:!bg-red-600 !px-4 !py-2 !rounded-lg",
-      rejectClassName: "!bg-transparent !border-gray-300 !text-gray-700 hover:!bg-gray-100 dark:!text-gray-300 dark:hover:!bg-gray-800 !px-4 !py-2 !rounded-lg",
+      rejectClassName: "!bg-transparent !border-gray-300 !text-gray-700 hover:!bg-gray-100 dark:!border-gray-600 dark:!text-gray-300 dark:hover:!bg-gray-800 !px-4 !py-2 !rounded-lg",
       accept: async () => {
         try {
           const response = await api.delete(`/cart/items/${cartItemId}`);
-          setCart(response.data.data);
+          const cartData = response.data.data;
+          setCart(cartData);
+          // Update cart count in Redux
+          const itemCount = cartData.items?.reduce((total, item) => total + item.quantity, 0) || 0;
+          dispatch(setCartCount(itemCount));
           toast.current?.show({
             severity: "success",
             summary: "Removed",
@@ -394,7 +450,7 @@ function CartPage() {
   };
 
   // Save new address
-  const saveNewAddress = () => {
+  const saveNewAddress = async () => {
     if (!addressForm.name || !addressForm.phone || !addressForm.address || !addressForm.city || !addressForm.state || !addressForm.pincode) {
       toast.current?.show({
         severity: "error",
@@ -405,30 +461,65 @@ function CartPage() {
       return;
     }
     
-    const newAddress = {
-      id: Date.now(),
-      ...addressForm,
-      isDefault: false
-    };
-    
-    setSelectedAddress(newAddress);
-    setShowAddressForm(false);
-    setAddressForm({
-      name: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      pincode: "",
-      type: "home"
-    });
-    
-    toast.current?.show({
-      severity: "success",
-      summary: "Address Saved",
-      detail: "New delivery address added",
-      life: 2000,
-    });
+    try {
+      // Normalize phone number - remove spaces, dashes, and country code
+      const normalizedPhone = addressForm.phone.replace(/[\s\-]/g, '').replace(/^(\+91|91)/, '');
+      
+      // Build address data - only include address_line2 if provided
+      const addressData = {
+        full_name: addressForm.name,
+        phone: normalizedPhone,
+        address_line1: addressForm.address,
+        city: addressForm.city,
+        state: addressForm.state,
+        postal_code: addressForm.pincode,
+        country: "India",
+        is_primary: addressForm.is_primary
+      };
+      
+      // Save address to user profile via backend
+      const response = await api.post("/cart/address", addressData);
+      
+      const newAddress = {
+        id: response.data.data.address_id,
+        ...addressForm,
+        isDefault: response.data.data.is_default || false
+      };
+      
+      setSelectedAddress(newAddress);
+      setAllAddresses(prev => [...prev, newAddress]);
+      setShowAddressForm(false);
+      setAddressForm({
+        name: "",
+        phone: "",
+        address: "",
+        city: "",
+        state: "",
+        pincode: "",
+        type: "home",
+        is_primary: true
+      });
+      
+      toast.current?.show({
+        severity: "success",
+        summary: "Address Saved",
+        detail: "New delivery address added to your profile",
+        life: 2000,
+      });
+    } catch (error) {
+      console.error("Error saving address:", error);
+      console.log("Error response data:", error.response?.data);
+      // Zod validation errors are in error.response.data.errors (array of {message, path})
+      const errorDetails = error.response?.data?.errors?.map(e => `${e.path?.join('.') || 'field'}: ${e.message}`).join(', ') 
+        || error.response?.data?.message 
+        || "Failed to save address";
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: errorDetails,
+        life: 5000,
+      });
+    }
   };
 
   // Get product-specific offers for items in cart
@@ -495,8 +586,13 @@ function CartPage() {
     <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b] pt-20">
       <Toast ref={toast} position="top-right" pt={{ root: { style: { marginTop: '80px', zIndex: 9999 } } }} />
       <ConfirmDialog 
-        className="cart-confirm-dialog"
-        contentClassName="dark:bg-[#151e22]"
+        pt={{
+          root: { className: 'dark:bg-[#151e22]' },
+          header: { className: 'dark:bg-[#151e22] dark:text-slate-100' },
+          content: { className: 'dark:bg-[#151e22]' },
+          footer: { className: 'dark:bg-[#151e22]' },
+          message: { className: 'dark:text-slate-300' }
+        }}
         breakpoints={{ '960px': '75vw', '640px': '90vw' }}
       />
       
@@ -680,73 +776,80 @@ function CartPage() {
               Continue Shopping
             </button>
             
-            {/* Delivery Address Section */}
-            <div className="mt-8 bg-white dark:bg-[#151e22] rounded-2xl p-4 sm:p-6 shadow-sm border border-[#e8dccf] dark:border-[#243440]">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-serif text-lg sm:text-xl font-semibold text-gray-900 dark:text-slate-100">
-                  <i className="pi pi-map-marker text-[#2f7a6f] mr-2" />
+            {/* Delivery Address Section - Compact */}
+            <div className="mt-4 bg-white dark:bg-[#151e22] rounded-xl p-3 sm:p-4 shadow-sm border border-[#e8dccf] dark:border-[#243440]">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
+                  <i className="pi pi-map-marker text-[#2f7a6f]" />
                   Delivery Address
-                </h2>
+                </h3>
                 <Button
                   label="Add New"
                   icon="pi pi-plus"
-                  className="p-button-text p-button-sm text-[#2f7a6f] text-xs sm:text-sm"
+                  className="p-button-text p-button-sm text-[#2f7a6f] !text-xs !py-1"
                   onClick={() => setShowAddressForm(true)}
                 />
               </div>
               
               {selectedAddress ? (
-                <div className="p-3 sm:p-4 border-2 border-[#2f7a6f] rounded-xl bg-[#2f7a6f]/5">
-                  <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-medium text-gray-900 dark:text-slate-100 text-sm sm:text-base">{selectedAddress.name}</span>
-                        <Tag value={selectedAddress.type === "home" ? "Home" : "Work"} severity="info" className="text-xs" />
-                        {selectedAddress.isDefault && <Tag value="Default" severity="success" className="text-xs" />}
+                <div>
+                  {/* Primary/Selected Address Display */}
+                  <div className="p-2.5 border border-[#2f7a6f]/30 rounded-lg bg-[#2f7a6f]/5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-gray-900 dark:text-slate-100 text-sm">{selectedAddress.name}</span>
+                          {selectedAddress.isDefault && <Tag value="Default" severity="success" className="!text-[10px] !px-1.5 !py-0.5" />}
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-slate-400 mt-0.5">{selectedAddress.phone}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-500 mt-0.5 line-clamp-1">
+                          {selectedAddress.address}, {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.pincode}
+                        </p>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400">{selectedAddress.phone}</p>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mt-1">
-                        {selectedAddress.address}, {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.pincode}
-                      </p>
-                    </div>
-                    <div className="flex gap-2 self-end sm:self-auto">
                       <Button
                         icon="pi pi-pencil"
-                        className="p-button-text p-button-sm text-gray-500"
+                        className="p-button-text p-button-sm text-gray-400 !p-1"
                         onClick={() => {
                           setAddressForm(selectedAddress);
                           setShowAddressForm(true);
                         }}
                       />
-                      {DUMMY_ADDRESSES.length > 1 && (
-                        <Dropdown
-                          value={selectedAddress.id}
-                          options={DUMMY_ADDRESSES.map(a => ({ label: `${a.type.toUpperCase()} - ${a.city}`, value: a.id }))}
-                          onChange={(e) => {
-                            const addr = DUMMY_ADDRESSES.find(a => a.id === e.value);
-                            if (addr) setSelectedAddress(addr);
-                          }}
-                          className="p-inputtext-sm text-xs dark:bg-[#1a262f] dark:border-[#243440]"
-                          panelClassName="dark:bg-[#1a262f]"
-                          placeholder="Change"
-                        />
-                      )}
                     </div>
                   </div>
+                  
+                  {/* Other Addresses Dropdown */}
+                  {allAddresses.filter(a => a.id !== selectedAddress.id).length > 0 && (
+                    <div className="mt-2">
+                      <Dropdown
+                        value={null}
+                        options={allAddresses
+                          .filter(a => a.id !== selectedAddress.id)
+                          .map(a => ({
+                            label: `${a.name} - ${a.address}, ${a.city}`,
+                            value: a
+                          }))}
+                        onChange={(e) => {
+                          if (e.value) {
+                            setSelectedAddress(e.value);
+                          }
+                        }}
+                        placeholder="Change to another address..."
+                        className="w-full dark:bg-[#1a262f] dark:border-[#243440] text-xs"
+                        panelClassName="dark:bg-[#1a262f]"
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center text-center py-10 sm:py-12 rounded-xl border border-dashed border-[#e8dccf] dark:border-[#243440] bg-[#fff8ee]/30 dark:bg-[#0f171c]/30">
-                  <i className="pi pi-map-marker text-4xl text-gray-300 dark:text-slate-600 mb-4" />
-                  <p className="text-gray-600 dark:text-slate-300 text-sm font-medium">
-                    No delivery address selected
-                  </p>
-                  <p className="text-gray-500 dark:text-slate-400 text-xs mt-1 mb-5">
-                    Add an address to place your order.
-                  </p>
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-dashed border-gray-300 dark:border-[#243440] bg-gray-50/50 dark:bg-[#1a262f]/30">
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-slate-400">
+                    <i className="pi pi-map-marker text-sm" />
+                    <span className="text-xs">No address added</span>
+                  </div>
                   <Button
-                    label="Add Address"
+                    label="Add"
                     icon="pi pi-plus"
-                    className="p-button-sm !bg-[#2f7a6f] !border-none !text-white !rounded-xl hover:!bg-[#265c54] !transition-colors"
+                    className="!text-xs !py-1 !px-2 !bg-[#2f7a6f] !border-none !text-white !rounded-lg hover:!bg-[#265c54]"
                     onClick={() => setShowAddressForm(true)}
                   />
                 </div>
@@ -780,7 +883,7 @@ function CartPage() {
                       
                       return (
                         <div 
-                          key={offer.offer_id} 
+                          key={`product-${offer.offer_id}`}
                           className={`flex items-center justify-between p-3 rounded-lg transition-all ${
                             isApplied 
                               ? 'bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30'
@@ -837,7 +940,7 @@ function CartPage() {
                         
                         return (
                           <div 
-                            key={offer.offer_id} 
+                            key={`cart-${offer.offer_id}`}
                             className={`flex items-center justify-between p-3 rounded-lg transition-all ${
                               isApplied 
                                 ? 'bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30' 
@@ -1099,6 +1202,20 @@ function CartPage() {
                 </span>
               </label>
             </div>
+          </div>
+          
+          <div className="pt-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={addressForm.is_primary}
+                onChange={(e) => handleAddressFormChange('is_primary', e.target.checked)}
+                className="accent-[#2f7a6f] w-4 h-4 rounded"
+              />
+              <span className="text-sm text-gray-700 dark:text-slate-300">
+                Set as primary address
+              </span>
+            </label>
           </div>
         </div>
       </Dialog>

@@ -11,6 +11,9 @@ import {
   removeCartItemOffer,
   getApplicableOffers
 } from "../controllers/cart.controller.js";
+import { addUserAddress } from "../controllers/User.address.controller.js";
+import { validate } from "../middlewares/Validations.middleware.js";
+import { addressSchema } from "../validations/user.validation.js";
 
 import { auth } from "../middlewares/auth.middleware.js";
 
@@ -121,5 +124,17 @@ router.post("/items/:cartItemId/offer", auth, validateCart, validateCartItemOwne
  * Headers: Authorization: Bearer <token>
  */
 router.delete("/items/:cartItemId/offer", auth, validateCart, validateCartItemOwnership, removeCartItemOffer);
+
+// ============================================================================
+// ADDRESS ROUTES (for checkout)
+// ============================================================================
+
+/**
+ * Add address from cart (saves to user profile)
+ * POST /api/cart/address
+ * Headers: Authorization: Bearer <token>
+ * Body: { full_name, phone, address_line1, address_line2?, city, state, postal_code, country }
+ */
+router.post("/address", auth, validate(addressSchema), addUserAddress);
 
 export default router;

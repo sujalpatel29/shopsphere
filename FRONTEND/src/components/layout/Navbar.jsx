@@ -50,7 +50,7 @@ function Navbar() {
   const { darkMode, toggleDarkMode } = useTheme();
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.auth);
-  const itemCount = 0;
+  const { itemCount } = useSelector((state) => state.cart);
   const dashboardPath =
     currentUser?.role === "admin" ? "/admin/dashboard" : "/dashboard";
   const navigate = useNavigate();
