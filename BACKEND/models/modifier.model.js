@@ -278,7 +278,7 @@ async function getModifiersByProductPortion(product_portion_id) {
   return rows;
 }
 
-// Get modifiers assigned directly to a product (no portion)
+// Get modifiers assigned to a product (via product_portion)
 async function getModifiersByProduct(product_id) {
   const [rows] = await pool.query(
     `SELECT mm.modifier_id,
@@ -290,10 +290,14 @@ async function getModifiersByProduct(product_id) {
             mp.modifier_portion_id
        FROM modifier_portion mp
        JOIN modifier_master mm ON mm.modifier_id = mp.modifier_id
-      WHERE mp.product_id = ?
-        AND mp.product_portion_id IS NULL
+       JOIN product_portion pp ON pp.product_portion_id = mp.product_portion_id
+      WHERE pp.product_id = ?
         AND mp.is_deleted = 0
+        AND mp.is_active = 1
         AND mm.is_deleted = 0
+        AND mm.is_active = 1
+        AND pp.is_deleted = 0
+        AND pp.is_active = 1
       ORDER BY mm.modifier_name`,
     [product_id],
   );

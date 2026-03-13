@@ -29,3 +29,4 @@ const testConnection = async () => {
 testConnection();
 
 export default pool;
+

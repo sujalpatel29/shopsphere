@@ -336,7 +336,7 @@ Verifies cart item belongs to the authenticated user.
 ### Offer Types
 
 | Type | Description | Applied To | Frontend Type |
-|------|-------------|------------|---------------|
+|------|-------------|------------|---------------|+
 | `flat_discount` | Fixed or percentage discount on entire cart | Cart | `cart` |
 | `first_order` | Special discount for first-time users | Cart | `cart` |
 | `time_based` | Limited time offers | Cart | `cart` |

@@ -10,7 +10,7 @@ export const register = async (req, res) => {
     const { name, email, password } = req.body;
 
     // Check if user exists
-    const [existing] = await User.findByEmail(email);
+    const [existing] = await User.loginUserModel(email);
     if (existing.length > 0) {
       return res.status(400).json({
         message: "User already exists, try with a different email ✉️",
@@ -21,7 +21,7 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    await User.createUser({
+    await User.createUserModel({
       name,
       email,
       password: hashedPassword,
@@ -48,7 +48,7 @@ export const login = async (req, res) => {
     email = email.trim();
     password = password.trim();
 
-    const [users] = await User.findByEmail(email);
+    const [users] = await User.loginUserModel(email);
 
     if (users.length === 0) {
       return res.status(404).json({ message: "User not found" });

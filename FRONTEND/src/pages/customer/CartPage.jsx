@@ -61,6 +61,45 @@ function CartPage() {
       maximumFractionDigits: 2,
     });
 
+  // Color mapping for modifier values
+  const getColorStyle = (colorName) => {
+    if (!colorName) return {};
+    
+    const colorMap = {
+      'Blue': { bg: '#3B82F6', text: '#FFFFFF' },
+      'Red': { bg: '#EF4444', text: '#FFFFFF' },
+      'Green': { bg: '#22C55E', text: '#FFFFFF' },
+      'Yellow': { bg: '#EAB308', text: '#000000' },
+      'Orange': { bg: '#F97316', text: '#FFFFFF' },
+      'Purple': { bg: '#A855F7', text: '#FFFFFF' },
+      'Pink': { bg: '#EC4899', text: '#FFFFFF' },
+      'Black': { bg: '#1F2937', text: '#FFFFFF' },
+      'White': { bg: '#F3F4F6', text: '#1F2937' },
+      'Silver': { bg: '#C0C0C0', text: '#1F2937' },
+      'Gold': { bg: '#FFD700', text: '#1F2937' },
+      'Gray': { bg: '#6B7280', text: '#FFFFFF' },
+      'Grey': { bg: '#6B7280', text: '#FFFFFF' },
+      'Brown': { bg: '#92400E', text: '#FFFFFF' },
+      'Navy': { bg: '#1E3A8A', text: '#FFFFFF' },
+      'Teal': { bg: '#14B8A6', text: '#FFFFFF' },
+      'Cyan': { bg: '#06B6D4', text: '#FFFFFF' },
+      'Maroon': { bg: '#881337', text: '#FFFFFF' },
+      'Olive': { bg: '#65A30D', text: '#FFFFFF' },
+      'Lime': { bg: '#84CC16', text: '#1F2937' },
+      'Aqua': { bg: '#22D3EE', text: '#1F2937' },
+      'Magenta': { bg: '#E11D48', text: '#FFFFFF' },
+    };
+    
+    // Case-insensitive lookup
+    const key = Object.keys(colorMap).find(k => k.toLowerCase() === colorName.toLowerCase());
+    if (key) {
+      return { backgroundColor: colorMap[key].bg, color: colorMap[key].text };
+    }
+    
+    // Default style for unknown colors
+    return { backgroundColor: '#6B7280', color: '#FFFFFF' };
+  };
+
   // Fetch cart from backend
   const fetchCart = async () => {
     try {
@@ -674,7 +713,7 @@ function CartPage() {
                         </p>
                         
                         {/* Portion & Modifier Details */}
-                        {(item.portionId || item.modifierId) && (
+                        {(item.portionId || item.modifiers?.length > 0) && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {item.portionValue && (
                               <Tag 
@@ -683,13 +722,14 @@ function CartPage() {
                                 className="text-xs"
                               />
                             )}
-                            {item.modifierName && (
+                            {item.modifiers?.map((mod, idx) => (
                               <Tag 
-                                value={item.modifierName} 
-                                severity="secondary"
-                                className="text-xs"
+                                key={idx}
+                                value={mod.modifier_value}
+                                style={getColorStyle(mod.modifier_value)}
+                                className="text-xs font-medium"
                               />
-                            )}
+                            ))}
                           </div>
                         )}
                         

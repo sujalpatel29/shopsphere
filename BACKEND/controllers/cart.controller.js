@@ -20,7 +20,17 @@ import {
 
   getModifierPricing,
 
-  getFirstAvailablePortion
+  getFirstAvailablePortion,
+  
+  getCartItemModifiers,
+  
+  insertCartItemModifiers,
+  
+  deleteCartItemModifiers,
+  
+  findCartItemWithModifiers,
+  
+  getCartItemsWithModifiers,
 
 } from "../models/cart.model.js";
 
@@ -360,11 +370,15 @@ async function buildCartResponse(cartId, items, cartOffer = null, userId = null)
 
       portionValue: item.portion_value,
 
-      modifierId: item.modifier_id,
+      // Support both old single modifier and new modifiers array
+      modifierId: item.modifier_id || (item.modifiers && item.modifiers[0]?.modifier_id) || null,
 
-      modifierName: item.modifier_name,
+      modifierName: item.modifier_name || (item.modifiers && item.modifiers[0]?.modifier_name) || null,
 
-      modifierValue: item.modifier_value,
+      modifierValue: item.modifier_value || (item.modifiers && item.modifiers[0]?.modifier_value) || null,
+
+      // New: array of all modifiers
+      modifiers: item.modifiers || [],
 
       appliedOffer: appliedItemOffer,
 
@@ -520,17 +534,23 @@ async function addItemToCart(req, res) {
     const userId = req.user.id;
 
     // Cart is attached by validateCart middleware
-    const { productId, quantity, portionId, modifierId } = req.body;
+    // Support both single modifierId (backward compatible) and modifierIds array
+    const { productId, quantity, portionId, modifierId, modifierIds } = req.body;
 
-
+    // Normalize to array of modifier IDs
+    let parsedModifierPortionIds = [];
+    if (modifierIds && Array.isArray(modifierIds)) {
+      parsedModifierPortionIds = modifierIds.map(id => parsePositiveInt(id)).filter(Boolean);
+    } else if (modifierId) {
+      const singleId = parsePositiveInt(modifierId);
+      if (singleId) parsedModifierPortionIds = [singleId];
+    }
 
     const parsedProductId = parsePositiveInt(productId);
 
     const parsedQuantity = parsePositiveInt(quantity);
 
     const parsedPortionId = portionId ? parsePositiveInt(portionId) : null;
-
-    const parsedModifierId = modifierId ? parsePositiveInt(modifierId) : null;
 
 
 
@@ -594,20 +614,30 @@ async function addItemToCart(req, res) {
 
 
 
-    // If modifier is provided, add modifier's additional price
-    if (parsedModifierId) {
-      const modifierPricing = await getModifierPricing(parsedModifierId);
+    // Process all modifiers and calculate total additional price
+    const modifierDetails = [];
+    for (const modifierPortionId of parsedModifierPortionIds) {
+      const modifierPricing = await getModifierPricing(modifierPortionId);
       if (!modifierPricing) {
-        return badRequest(res, "Invalid modifier specified. This modifier does not exist or is inactive.");
+        return badRequest(res, `Invalid modifier specified (ID: ${modifierPortionId}). This modifier does not exist or is inactive.`);
       }
+      modifierDetails.push(modifierPricing);
       itemPrice = Math.round((itemPrice + Number(modifierPricing.additionalPrice)) * 1000) / 1000;
-    } else {
+    }
+    
+    if (modifierDetails.length === 0) {
       itemPrice = Math.round(itemPrice * 1000) / 1000;
     }
 
 
 
-    const existingItem = await findCartItem(req.cart.cart_id, parsedProductId, finalPortionId, parsedModifierId);
+    // Find existing item with same portion and modifiers
+    const existingItem = await findCartItemWithModifiers(
+      req.cart.cart_id, 
+      parsedProductId, 
+      finalPortionId, 
+      parsedModifierPortionIds
+    );
 
 
     // Validate cart limits
@@ -652,7 +682,7 @@ async function addItemToCart(req, res) {
         return badRequest(res, `Cannot add more than ${CART_LIMITS.MAX_QUANTITY_PER_PRODUCT} units of the same product`);
       }
 
-      await insertCartItem({
+      const cartItemId = await insertCartItem({
 
         cartId: req.cart.cart_id,
 
@@ -664,11 +694,16 @@ async function addItemToCart(req, res) {
 
         productPortionId: finalPortionId,
 
-        modifierId: parsedModifierId,
+        modifierId: null, // No longer using single modifier_id column
 
         userId
 
       });
+      
+      // Insert all modifiers into cart_item_modifiers table
+      if (modifierDetails.length > 0) {
+        await insertCartItemModifiers(cartItemId, modifierDetails);
+      }
 
     }
 

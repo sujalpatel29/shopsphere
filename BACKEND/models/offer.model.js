@@ -809,9 +809,9 @@ export const getCartWithOffer = async (cartId) => {
 };
 
 /**
- * Get cart items with product and offer details
+ * Get cart items with product, offer, and modifier details
  * @param {number} cartId - Cart ID
- * @returns {Promise<Array>} Cart items with offer details
+ * @returns {Promise<Array>} Cart items with offer and modifier details
  */
 export const getCartItemsWithOffer = async (cartId) => {
   const [rows] = await pool.query(
@@ -820,15 +820,12 @@ export const getCartItemsWithOffer = async (cartId) => {
             ci.quantity,
             ci.price AS effective_price,
             ci.product_portion_id,
-            ci.modifier_id,
             ci.offer_id AS item_offer_id,
             pm.display_name,
             pm.short_description,
             por.portion_value,
             pp.price AS portion_price,
             pp.discounted_price AS portion_discounted_price,
-            mt.modifier_name,
-            mt.modifier_value,
             item_offer.offer_name AS item_offer_name,
             item_offer.offer_type AS item_offer_type,
             item_offer.discount_type AS item_discount_type,
@@ -838,13 +835,39 @@ export const getCartItemsWithOffer = async (cartId) => {
        JOIN product_master pm ON pm.product_id = ci.product_id
        LEFT JOIN product_portion pp ON pp.product_portion_id = ci.product_portion_id AND pp.product_id = ci.product_id
        LEFT JOIN portion_master por ON por.portion_id = pp.portion_id
-       LEFT JOIN modifier_master mt ON mt.modifier_id = ci.modifier_id
        LEFT JOIN offer_master item_offer ON item_offer.offer_id = ci.offer_id
       WHERE ci.cart_id = ? AND ci.is_deleted = 0
       ORDER BY ci.cart_item_id`,
     [cartId],
   );
-  return rows;
+  
+  // Fetch modifiers for each cart item from cart_item_modifiers table
+  const rowsWithModifiers = await Promise.all(
+    rows.map(async (item) => {
+      const [modifierRows] = await pool.query(
+        `SELECT cim.modifier_portion_id,
+                cim.modifier_id,
+                cim.additional_price,
+                mm.modifier_name,
+                mm.modifier_value
+           FROM cart_item_modifiers cim
+           JOIN modifier_master mm ON mm.modifier_id = cim.modifier_id
+          WHERE cim.cart_item_id = ?
+          ORDER BY cim.cart_item_modifier_id`,
+        [item.cart_item_id],
+      );
+      return {
+        ...item,
+        modifiers: modifierRows || [],
+        // Backward compatibility: set single modifier fields from first modifier
+        modifier_id: modifierRows[0]?.modifier_id || null,
+        modifier_name: modifierRows[0]?.modifier_name || null,
+        modifier_value: modifierRows[0]?.modifier_value || null,
+      };
+    }),
+  );
+  
+  return rowsWithModifiers;
 };
 
 /**

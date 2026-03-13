@@ -18,5 +18,4 @@ orderRouter.get('/admin/orders', auth, adminOnly, getAdminOrdersPaginated)
 orderRouter.get('/admin/orders/:id', auth, adminOnly, getAdminOrderDetail)
 orderRouter.patch('/admin/orders/:id/payment-status', auth, adminOnly, updatePaymentStatusByAdmin)
 
-
 export default orderRouter;

@@ -157,7 +157,7 @@ function Navbar() {
             >
               <ShoppingCart className="h-5 w-5" />
               {itemCount > 0 && (
-                <span className="absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-600 px-1 font-accent text-xs font-semibold text-white">
+                <span className="absolute -right-2 -top-2 z-50 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-600 px-1 font-accent text-xs font-semibold text-white">
                   {itemCount}
                 </span>
               )}

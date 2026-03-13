@@ -14,7 +14,8 @@ import { Card } from "primereact/card";
 import { Dialog } from "primereact/dialog";
 import { Skeleton } from "primereact/skeleton";
 import { Toast } from "primereact/toast";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { incrementCart } from "../../redux/slices/cartSlice";
 import { useTheme } from "../../context/ThemeContext";
 import {
   addCartItem,
@@ -105,6 +106,7 @@ function ProductDetailsPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { darkMode } = useTheme();
+  const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.auth);
   const toastRef = useRef(null);
   const ctaAnchorRef = useRef(null);
@@ -401,14 +403,6 @@ function ProductDetailsPage() {
       showToast("warn", "Required Selection", "Please select all required modifiers.");
       return false;
     }
-    if (Object.values(selectedModifiers).filter(Boolean).length > 1) {
-      showToast(
-        "warn",
-        "Modifier Limit",
-        "Current cart API supports one modifier selection per product."
-      );
-      return false;
-    }
     if (outOfStock) {
       showToast("warn", "Out of Stock", "This product is currently unavailable.");
       return false;
@@ -423,14 +417,20 @@ function ProductDetailsPage() {
       return false;
     }
     if (!validateSelection()) return false;
-    const selectedModifier = selectedModifierItems[0] || null;
+    
+    // Get all selected modifier portion IDs
+    const modifierPortionIds = selectedModifierItems
+      .map(m => Number(m.modifier_portion_id))
+      .filter(Boolean);
+    
     await addCartItem({
       productId: Number(product.product_id),
       quantity,
       portionId: selectedPortion ? Number(selectedPortion.product_portion_id) : undefined,
-      modifierId: selectedModifier ? Number(selectedModifier.modifier_id) : undefined,
+      modifierIds: modifierPortionIds.length > 0 ? modifierPortionIds : undefined,
     });
     setQuantityInCart((prev) => prev + quantity);
+    dispatch(incrementCart()); // Update cart badge count
     showToast("success", "Added to Cart", "Product added successfully.");
     return true;
   };
@@ -703,8 +703,8 @@ function ProductDetailsPage() {
         </ol>
       </nav>
 
-      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <Card className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22]">
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] items-stretch">
+        <Card className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22] flex flex-col">
           <div
             className="relative overflow-hidden rounded-xl border border-gray-100 bg-gray-50 dark:border-[#1f2933] dark:bg-[#10171b]"
             onTouchStart={(event) => {
@@ -720,7 +720,7 @@ function ProductDetailsPage() {
               <button
                 type="button"
                 onClick={() => setTapZoom((prev) => !prev)}
-                className="group h-[450px] w-full overflow-hidden md:h-[560px]"
+                className="group h-[280px] w-full overflow-hidden md:h-[320px]"
                 aria-label="Toggle image zoom"
               >
                 <img
@@ -732,7 +732,7 @@ function ProductDetailsPage() {
                 />
               </button>
             ) : (
-              <div className="flex h-[450px] items-center justify-center text-gray-500 dark:text-slate-400">
+              <div className="flex h-[280px] items-center justify-center text-gray-500 dark:text-slate-400">
                 No image available
               </div>
             )}
@@ -757,30 +757,32 @@ function ProductDetailsPage() {
               </>
             )}
           </div>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {(images.length ? images : [{ image_url: "" }]).map((item, index) => (
-              <button
-                key={item.image_id || `img-${index}`}
-                type="button"
-                onClick={() => goToImage(index)}
-                className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border ${
-                  index === activeImageIndex
-                    ? "border-amber-500"
-                    : "border-gray-200 dark:border-[#1f2933]"
-                }`}
-                aria-label={`View image ${index + 1}`}
-              >
-                {item.image_url ? (
-                  <img src={item.image_url} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full bg-gray-100 dark:bg-[#10171b]" />
-                )}
-              </button>
-            ))}
+          <div className="mt-3 w-full">
+            <div className="flex flex-wrap gap-2">
+              {(images.length ? images : [{ image_url: "" }]).map((item, index) => (
+                <button
+                  key={item.image_id || `img-${index}`}
+                  type="button"
+                  onClick={() => goToImage(index)}
+                  className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                    index === activeImageIndex
+                      ? "border-amber-500 ring-2 ring-amber-200"
+                      : "border-gray-200 dark:border-[#1f2933] hover:border-gray-400"
+                  }`}
+                  aria-label={`View image ${index + 1}`}
+                >
+                  {item.image_url ? (
+                    <img src={item.image_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full bg-gray-100 dark:bg-[#10171b]" />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
+        <Card className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22] flex flex-col">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h1 className="font-serif text-3xl text-gray-900 dark:text-slate-100">

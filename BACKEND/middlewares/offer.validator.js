@@ -366,12 +366,11 @@ const statusChangeOfferSchema = z.object({
  * Required:
  * - `offer_name`
  */
-const validateOfferSchema = z
-  .object({
-    offer_name: z
-      .string({ required_error: "offer_name is required" })
-      .trim()
-      .min(1, "offer_name cannot be empty"),
+const validateOfferSchema = z.object({
+  offer_name: z
+    .string({ required_error: "offer_name is required" })
+    .trim()
+    .min(1, "offer_name cannot be empty"),
 
     product_id: z.coerce
       .number({ invalid_type_error: "product_id must be a number" })

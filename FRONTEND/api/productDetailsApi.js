@@ -83,12 +83,14 @@ export const getCart = async () => {
   return response.data?.data || null;
 };
 
-export const addCartItem = async ({ productId, quantity, portionId, modifierId }) => {
+export const addCartItem = async ({ productId, quantity, portionId, modifierId, modifierIds }) => {
   const response = await api.post("/cart/items", {
     productId,
     quantity,
     portionId,
+    // Support both single modifierId and modifierIds array
     modifierId,
+    modifierIds,
   });
   return response.data?.data || null;
 };
