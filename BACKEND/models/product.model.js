@@ -100,6 +100,41 @@ const Product = {
     const conditions = ["p.is_deleted = 0"];
     const values = [];
 
+    const ratingJoinClause =
+      pagination.sort === "rating_high_low"
+        ? `
+      LEFT JOIN (
+        SELECT product_id, ROUND(AVG(rating), 2) AS avg_rating
+        FROM product_reviews
+        WHERE is_deleted = 0
+        GROUP BY product_id
+      ) pr ON pr.product_id = p.product_id
+    `
+        : "";
+
+    const ratingSelectClause =
+      pagination.sort === "rating_high_low"
+        ? ", COALESCE(pr.avg_rating, 0) AS avg_rating"
+        : "";
+
+    const imageJoinClause = `
+      LEFT JOIN (
+        SELECT pi1.product_id, pi1.image_url
+        FROM product_images pi1
+        INNER JOIN (
+          SELECT
+            product_id,
+            MAX(CASE WHEN is_primary = 1 THEN image_id END) AS primary_id,
+            MAX(image_id) AS latest_id
+          FROM product_images
+          WHERE is_deleted = 0
+          GROUP BY product_id
+        ) pick
+          ON pick.product_id = pi1.product_id
+         AND pi1.image_id = COALESCE(pick.primary_id, pick.latest_id)
+      ) pi ON pi.product_id = p.product_id
+    `;
+
     let baseSql = `
       FROM product_master p
       LEFT JOIN category_master c ON p.category_id = c.category_id
@@ -130,6 +165,8 @@ const Product = {
         WHERE pp2.is_deleted = 0
         GROUP BY pp2.product_id
       ) mc ON p.product_id = mc.product_id
+      ${ratingJoinClause}
+      ${imageJoinClause}
     `;
 
     // category filtering
@@ -202,7 +239,16 @@ const Product = {
     };
 
     let orderClause = "ORDER BY p.product_id ASC";
-    if (pagination.sortField && sortableColumns[pagination.sortField]) {
+    if (pagination.sort) {
+      const priceExpr = "CAST(COALESCE(p.discounted_price, p.price) AS DECIMAL(12,2))";
+      if (pagination.sort === "price_low_high") {
+        orderClause = `ORDER BY ${priceExpr} ASC, p.product_id DESC`;
+      } else if (pagination.sort === "price_high_low") {
+        orderClause = `ORDER BY ${priceExpr} DESC, p.product_id DESC`;
+      } else if (pagination.sort === "rating_high_low") {
+        orderClause = "ORDER BY COALESCE(pr.avg_rating, 0) DESC, p.product_id DESC";
+      }
+    } else if (pagination.sortField && sortableColumns[pagination.sortField]) {
       const dir = pagination.sortOrder === "desc" ? "DESC" : "ASC";
       orderClause = `ORDER BY ${sortableColumns[pagination.sortField]} ${dir}`;
     }
@@ -214,7 +260,9 @@ const Product = {
              ptc.portion_details,
              COALESCE(mc.modifier_count, 0) AS modifier_count,
              mc.modifier_values,
-             mc.modifier_details
+             mc.modifier_details,
+             pi.image_url
+             ${ratingSelectClause}
       ${baseSql}
       ${whereClause}
       ${orderClause}

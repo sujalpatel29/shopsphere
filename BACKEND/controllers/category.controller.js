@@ -715,7 +715,7 @@ const resolveFilterSource = (req) =>
 export const getProductsByCategoryFilters = async (req, res) => {
   try {
     const filterSource = resolveFilterSource(req);
-    const { page, limit, search, min_price, max_price } = filterSource;
+    const { page, limit, search, min_price, max_price, sort } = filterSource;
     const { parentIds, childIds } = resolveCategoryFilters(filterSource);
 
     const hasPaging = page !== undefined || limit !== undefined;
@@ -730,6 +730,7 @@ export const getProductsByCategoryFilters = async (req, res) => {
         search,
         min_price,
         max_price,
+        sort,
       );
       return ok(res, "Products fetched successfully", {
         count: products.length,
@@ -766,6 +767,7 @@ export const getProductsByCategoryFilters = async (req, res) => {
       search,
       min_price,
       max_price,
+      sort,
       perPage,
       offset,
     );
