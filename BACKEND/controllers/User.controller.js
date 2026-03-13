@@ -50,10 +50,7 @@ const generateTempPassword = () =>
 
 const hashOtp = (otp) => {
   const pepper = process.env.OTP_PEPPER || "";
-  return crypto
-    .createHash("sha256")
-    .update(`${otp}.${pepper}`)
-    .digest("hex");
+  return crypto.createHash("sha256").update(`${otp}.${pepper}`).digest("hex");
 };
 
 const isHashMatch = (inputHashHex, expectedHashHex) => {
@@ -99,7 +96,7 @@ const sendOtpEmail = async ({ to, otp, purpose }) => {
         ? "Your email change OTP"
         : purpose === OTP_PURPOSE_DELETE_ACCOUNT
           ? "Your account deletion OTP"
-        : "Your password reset OTP";
+          : "Your password reset OTP";
 
   const mailFrom =
     process.env.SMTP_FROM ||
@@ -147,13 +144,17 @@ const otpRequestLimiter = new Map();
 const otpVerifyLimiter = new Map();
 
 const OTP_REQUEST_LIMIT = Number(process.env.OTP_REQUEST_LIMIT || 3);
-const OTP_REQUEST_WINDOW_MS = Number(process.env.OTP_REQUEST_WINDOW_MS || 10 * 60 * 1000);
+const OTP_REQUEST_WINDOW_MS = Number(
+  process.env.OTP_REQUEST_WINDOW_MS || 10 * 60 * 1000,
+);
 const OTP_REQUEST_MIN_INTERVAL_MS = Number(
   process.env.OTP_REQUEST_MIN_INTERVAL_MS || 60 * 1000,
 );
 
 const OTP_VERIFY_LIMIT = Number(process.env.OTP_VERIFY_LIMIT || 5);
-const OTP_VERIFY_WINDOW_MS = Number(process.env.OTP_VERIFY_WINDOW_MS || 10 * 60 * 1000);
+const OTP_VERIFY_WINDOW_MS = Number(
+  process.env.OTP_VERIFY_WINDOW_MS || 10 * 60 * 1000,
+);
 
 const getClientIp = (req) => {
   const xff = req.headers["x-forwarded-for"];
@@ -234,7 +235,9 @@ export const registerRequestOtp = async (req, res) => {
     }
 
     const { name, email, password } = req.validated?.body || req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
     const clientIp = getClientIp(req);
 
     const requestKey = `register:${normalizedEmail}:${clientIp}`;
@@ -274,7 +277,11 @@ export const registerRequestOtp = async (req, res) => {
       { expiresIn: OTP_EXPIRES_IN },
     );
 
-    await sendOtpEmail({ to: normalizedEmail, otp, purpose: OTP_PURPOSE_REGISTER });
+    await sendOtpEmail({
+      to: normalizedEmail,
+      otp,
+      purpose: OTP_PURPOSE_REGISTER,
+    });
 
     const responseData = { otpToken, expiresIn: OTP_EXPIRES_IN };
     if (process.env.NODE_ENV !== "production") {
@@ -358,7 +365,11 @@ export const registerVerifyOtp = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const body = req.validated?.body ?? req.body;
+    const email = String(body.email ?? "")
+      .trim()
+      .toLowerCase();
+    const { password } = body;
     // 1️ Find user
     const rows = await loginUserModel(email);
 
@@ -641,7 +652,9 @@ export const changeEmailRequestOtp = async (req, res) => {
     }
 
     const { newEmail } = req.validated?.body || req.body;
-    const normalizedNewEmail = String(newEmail || "").trim().toLowerCase();
+    const normalizedNewEmail = String(newEmail || "")
+      .trim()
+      .toLowerCase();
     const clientIp = getClientIp(req);
 
     const requestKey = `change-email:${userId}:${clientIp}`;
@@ -722,7 +735,9 @@ export const changeEmailVerifyOtp = async (req, res) => {
     }
 
     const { newEmail, otp, otpToken } = req.validated?.body || req.body;
-    const normalizedNewEmail = String(newEmail || "").trim().toLowerCase();
+    const normalizedNewEmail = String(newEmail || "")
+      .trim()
+      .toLowerCase();
     const clientIp = getClientIp(req);
 
     const verifyKey = `change-email-verify:${userId}:${clientIp}`;
@@ -771,7 +786,10 @@ export const changeEmailVerifyOtp = async (req, res) => {
       return conflict(res, "Email already exists");
     }
 
-    const result = await updateProfileModel({ email: normalizedNewEmail }, userId);
+    const result = await updateProfileModel(
+      { email: normalizedNewEmail },
+      userId,
+    );
 
     if (result.affectedRows === 0) {
       return notFound(res, "User not found or already deleted");
@@ -807,7 +825,9 @@ export const deleteAccountRequestOtp = async (req, res) => {
     }
 
     const { email } = req.validated?.body || req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
     const clientIp = getClientIp(req);
 
     const requestKey = `delete-account:${userId}:${clientIp}`;
@@ -832,7 +852,9 @@ export const deleteAccountRequestOtp = async (req, res) => {
       return notFound(res, "User not found");
     }
 
-    const currentEmail = String(currentUser.email || "").trim().toLowerCase();
+    const currentEmail = String(currentUser.email || "")
+      .trim()
+      .toLowerCase();
     if (currentEmail !== normalizedEmail) {
       return badRequest(res, "Please enter your current account email");
     }
@@ -884,7 +906,9 @@ export const deleteAccountVerifyOtp = async (req, res) => {
     }
 
     const { email, otp, otpToken } = req.validated?.body || req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
     const clientIp = getClientIp(req);
 
     const verifyKey = `delete-account-verify:${userId}:${clientIp}`;
@@ -953,7 +977,9 @@ export const forgotPasswordRequestOtp = async (req, res) => {
     }
 
     const { email } = req.validated?.body || req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
     const clientIp = getClientIp(req);
 
     const requestKey = `forgot:${normalizedEmail}:${clientIp}`;
@@ -1023,7 +1049,9 @@ export const forgotPasswordVerifyOtp = async (req, res) => {
     }
 
     const { email, otp, otpToken } = req.validated?.body || req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
     const clientIp = getClientIp(req);
 
     const verifyKey = `forgot-verify:${normalizedEmail}:${clientIp}`;
@@ -1063,7 +1091,11 @@ export const forgotPasswordVerifyOtp = async (req, res) => {
 
     const users = await loginUserModel(normalizedEmail);
     const user = users[0];
-    if (!user || !decoded.userId || Number(decoded.userId) !== Number(user.user_id)) {
+    if (
+      !user ||
+      !decoded.userId ||
+      Number(decoded.userId) !== Number(user.user_id)
+    ) {
       return badRequest(res, "Invalid OTP");
     }
 
@@ -1090,7 +1122,10 @@ export const forgotPasswordVerifyOtp = async (req, res) => {
 export const forgotPasswordResetWithToken = async (req, res) => {
   try {
     if (!RESET_TOKEN_SECRET) {
-      return serverError(res, "RESET_TOKEN_SECRET or OTP_JWT_SECRET is required");
+      return serverError(
+        res,
+        "RESET_TOKEN_SECRET or OTP_JWT_SECRET is required",
+      );
     }
 
     const { resetToken, newPassword } = req.validated?.body || req.body;
@@ -1147,9 +1182,10 @@ export const getAllUsers = async (req, res) => {
     const role = String(req.query.role || "").trim();
     const status = String(req.query.status || "").trim();
     const sortField = String(req.query.sortField || "").trim() || "created_at";
-    const sortOrder = String(req.query.sortOrder || "desc").toLowerCase() === "asc"
-      ? "asc"
-      : "desc";
+    const sortOrder =
+      String(req.query.sortOrder || "desc").toLowerCase() === "asc"
+        ? "asc"
+        : "desc";
 
     const limit = Number.isNaN(requestedLimit)
       ? 10
@@ -1194,7 +1230,9 @@ export const createUserByAdmin = async (req, res) => {
   try {
     const adminId = req.user?.id;
     const { name, email, role } = req.validated?.body || req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
 
     if (!adminId) {
       return unauthorized(res, "Authentication required");
@@ -1292,7 +1330,7 @@ export const blockUser = async (req, res) => {
     // 2️ Check if user exists
     const [rows] = await pool.query(
       "SELECT is_blocked FROM user_master WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
     if (rows.length === 0) {
@@ -1310,16 +1348,15 @@ export const blockUser = async (req, res) => {
     await blockUserById(userId, adminId);
 
     return ok(res, "User blocked successfully");
-
   } catch (error) {
     console.error("Block User Error:", error);
     return serverError(res, "Internal server error");
   }
 };
 
-export const unblockUser = async (req,res) => {
+export const unblockUser = async (req, res) => {
   try {
-     const userId = req.params.id;
+    const userId = req.params.id;
     const adminId = req.user.id;
 
     // 1️ Validate userId
@@ -1330,7 +1367,7 @@ export const unblockUser = async (req,res) => {
     // 2️ Check if user exists
     const [rows] = await pool.query(
       "SELECT is_blocked FROM user_master WHERE user_id = ?",
-      [userId]
+      [userId],
     );
 
     if (rows.length === 0) {
@@ -1348,9 +1385,8 @@ export const unblockUser = async (req,res) => {
     await unblockUserById(userId, adminId);
 
     return ok(res, "User Unblocked successfully");
-
   } catch (error) {
     console.error("Block User Error:", error);
     return serverError(res, "Internal server error");
   }
-}
+};

@@ -16,7 +16,7 @@ import "../admin/AdminDashboard.css";
 const dashboardTabSet = new Set(profileNav.map((item) => item.key));
 
 const getDashboardPathForTab = (tab) => {
-  if (!tab || tab === "profile") {
+  if (!tab || tab === "dashboard") {
     return "/dashboard";
   }
 
@@ -104,7 +104,7 @@ function DashboardPage() {
 
   const activeLabel = useMemo(() => {
     const active = profileNav.find((entry) => entry.key === activeTab);
-    return active?.label || "Profile";
+    return active?.label || "Dashboard";
   }, [activeTab]);
 
   return (
@@ -165,7 +165,7 @@ function DashboardPage() {
         position="top-right"
         baseZIndex={100000}
         appendTo={typeof document !== "undefined" ? document.body : undefined}
-        className="customer-dashboard-toast"
+        className="customer-dashboard-toast app-toast-offset"
       />
 
       <OrderDetailsDialog

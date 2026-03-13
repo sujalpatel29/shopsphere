@@ -243,6 +243,32 @@ const userIdParamSchema = z.object({
 });
 
 /**
+ * Route param validation for product id based endpoints.
+ */
+const productIdParamSchema = z.object({
+  id: z.coerce
+    .number({
+      required_error: "id is required",
+      invalid_type_error: "id must be a number",
+    })
+    .int("id must be an integer")
+    .min(1, "id must be a positive number"),
+});
+
+/**
+ * Route param validation for category id based endpoints.
+ */
+const categoryIdParamSchema = z.object({
+  id: z.coerce
+    .number({
+      required_error: "id is required",
+      invalid_type_error: "id must be a number",
+    })
+    .int("id must be an integer")
+    .min(1, "id must be a positive number"),
+});
+
+/**
  * Final schema used by update-offer endpoint.
  * Also ensures at least one field is present in request body.
  */
@@ -269,26 +295,35 @@ const statusChangeOfferSchema = z.object({
  * Required:
  * - `offer_name`
  */
-const validateOfferSchema = z.object({
-  offer_name: z
-    .string({ required_error: "offer_name is required" })
-    .trim()
-    .min(1, "offer_name cannot be empty"),
+const validateOfferSchema = z
+  .object({
+    offer_name: z
+      .string({ required_error: "offer_name is required" })
+      .trim()
+      .min(1, "offer_name cannot be empty"),
 
-  product_id: z.coerce
-    .number({ invalid_type_error: "product_id must be a number" })
-    .int("product_id must be an integer")
-    .min(1, "product_id must be a positive number")
-    .optional()
-    .nullable(),
+    product_id: z.coerce
+      .number({ invalid_type_error: "product_id must be a number" })
+      .int("product_id must be an integer")
+      .min(1, "product_id must be a positive number")
+      .optional()
+      .nullable(),
 
-  category_id: z.coerce
-    .number({ invalid_type_error: "category_id must be a number" })
-    .int("category_id must be an integer")
-    .min(1, "category_id must be a positive number")
-    .optional()
-    .nullable(),
-});
+    category_id: z.coerce
+      .number({ invalid_type_error: "category_id must be a number" })
+      .int("category_id must be an integer")
+      .min(1, "category_id must be a positive number")
+      .optional()
+      .nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.product_id && data.category_id) {
+      ctx.addIssue({
+        path: ["product_id"],
+        message: "Provide only one: product_id or category_id",
+      });
+    }
+  });
 
 // ============================================================================
 // OFFER PRODUCT CATEGORY MAPPING VALIDATION SCHEMAS
@@ -443,6 +478,19 @@ export const validateOfferIdParam = validate(offerIdParamSchema, "params");
  * Validate user id route param
  */
 export const validateUserIdParam = validate(userIdParamSchema, "params");
+
+/**
+ * Validate product id route param
+ */
+export const validateProductIdParam = validate(productIdParamSchema, "params");
+
+/**
+ * Validate category id route param
+ */
+export const validateCategoryIdParam = validate(
+  categoryIdParamSchema,
+  "params",
+);
 
 /**
  * Validate update-offer payload

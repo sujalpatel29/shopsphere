@@ -11,6 +11,7 @@ import {
 } from "../utils/apiResponse.js";
 import {
   getProductRatingSummary,
+  getProductRatingSummariesBulk,
   getReviewById,
   getReviewsByProduct,
   hardDeleteReview,
@@ -172,6 +173,23 @@ export const reviewController = {
       return success(res, "Product rating summary fetched successfully", summary);
     } catch (error) {
       console.error("Get review summary error:", error);
+      return serverError(res, "Internal server error");
+    }
+  },
+
+  // POST /api/review/product/summary/bulk
+  getBulkSummary: async (req, res) => {
+    try {
+      const { product_ids } = req.validatedBody ?? req.body;
+      const summaries = await getProductRatingSummariesBulk(product_ids);
+
+      return success(
+        res,
+        "Product rating summaries fetched successfully",
+        summaries,
+      );
+    } catch (error) {
+      console.error("Get review summaries bulk error:", error);
       return serverError(res, "Internal server error");
     }
   },

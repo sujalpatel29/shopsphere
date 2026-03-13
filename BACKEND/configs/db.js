@@ -20,7 +20,10 @@ const testConnection = async () => {
     console.log(`DB connection done on ${process.env.DB_HOST}:${dbPort}`);
     connection.release();
   } catch (err) {
-    console.log(`DB connection failed on ${process.env.DB_HOST}:${dbPort}:`, err.message);
+    console.log(
+      `DB connection failed on ${process.env.DB_HOST}:${dbPort}:`,
+      err.message,
+    );
   }
 };
 

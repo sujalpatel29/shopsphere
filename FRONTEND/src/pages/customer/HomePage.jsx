@@ -30,7 +30,7 @@ function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/"
+                to="/categories"
                 className="rounded-lg bg-amber-600 px-6 py-3 font-accent font-medium text-white shadow-lg shadow-amber-600/20 transition-all hover:bg-amber-700"
               >
                 Explore

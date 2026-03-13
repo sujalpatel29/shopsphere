@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -17,8 +17,8 @@ import { Sidebar } from "primereact/sidebar";
 import { ScrollPanel } from "primereact/scrollpanel";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
-import { postOrders, fetchOrders,fetchUserAddress } from "../../redux/slices/orderSlice";
 import { useTheme } from "../../context/ThemeContext";
+import api from "../../../api/api";
 
 const menuSections = [
   {
@@ -39,7 +39,7 @@ const menuSections = [
 ];
 
 const topNavLinks = [
-  { label: "Categories", href: "/products" },
+  { label: "Shop", href: "/categories" },
   { label: "Today's Deals", href: "/products" },
   { label: "New Releases", href: "/products" },
   { label: "Electronics", href: "/products" },
@@ -51,12 +51,30 @@ function Navbar() {
   const { darkMode, toggleDarkMode } = useTheme();
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.auth);
-  const itemCount = 0;
+  const [itemCount, setItemCount] = useState(0);
   const dashboardPath =
     currentUser?.role === "admin" ? "/admin/dashboard" : "/dashboard";
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const fetchCartCount = useCallback(async () => {
+    if (!currentUser) { setItemCount(0); return; }
+    try {
+      const res = await api.get("/cart");
+      const items = res.data?.data?.items || [];
+      const total = items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+      setItemCount(total);
+    } catch {
+      setItemCount(0);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    fetchCartCount();
+    window.addEventListener("cart:updated", fetchCartCount);
+    return () => window.removeEventListener("cart:updated", fetchCartCount);
+  }, [fetchCartCount]);
 
   const parentCategories = useMemo(() => [], []);
   const childMap = useMemo(() => new Map(), []);
@@ -82,9 +100,9 @@ function Navbar() {
     }));
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setMenuOpen(false);
-    await dispatch(logoutUser());
+    dispatch(logoutUser());
     navigate("/");
   };
 
@@ -142,18 +160,21 @@ function Navbar() {
               }`}
               aria-label="Toggle dark mode"
             >
-              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {darkMode ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
             </Button>
 
             <Link
-              to="/"
+              to="/categories"
               className={`hidden transition md:inline-flex ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
             >
               Shop
             </Link>
             <Link
-              to="/checkout/address"
-              
+              to="/cart"
               className={`relative transition ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
               aria-label="Cart"
             >
@@ -249,7 +270,9 @@ function Navbar() {
         showCloseIcon={false}
         blockScroll
         className={`shopsphere-sidebar ${darkMode ? "bg-[#151e22] text-slate-100" : "bg-[#fff8ee] text-gray-900"} !w-[86vw] !max-w-[380px]`}
-        contentClassName="flex h-full flex-col p-0"
+        pt={{
+          content: { className: "flex h-full flex-col p-0" },
+        }}
       >
         <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2927] to-[#163b36] px-4 py-4 text-white">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(201,184,138,0.08),transparent_60%)]" />

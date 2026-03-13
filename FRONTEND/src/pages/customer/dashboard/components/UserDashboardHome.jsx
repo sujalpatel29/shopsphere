@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Message } from "primereact/message";
 import api from "../../../../../api/api";
+import getApiErrorMessage from "../../../../utils/apiError";
+import { fetchAllUserOrders } from "../orderData";
 import DashboardSummaryCards from "./DashboardSummaryCards";
 import RecentOrdersList from "./RecentOrdersList";
 
@@ -23,7 +25,7 @@ function UserDashboardHome({ showToast }) {
 
       try {
         const [ordersRes, addressesRes, offersRes] = await Promise.all([
-          api.get("/order/user-allorder"),
+          fetchAllUserOrders(api),
           api.get("/users/show-addresses"),
           api.get("/offer/active"),
         ]);
@@ -32,7 +34,7 @@ function UserDashboardHome({ showToast }) {
           return;
         }
 
-        const ordersPayload = toArray(extractData(ordersRes));
+        const ordersPayload = toArray(ordersRes);
         const sortedOrders = [...ordersPayload].sort((a, b) => {
           const aDate = new Date(a?.created_at || a?.placed_at || 0).getTime();
           const bDate = new Date(b?.created_at || b?.placed_at || 0).getTime();
@@ -49,8 +51,10 @@ function UserDashboardHome({ showToast }) {
         }
 
         setError(
-          apiError?.response?.data?.message ||
-            "Failed to load dashboard summary. Please try again.",
+          getApiErrorMessage(
+            apiError,
+            "We could not load your dashboard summary right now. Please try again.",
+          ),
         );
       } finally {
         if (active) {

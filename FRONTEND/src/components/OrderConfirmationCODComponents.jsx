@@ -9,6 +9,13 @@ import { OrderSummery, postOrders } from "../redux/slices/orderSlice";
 import api from "../../api/api";
 import OrderSummaryComponent from "./OrderSummaryComponent";
 import { ClipboardList, Wallet } from "lucide-react";
+import { useToast } from "../context/ToastContext";
+import {
+  clearPendingCheckout,
+  loadPendingCheckout,
+  savePendingCheckout,
+} from "../utils/checkoutStorage";
+import "../styles/CheckoutFlow.css";
 
 const formatPersonName = (value = "") =>
   value
@@ -31,13 +38,17 @@ export default function OrderConfirmationCODComponent() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  const showToast = useToast();
 
   const [showItemsDialog, setShowItemsDialog] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [cartItemsLoading, setCartItemsLoading] = useState(false);
   const [cartItemsError, setCartItemsError] = useState("");
+  const [cartSummary, setCartSummary] = useState(null);
+  const pendingCheckout = loadPendingCheckout();
 
-  const selectedAddress = location.state?.selectedAddress;
+  const selectedAddress =
+    location.state?.selectedAddress || pendingCheckout?.selectedAddress;
   const { orderSummery, loading } = useSelector((state) => state.order || {});
 
   useEffect(() => {
@@ -48,9 +59,14 @@ export default function OrderConfirmationCODComponent() {
         setCartItemsLoading(true);
         setCartItemsError("");
         const res = await api.get("/cart");
-        setCartItems(res?.data?.data?.items || []);
+        const cartData = res?.data?.data || {};
+        setCartItems(Array.isArray(cartData.items) ? cartData.items : []);
+        setCartSummary(cartData);
       } catch (err) {
-        setCartItemsError(err?.response?.data?.message || "Unable to load cart items.");
+        setCartItemsError(
+          err?.response?.data?.message || "Unable to load cart items.",
+        );
+        setCartSummary(null);
       } finally {
         setCartItemsLoading(false);
       }
@@ -59,10 +75,77 @@ export default function OrderConfirmationCODComponent() {
     fetchCartItems();
   }, [dispatch]);
 
-  const handlePlaceOrder = () => {
-    dispatch(postOrders()).then(() => {
-      navigate("/dashboard/orders");
-    });
+  const handlePlaceOrder = async () => {
+    if (cartItemsLoading) {
+      return;
+    }
+
+    if (!selectedAddress) {
+      showToast("warn", "Address Required", "Please select a delivery address.");
+      navigate("/checkout/address");
+      return;
+    }
+
+    if (!cartItems.length) {
+      showToast("warn", "Empty Cart", "Your cart is empty. Add items first.");
+      navigate("/cart");
+      return;
+    }
+
+    const result = await dispatch(
+      postOrders({ payment_method: "cash_on_delivery" }),
+    );
+
+    if (result.meta.requestStatus !== "fulfilled") {
+      showToast("error", "Order Failed", "Unable to place the order.");
+      return;
+    }
+
+    const orderData = result.payload;
+    const orderId = orderData?.order_id || orderData?.insertId;
+    const orderTotal =
+      Number(orderData?.total_amount) ||
+      Number(cartSummary?.total) ||
+      Number(orderSummery?.final_amount) ||
+      0;
+
+    try {
+      await api.post("/payments/initiate", {
+        order_id: orderId,
+        amount: orderTotal,
+        payment_method: "cash_on_delivery",
+        currency: "INR",
+      });
+
+      clearPendingCheckout();
+      window.dispatchEvent(new CustomEvent("cart:updated"));
+      navigate("/checkout/success", {
+        state: {
+          orderData: {
+            ...orderData,
+            order_id: orderId,
+            total_amount: orderTotal,
+            payment_method: "cash_on_delivery",
+            payment_status: "pending",
+          },
+          selectedAddress,
+        },
+      });
+    } catch (error) {
+      try {
+        await api.delete(`/order/cancelorder/${orderId}`);
+      } catch {
+        // no-op rollback fallback
+      }
+
+      savePendingCheckout({ selectedAddress });
+      showToast(
+        "error",
+        "Payment Setup Failed",
+        error?.response?.data?.message ||
+          "Order was created but COD payment setup failed, so it was rolled back.",
+      );
+    }
   };
 
   return (
@@ -72,7 +155,8 @@ export default function OrderConfirmationCODComponent() {
           <p className="order-flow-eyebrow">Step 3 of 3</p>
           <h2 className="order-flow-title">Confirm COD Order</h2>
           <p className="order-flow-text">
-            Review items, delivery details, and totals before placing your order.
+            Review items, delivery details, and totals before placing your
+            order.
           </p>
         </div>
       </section>
@@ -85,9 +169,12 @@ export default function OrderConfirmationCODComponent() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <span className="order-flow-badge">Cash On Delivery</span>
-              <h3 className="order-flow-section-title mt-4">Payment on Delivery</h3>
+              <h3 className="order-flow-section-title mt-4">
+                Payment on Delivery
+              </h3>
               <p className="order-flow-section-copy">
-                Keep exact change ready for quick handover when the order arrives.
+                Keep exact change ready for quick handover when the order
+                arrives.
               </p>
             </div>
             <div className="order-flow-card-muted flex items-center gap-3">
@@ -109,7 +196,8 @@ export default function OrderConfirmationCODComponent() {
                 Deliver To
               </p>
               <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-slate-100">
-                {formatPersonName(selectedAddress.full_name)}, {selectedAddress.phone}
+                {formatPersonName(selectedAddress.full_name)},{" "}
+                {selectedAddress.phone}
               </p>
               <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-slate-300">
                 {selectedAddress.address_line1}
@@ -135,6 +223,7 @@ export default function OrderConfirmationCODComponent() {
               icon="pi pi-list"
               onClick={() => setShowItemsDialog(true)}
               className="order-flow-neutral-button"
+              disabled={cartItemsLoading}
             />
           </div>
 
@@ -146,7 +235,7 @@ export default function OrderConfirmationCODComponent() {
               icon="pi pi-check"
               onClick={handlePlaceOrder}
               loading={loading}
-              disabled={loading}
+              disabled={loading || cartItemsLoading || !cartItems.length}
               className="order-flow-primary-button"
             />
           </div>
@@ -156,10 +245,11 @@ export default function OrderConfirmationCODComponent() {
           <OrderSummaryComponent
             title="Final Amount"
             orderData={{
-              total_amount: orderSummery?.total_price ?? 0,
-              tax_amount: orderSummery?.tax ?? 0,
-              discount_amount: orderSummery?.discount ?? 0,
-              shipping_amount: orderSummery?.shipping ?? 0,
+              total_amount: cartSummary?.subtotal ?? orderSummery?.total_price ?? 0,
+              tax_amount: cartSummary?.tax ?? orderSummery?.tax ?? 0,
+              discount_amount: cartSummary?.discount ?? orderSummery?.discount ?? 0,
+              shipping_amount: 0,
+              final_amount: cartSummary?.total ?? orderSummery?.final_amount ?? 0,
             }}
           />
         </div>
@@ -172,7 +262,9 @@ export default function OrderConfirmationCODComponent() {
         breakpoints={{ "960px": "95vw", "640px": "100vw" }}
         onHide={() => setShowItemsDialog(false)}
       >
-        {cartItemsLoading && <div className="order-flow-empty">Loading items...</div>}
+        {cartItemsLoading && (
+          <div className="order-flow-empty">Loading items...</div>
+        )}
         {!cartItemsLoading && cartItemsError && (
           <div className="order-flow-alert border-red-300/70 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
             {cartItemsError}
@@ -189,19 +281,31 @@ export default function OrderConfirmationCODComponent() {
                 key={item.cartItemId}
                 className="flex items-center justify-between gap-4 rounded-2xl border border-amber-200/70 bg-amber-50/40 p-4 dark:border-[#1f2933] dark:bg-[#10171b]"
               >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                      <ClipboardList className="h-5 w-5" />
+                <div className="flex min-w-0 items-center gap-4">
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.productName || "Product"}
+                      className="h-16 w-16 rounded-2xl border border-amber-200/70 object-cover dark:border-[#1f2933]"
+                    />
+                  ) : (
+                    <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                      <ClipboardList className="h-6 w-6" />
                     </span>
+                  )}
+                  <div className="min-w-0">
                     <div className="font-semibold text-gray-900 dark:text-slate-100">
                       {item.productName || "Product"}
                     </div>
-                  </div>
-                  <div className="mt-2 text-sm text-gray-500 dark:text-slate-400">
-                    Qty: {item.quantity}
-                    {item.portionValue ? ` | Portion: ${item.portionValue}` : ""}
-                    {item.modifierValue ? ` | Modifier: ${item.modifierValue}` : ""}
+                    <div className="mt-2 text-sm text-gray-500 dark:text-slate-400">
+                      Qty: {item.quantity}
+                      {item.portionValue
+                        ? ` | Portion: ${item.portionValue}`
+                        : ""}
+                      {item.modifierValue
+                        ? ` | Modifier: ${item.modifierValue}`
+                        : ""}
+                    </div>
                   </div>
                 </div>
                 <div className="shrink-0 font-semibold text-gray-900 dark:text-slate-100">

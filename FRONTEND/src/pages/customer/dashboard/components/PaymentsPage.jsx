@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../../../../api/api";
+import { fetchAllUserOrders } from "../orderData";
 import PaymentDetailsModal from "./PaymentDetailsModal";
 import PaymentsTable from "./PaymentsTable";
 
@@ -28,8 +29,7 @@ function PaymentsPage({ showToast }) {
     setError("");
 
     try {
-      const ordersRes = await api.get("/order/user-allorder");
-      const orders = toArray(extractData(ordersRes));
+      const orders = toArray(await fetchAllUserOrders(api));
 
       if (orders.length === 0) {
         setPayments([]);

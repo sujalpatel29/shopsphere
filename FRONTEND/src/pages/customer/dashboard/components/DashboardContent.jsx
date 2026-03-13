@@ -8,6 +8,7 @@ import OrdersPage from "./OrdersPage";
 import PaymentsPage from "./PaymentsPage";
 import PlaceholderSection from "./PlaceholderSection";
 import SecuritySettingsPage from "./SecuritySettingsPage";
+import UserDashboardHome from "./UserDashboardHome";
 import UserProfilePage from "./UserProfilePage";
 import UserReviewsPage from "./UserReviewsPage";
 
@@ -102,6 +103,10 @@ function DashboardContent({ currentUser, dashboard, showToast }) {
 
   if (dashboard.loading && dashboard.activeTab === "profile") {
     return <DashboardLoadingState />;
+  }
+
+  if (dashboard.activeTab === "dashboard") {
+    return <UserDashboardHome showToast={showToast} />;
   }
 
   if (dashboard.activeTab === "profile") {

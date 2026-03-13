@@ -7,22 +7,18 @@ import RegisterPage from "../pages/RegisterPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import HomePage from "../pages/customer/HomePage";
 import DashboardPage from "../pages/customer/DashboardPage";
+import CartPage from "../pages/customer/CartPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
+import CategoryPage from "../pages/customer/categoryPage";
+import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPage";
+import ItemsPage from "../pages/customer/ItemsPage";
+import OrderPage from "../pages/OrderPage";
+import OrderDetailPage from "../pages/OrderDetailPage";
+import OrderSuccessPage from "../pages/customer/OrderSuccessPage";
 import OrderSelectAddressComponent from "../components/OrderSelectAddressComponent";
 import OrderPaymentComponent from "../components/orderPaymentComponent";
-import CheckoutPage from "../pages/customer/CheckoutPage";
-import PaymentPage from "../pages/customer/PaymentPage";
 import OrderConfirmationCODComponent from "../components/OrderConfirmationCODComponents";
-import PaymentsInfoPage from "../pages/customer/PaymentsInfoPage";
-import ShippingInfoPage from "../pages/customer/ShippingInfoPage";
-import ReturnsInfoPage from "../pages/customer/ReturnsInfoPage";
-import TermsInfoPage from "../pages/customer/TermsInfoPage";
-import SecurityInfoPage from "../pages/customer/SecurityInfoPage";
-import PrivacyInfoPage from "../pages/customer/PrivacyInfoPage";
-import ContactInfoPage from "../pages/customer/ContactInfoPage";
-import AboutInfoPage from "../pages/customer/AboutInfoPage";
 
-/** Redirect admin users to their dashboard — prevents admins from browsing customer pages */
 function RedirectIfAdmin({ children }) {
   const { currentUser } = useSelector((state) => state.auth);
   if (currentUser?.role === "admin") {
@@ -33,8 +29,7 @@ function RedirectIfAdmin({ children }) {
 
 function ProtectedRoute() {
   const { currentUser } = useSelector((state) => state.auth);
-  const isAuthenticated = Boolean(currentUser);
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  return Boolean(currentUser) ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 function AdminRoute() {
@@ -48,48 +43,38 @@ function AdminRoute() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Login / Register — redirect admin to dashboard if already logged in */}
+      {/* Auth */}
       <Route path="/login" element={<RedirectIfAdmin><LoginPage /></RedirectIfAdmin>} />
       <Route path="/register" element={<RedirectIfAdmin><RegisterPage /></RedirectIfAdmin>} />
-      <Route
-        path="/forgot-password"
-        element={
-          <RedirectIfAdmin>
-            <ForgotPasswordPage />
-          </RedirectIfAdmin>
-        }
-      />
+      <Route path="/forgot-password" element={<RedirectIfAdmin><ForgotPasswordPage /></RedirectIfAdmin>} />
 
-      {/* Public Routes with Layout — admin gets redirected to dashboard */}
+      {/* Public - with Navbar/Footer */}
       <Route element={<RedirectIfAdmin />}>
         <Route element={<AppLayout />}>
-          <Route path="/checkout">
-            <Route path="address" element={<OrderSelectAddressComponent/>} />
-            <Route path="payment" element={<OrderPaymentComponent/>} />
-            <Route path="beforeorderconfirm" element={<OrderConfirmationCODComponent/>} />   
-          </Route>
           <Route path="/" element={<HomePage />} />
-          <Route path="/info/payments" element={<PaymentsInfoPage />} />
-          <Route path="/info/shipping" element={<ShippingInfoPage />} />
-          <Route path="/info/returns" element={<ReturnsInfoPage />} />
-          <Route path="/info/terms" element={<TermsInfoPage />} />
-          <Route path="/info/security" element={<SecurityInfoPage />} />
-          <Route path="/info/privacy" element={<PrivacyInfoPage />} />
-          <Route path="/info/contact" element={<ContactInfoPage />} />
-          <Route path="/info/about" element={<AboutInfoPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/categories" element={<CategoryPage />} />
+          <Route path="/products" element={<HomePage />} />
+          <Route path="/products/:id" element={<ProductDetailsPlaceholder />} />
+          <Route path="/items/:id" element={<ItemsPage />} />
         </Route>
       </Route>
 
-      {/* Protected Routes */}
+      {/* Protected - with Navbar/Footer */}
       <Route element={<ProtectedRoute />}>
-        {/* Customer routes with Navbar/Footer */}
         <Route element={<AppLayout />}>
-          <Route path="/dashboard/*" element={<DashboardPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/checkout/payment" element={<PaymentPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/orders" element={<OrderPage />} />
+          <Route path="/orders/:id" element={<OrderDetailPage />} />
+
+          {/* Checkout flow */}
+          <Route path="/checkout/address" element={<OrderSelectAddressComponent />} />
+          <Route path="/checkout/payment" element={<OrderPaymentComponent />} />
+          <Route path="/checkout/beforeorderconfirm" element={<OrderConfirmationCODComponent />} />
+          <Route path="/checkout/success" element={<OrderSuccessPage />} />
         </Route>
 
-        {/* Admin routes — full-screen, no Navbar/Footer */}
+        {/* Admin - full-screen, no Navbar/Footer */}
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -97,15 +82,8 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      {/* Fallback — admin goes to admin dashboard, others go to home */}
-      <Route
-        path="*"
-        element={
-          <RedirectIfAdmin>
-            <Navigate to="/" replace />
-          </RedirectIfAdmin>
-        }
-      />
+      {/* Fallback */}
+      <Route path="*" element={<RedirectIfAdmin><Navigate to="/" replace /></RedirectIfAdmin>} />
     </Routes>
   );
 }

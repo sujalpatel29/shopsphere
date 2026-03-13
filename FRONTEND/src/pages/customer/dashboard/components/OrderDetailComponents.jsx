@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  findOrderItems,
-  updateOrderStatusLocally,
-} from "../../../../redux/slices/orderSlice";
+import { findOrderItems, updateOrderStatusLocally } from "../../../../redux/slices/orderSlice";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -13,6 +10,7 @@ import { Divider } from "primereact/divider";
 import OrderSummaryComponent from "./OrderSummaryComponent";
 import { CalendarDays, PackageCheck, ReceiptIndianRupee } from "lucide-react";
 import api from "../../../../../api/api";
+import "../../../admin/AdminProducts.css";
 
 const ADMIN_ORDER_STATUSES = [
   "pending",
@@ -45,6 +43,12 @@ const formatDate = (value) => {
   });
 };
 
+const formatProductLabel = (value) =>
+  String(value || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
 export default function OrderDetailComponents({
   orderId: orderIdProp,
   orderData: orderDataProp,
@@ -74,8 +78,12 @@ export default function OrderDetailComponents({
 
   const isAdmin = currentUser?.role === "admin";
   const orderData = currentOrderData || resolvedOrderData;
+  const hasPendingCancelRequest =
+    String(orderData?.cancel_request_status || "").toLowerCase() === "pending";
   const canCancelOrder =
-    !isAdmin && USER_CANCELABLE_STATUSES.has(orderData?.order_status);
+    !isAdmin &&
+    USER_CANCELABLE_STATUSES.has(orderData?.order_status) &&
+    !hasPendingCancelRequest;
   const canReturnOrder =
     !isAdmin && USER_RETURNABLE_STATUSES.has(orderData?.order_status);
 
@@ -154,26 +162,21 @@ export default function OrderDetailComponents({
     setStatusError("");
 
     try {
-      await api.delete(`/order/cancelorder/${resolvedOrderId}`);
+      await api.post(`/order/${resolvedOrderId}/cancel-request`);
 
       setCurrentOrderData((prev) => ({
         ...(prev || {}),
-        order_status: "cancelled",
+        cancel_request_status: "pending",
       }));
-      dispatch(
-        updateOrderStatusLocally({
-          orderId: resolvedOrderId,
-          status: "cancelled",
-        }),
+      showToast?.(
+        "success",
+        "Success",
+        "Cancellation request submitted successfully.",
       );
-
-      if (onOrderStatusChange) {
-        onOrderStatusChange("cancelled");
-      }
-      showToast?.("success", "Success", "Order cancelled successfully.");
     } catch (err) {
       setStatusError(
-        err?.response?.data?.message || "Unable to cancel this order.",
+        err?.response?.data?.message ||
+          "Unable to submit cancellation request.",
       );
     } finally {
       setStatusSaving(false);
@@ -238,7 +241,13 @@ export default function OrderDetailComponents({
   }
 
   return (
-    <div className={isDialog ? "" : "orders-page-wrapper animate-fade-in"}>
+    <div
+      className={
+        isDialog
+          ? "order-detail-dialog-body space-y-5 p-5 sm:p-6"
+          : "orders-page-wrapper animate-fade-in"
+      }
+    >
       <section className={`${isDialog ? "mb-4" : "order-flow-hero mb-6"}`}>
         <div className={isDialog ? "flex flex-wrap items-start justify-between gap-3" : "order-flow-hero-content flex flex-wrap items-start justify-between gap-4"}>
           <div>
@@ -250,11 +259,28 @@ export default function OrderDetailComponents({
               Review item-level pricing, tax, and the final order summary in the same
               style used across the rest of the storefront.
             </p>
+            {hasPendingCancelRequest && (
+              <p className="mt-2 text-sm font-medium text-amber-600 dark:text-amber-300">
+                Cancellation request pending admin approval.
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            {isDialog && onClose && (
+              <Button
+                icon="pi pi-times"
+                rounded
+                text
+                aria-label="Close order details"
+                onClick={onClose}
+                className="order-detail-close-button !h-10 !w-10 !text-slate-500 hover:!bg-slate-100 hover:!text-slate-800 dark:hover:!bg-slate-800 dark:hover:!text-slate-100"
+              />
+            )}
             {canCancelOrder && (
               <Button
-                label={statusSaving ? "Cancelling..." : "Cancel Order"}
+                label={
+                  statusSaving ? "Submitting..." : "Request Cancellation"
+                }
                 icon="pi pi-times"
                 outlined
                 onClick={handleCancelOrder}
@@ -285,7 +311,7 @@ export default function OrderDetailComponents({
         </div>
       </section>
 
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
           <div className="flex items-center gap-3">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
@@ -333,7 +359,7 @@ export default function OrderDetailComponents({
             className="order-flow-card"
             pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
           >
-            <div className="mb-2 flex items-center justify-between gap-3">
+            <div className="mb-2 flex items-center justify-between gap-3 p-5 pb-0">
               <div>
                 <h3 className="order-flow-section-title text-[1.45rem]">Order Items</h3>
                 <p className="order-flow-section-copy mt-1">
@@ -367,53 +393,119 @@ export default function OrderDetailComponents({
             </div>
             <Divider />
 
-            <div
-              className={
-                isDialog
-                  ? "order-items-scroll max-h-[52vh] overflow-y-auto pr-1"
-                  : ""
-              }
-            >
-              <DataTable
-                value={orderItems}
-                lazy
-                paginator
-                rows={itemPagination?.itemsPerPage || 5}
-                first={first}
-                rowsPerPageOptions={[5, 10, 25, 50]}
-                responsiveLayout="stack"
-                breakpoint="960px"
-                stripedRows
-                tableStyle={{ width: "100%" }}
-                paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                currentPageReportTemplate="{first} to {last} of {totalRecords}"
-                totalRecords={itemPagination?.totalItems || 0}
-                onPage={onPage}
-                dataKey="order_item_id"
-                loading={loading}
-                className="order-items-table"
-                emptyMessage="No items found."
-              >
-                <Column field="order_item_id" sortable header="ID" />
-                <Column field="product_name" sortable header="Product" />
-                <Column field="quantity" sortable header="Qty" />
-                <Column
-                  field="price"
-                  header="Price"
-                  body={(row) => formatINR(row.price)}
-                />
-                <Column
-                  field="tax_amount"
-                  header="Tax"
-                  body={(row) => formatINR(row.tax_amount)}
-                />
-                <Column
-                  field="total"
-                  header="Total"
-                  body={(row) => formatINR(row.total)}
-                />
-              </DataTable>
-            </div>
+            {isDialog ? (
+              <div className="px-5 pb-5">
+                <div className="order-items-scrollbox max-h-[320px] overflow-y-auto rounded-2xl border border-[rgba(214,192,144,0.22)]">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-[#f5f0e8] dark:bg-[#1a2528]">
+                      <tr>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">ID</th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Product</th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Qty</th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Price</th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Tax</th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orderItems?.length ? (
+                        orderItems.map((row) => (
+                          <tr
+                            key={row.order_item_id}
+                            className="border-b border-[rgba(201,184,138,0.16)] last:border-b-0"
+                          >
+                            <td className="px-5 py-4 text-[0.95rem] text-slate-600 dark:text-slate-300">
+                              {row.order_item_id}
+                            </td>
+                            <td className="px-5 py-4 text-[0.95rem] font-medium text-slate-800 dark:text-slate-100">
+                              {formatProductLabel(row.product_name) || "-"}
+                            </td>
+                            <td className="px-5 py-4 text-[0.95rem] text-slate-600 dark:text-slate-300">
+                              {row.quantity}
+                            </td>
+                            <td className="px-5 py-4 text-[0.95rem] font-medium text-slate-700 dark:text-slate-200">
+                              {formatINR(row.price)}
+                            </td>
+                            <td className="px-5 py-4 text-[0.95rem] text-slate-600 dark:text-slate-300">
+                              {formatINR(row.tax_amount)}
+                            </td>
+                            <td className="px-5 py-4 text-[0.95rem] font-semibold text-slate-900 dark:text-slate-100">
+                              {formatINR(row.total)}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan="6"
+                            className="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400"
+                          >
+                            No items found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="admin-products-table-wrapper flex-1 flex flex-col min-h-0">
+                <DataTable
+                  value={orderItems}
+                  lazy
+                  paginator
+                  rows={itemPagination?.itemsPerPage || 5}
+                  first={first}
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  responsiveLayout="stack"
+                  breakpoint="960px"
+                  stripedRows
+                  tableStyle={{ width: "100%" }}
+                  paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+                  currentPageReportTemplate="{first} to {last} of {totalRecords}"
+                  totalRecords={itemPagination?.totalItems || 0}
+                  onPage={onPage}
+                  dataKey="order_item_id"
+                  loading={loading}
+                  className="admin-products-table order-items-table"
+                  emptyMessage="No items found."
+                >
+                  <Column field="order_item_id" sortable header="ID" />
+                  <Column
+                    field="product_name"
+                    sortable
+                    header="Product"
+                    body={(row) => (
+                      <span className="font-medium text-slate-800 dark:text-slate-100">
+                        {formatProductLabel(row.product_name) || "-"}
+                      </span>
+                    )}
+                  />
+                  <Column field="quantity" sortable header="Qty" />
+                  <Column
+                    field="price"
+                    header="Price"
+                    body={(row) => (
+                      <span className="font-medium">{formatINR(row.price)}</span>
+                    )}
+                  />
+                  <Column
+                    field="tax_amount"
+                    header="Tax"
+                    body={(row) => formatINR(row.tax_amount)}
+                  />
+                  <Column
+                    field="total"
+                    header="Total"
+                    body={(row) => (
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">
+                        {formatINR(row.total)}
+                      </span>
+                    )}
+                  />
+                </DataTable>
+              </div>
+            )}
           </Card>
         </div>
 

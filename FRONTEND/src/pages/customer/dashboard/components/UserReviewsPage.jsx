@@ -4,6 +4,7 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ProgressSpinner } from "primereact/progressspinner";
 import api from "../../../../../api/api";
+import { fetchAllUserOrders } from "../orderData";
 import EditReviewModal from "./EditReviewModal";
 import ReviewCard from "./ReviewCard";
 
@@ -94,14 +95,14 @@ function UserReviewsPage({ showToast }) {
     try {
       const [profileRes, ordersRes] = await Promise.all([
         api.get("/users/view-profile"),
-        api.get("/order/user-allorder"),
+        fetchAllUserOrders(api),
       ]);
 
       const profile = normalizeProfilePayload(extractData(profileRes));
       const userNameNormalized = normalizeName(profile?.name || currentUser?.name);
       const userId = Number(currentUser?.user_id) || null;
 
-      const orders = toArray(extractData(ordersRes));
+      const orders = toArray(ordersRes);
       const itemGroups = await Promise.all(
         orders.map(async (order) => {
           try {

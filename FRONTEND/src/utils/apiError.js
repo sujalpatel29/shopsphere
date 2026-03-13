@@ -16,6 +16,80 @@ function collectMessages(value) {
   return [];
 }
 
+/**
+ * Translate backend/system wording into copy a non-technical person can act on.
+ * We keep this centralized so admin and customer screens stay consistent.
+ */
+function normalizeTechnicalMessage(message) {
+  if (typeof message !== "string") return "";
+
+  const trimmed = message.trim();
+  if (!trimmed) return "";
+
+  const normalized = trimmed.toLowerCase();
+
+  const exactMap = new Map([
+    ["server error", "Something went wrong on our side. Please try again."],
+    ["internal server error", "Something went wrong on our side. Please try again."],
+    ["invalid or missing status", "Please choose a valid status and try again."],
+    ["invalid status", "Please choose a valid status and try again."],
+    ["invalid status transition", "This order cannot be moved to that status yet."],
+    ["invalid or missing payment status", "Please choose a valid payment status and try again."],
+    ["invalid payment status", "Please choose a valid payment status and try again."],
+    ["invalid payment status transition", "This payment cannot be moved to that status yet."],
+    ["stripe payments are gateway-managed and cannot be updated by admin", "Stripe payment updates are handled automatically, so this status is view-only."],
+    ["cart is empty", "Your cart is empty. Add an item before continuing."],
+    ["invalid or expired otp token", "Your verification code has expired. Please request a new one."],
+    ["invalid otp", "The verification code is incorrect. Please try again."],
+    ["invalid otp request", "This verification request is no longer valid. Please start again."],
+    ["invalid otp purpose", "This verification request is no longer valid. Please start again."],
+    ["invalid refresh token", "Your session has expired. Please log in again."],
+    ["invalid or expired refresh token", "Your session has expired. Please log in again."],
+    ["invalid or expired token", "Your session has expired. Please log in again."],
+    ["no token", "Please log in to continue."],
+    ["invalid password", "The email or password you entered is incorrect."],
+    ["user not found", "We could not find an account with those details."],
+    ["all fields are required", "Please fill in all required fields."],
+    ["new password and confirm password do not match", "The new password and confirmation do not match."],
+    ["new password cannot be same as old password", "Please choose a new password that is different from your current one."],
+    ["smtp is not configured", "Email service is not available right now. Please try again later."],
+  ]);
+
+  if (exactMap.has(normalized)) {
+    return exactMap.get(normalized);
+  }
+
+  if (normalized.includes("not authorized")) {
+    return "You do not have permission to do that.";
+  }
+
+  if (normalized.includes("cannot be cancelled")) {
+    return "This order can no longer be cancelled.";
+  }
+
+  if (normalized.includes("cancellation-requested")) {
+    return "This order cannot accept a cancellation request right now.";
+  }
+
+  if (normalized.includes("payment verification failed")) {
+    return "We could not confirm the payment yet. Please wait a moment and check again.";
+  }
+
+  if (normalized.includes("invalid payment method")) {
+    return "Please choose a valid payment method.";
+  }
+
+  if (normalized.includes("order total is invalid")) {
+    return "We could not confirm your order total. Please refresh and try again.";
+  }
+
+  if (normalized.includes("unable to create order for online payment")) {
+    return "We could not start online payment right now. Please try again.";
+  }
+
+  return trimmed;
+}
+
 function getStatusFallback(status) {
   switch (status) {
     case 400:
@@ -56,7 +130,7 @@ export function getApiErrorMessage(error, fallback = "Something went wrong. Plea
     data?.data?.message;
 
   if (typeof directMessage === "string" && directMessage.trim()) {
-    return directMessage.trim();
+    return normalizeTechnicalMessage(directMessage);
   }
 
   const collected = [
@@ -66,7 +140,7 @@ export function getApiErrorMessage(error, fallback = "Something went wrong. Plea
   ].filter(Boolean);
 
   if (collected.length > 0) {
-    return collected.join(" ");
+    return normalizeTechnicalMessage(collected.join(" "));
   }
 
   if (!response) {
@@ -79,7 +153,7 @@ export function getApiErrorMessage(error, fallback = "Something went wrong. Plea
     }
 
     if (typeof error.message === "string" && error.message.trim()) {
-      return error.message.trim();
+      return normalizeTechnicalMessage(error.message);
     }
 
     return fallback;

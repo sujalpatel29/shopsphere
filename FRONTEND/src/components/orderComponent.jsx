@@ -2,6 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrders } from "../redux/slices/orderSlice";
 import { useEffect, useState } from "react";
+import "../styles/CheckoutFlow.css";
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -10,7 +11,7 @@ import { FilterMatchMode } from "primereact/api";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
 import OrderDetailComponents from "./OrderDetailComponents";
-import { Package } from "lucide-react";
+import "../pages/admin/AdminProducts.css";
 
 const DEFAULT_ORDER_PAGE = 1;
 const DEFAULT_ORDER_ROWS = 5;
@@ -80,32 +81,34 @@ export default function OrderComponent() {
     setShowOrderDialog(false);
     setSelectedOrder(null);
   };
-  
+
   const onGlobalFilterChange = (e) => {
     const value = e.target.value;
     let _filters = { ...filters };
     _filters["global"].value = value;
-    
+
     setFilters(_filters);
     setGlobalValue(value);
   };
-  
+
   const sortedOrders = React.useMemo(() => {
     const rows = Array.isArray(orders) ? [...orders] : [];
     const direction = sortOrder === 1 ? 1 : -1;
-    
+
     return rows.sort((a, b) => {
       const left = a?.[sortField];
       const right = b?.[sortField];
-      
+
       if (sortField === "created_at") {
-        return (new Date(left).getTime() - new Date(right).getTime()) * direction;
+        return (
+          (new Date(left).getTime() - new Date(right).getTime()) * direction
+        );
       }
-      
+
       if (sortField === "total_amount" || sortField === "order_id") {
         return ((Number(left) || 0) - (Number(right) || 0)) * direction;
       }
-      
+
       return String(left ?? "").localeCompare(String(right ?? "")) * direction;
     });
   }, [orders, sortField, sortOrder]);
@@ -156,12 +159,6 @@ export default function OrderComponent() {
 
   const header = (
     <div className="orders-header-flex">
-      <div className="flex items-center gap-3">
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-          <Package className="h-6 w-6" />
-        </span>
-        <div className="orders-title-text">Orders Overview</div>
-      </div>
       <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
         <div className="orders-search-container">
           <i className="pi pi-search orders-search-icon" />
@@ -169,7 +166,7 @@ export default function OrderComponent() {
             value={globalValue}
             onChange={onGlobalFilterChange}
             placeholder="Search all orders..."
-            className="orders-search-input"
+            className="orders-search-input admin-search-input"
           />
         </div>
         <div className="order-flow-card-muted min-w-[190px] px-4 py-3 text-left">
@@ -189,7 +186,7 @@ export default function OrderComponent() {
           {error}
         </div>
       )}
-      <div className="orders-card">
+      <div className="orders-card admin-products-table-wrapper flex-1 flex flex-col min-h-0">
         <DataTable
           value={sortedOrders}
           lazy
@@ -203,8 +200,7 @@ export default function OrderComponent() {
           breakpoint="960px"
           stripedRows
           tableStyle={{ width: "100%" }}
-          paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-          currentPageReportTemplate="{first} to {last} of {totalRecords}"
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
           totalRecords={pagination?.totalItems || 0}
           onPage={onPage}
           onSort={onSort}
@@ -218,7 +214,7 @@ export default function OrderComponent() {
             setSelectedOrder(e.data);
             setShowOrderDialog(true);
           }}
-          className="cursor-pointer orders-main-table orders-main-table-scrollable"
+          className="cursor-pointer admin-products-table orders-main-table-scrollable"
           globalFilterFields={[
             "order_number",
             "order_status",
@@ -263,6 +259,8 @@ export default function OrderComponent() {
 
       <Dialog
         header={null}
+        showHeader={false}
+        closable={false}
         visible={showOrderDialog}
         onHide={handleOrderDialogClose}
         style={{ width: "min(1100px, 95vw)" }}

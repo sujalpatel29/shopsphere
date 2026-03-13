@@ -5,6 +5,7 @@ import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
 import {
+  displayPaymentStatus,
   formatCurrency,
   formatDate,
   orderSeverity,
@@ -131,7 +132,10 @@ function OrderDetailsModal({
   const isCanceling = actionLoading?.cancelingId === Number(order?.order_id);
   const isReturning = actionLoading?.returningId === Number(order?.order_id);
   const paymentMethod = payment?.payment_method || "-";
-  const paymentStatus = payment?.status || order?.payment_status || "-";
+  const paymentStatus = displayPaymentStatus(
+    payment?.status || order?.payment_status || "-",
+    order,
+  );
 
   const timeline = [
     {
@@ -180,7 +184,14 @@ function OrderDetailsModal({
 
           <div className="flex flex-wrap gap-2">
             <Tag value={order?.order_status || "unknown"} severity={orderSeverity(order?.order_status)} />
-            <Tag value={paymentStatus} severity={paymentSeverity(paymentStatus)} />
+            <Tag
+              value={paymentStatus}
+              severity={
+                paymentStatus === "N/A"
+                  ? "secondary"
+                  : paymentSeverity(paymentStatus)
+              }
+            />
             <Tag value={formatCurrency(order?.total_amount)} severity="secondary" />
           </div>
         </div>
@@ -364,7 +375,14 @@ function OrderDetailsModal({
                   <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {String(paymentMethod).replaceAll("_", " ")}
                   </p>
-                  <Tag value={paymentStatus} severity={paymentSeverity(paymentStatus)} />
+                  <Tag
+                    value={paymentStatus}
+                    severity={
+                      paymentStatus === "N/A"
+                        ? "secondary"
+                        : paymentSeverity(paymentStatus)
+                    }
+                  />
                 </div>
               </div>
 

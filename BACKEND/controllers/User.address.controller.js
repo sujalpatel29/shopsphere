@@ -18,6 +18,7 @@ import {
 export const addUserAddress = async (req, res) => {
   try {
     const userId = req.user.id;
+    const existingAddresses = await getAllAddresses(userId);
 
     const data = {
       user_id: userId,
@@ -29,11 +30,21 @@ export const addUserAddress = async (req, res) => {
       state: req.body.state,
       postal_code: req.body.postal_code,
       country: req.body.country || "India",
+      is_default:
+        typeof req.body.is_default === "boolean"
+          ? Number(req.body.is_default)
+          : existingAddresses.length === 0
+            ? 1
+            : 0,
       created_at: new Date(),
       created_by: userId,
     };
 
     const result = await addUserAddressModel(data);
+
+    if (data.is_default === 1 && existingAddresses.length > 0) {
+      await setDefaultAddressModel(userId, result.insertId);
+    }
 
     return created(res, "Address added successfully", {
       address_id: result.insertId,

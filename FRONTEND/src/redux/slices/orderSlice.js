@@ -11,10 +11,7 @@ export const fetchOrders = createAsyncThunk(
     if (limit !== undefined) searchParams.set("limit", limit);
     if (sortField) searchParams.set("sortField", sortField);
     if (sortOrder !== undefined) {
-      searchParams.set(
-        "sortOrder",
-        Number(sortOrder) === 1 ? "ASC" : "DESC",
-      );
+      searchParams.set("sortOrder", Number(sortOrder) === 1 ? "ASC" : "DESC");
     }
 
     const res = await api.get(
@@ -23,10 +20,13 @@ export const fetchOrders = createAsyncThunk(
     return res.data;
   },
 );
-export const postOrders = createAsyncThunk("order/makeOrder", async () => {
-  const res = await api.post("order/make-order");
-  return res.data.data;
-});
+export const postOrders = createAsyncThunk(
+  "order/makeOrder",
+  async (payload = {}) => {
+    const res = await api.post("order/make-order", payload);
+    return res.data.data;
+  },
+);
 export const OrderSummery = createAsyncThunk("order/summery", async () => {
   const res = await api.get("/order/order-summery");
   return res.data.data;
@@ -35,17 +35,16 @@ export const getAdminOrder = createAsyncThunk(
   "order/admiorder",
   async (params = {}) => {
     const searchParams = new URLSearchParams();
-    const { page, limit, sortField, sortOrder } = params;
+    const { page, limit, sortField, sortOrder, search, status } = params;
 
     if (page !== undefined) searchParams.set("page", page);
     if (limit !== undefined) searchParams.set("limit", limit);
     if (sortField) searchParams.set("sortField", sortField);
     if (sortOrder !== undefined) {
-      searchParams.set(
-        "sortOrder",
-        Number(sortOrder) === 1 ? "ASC" : "DESC",
-      );
+      searchParams.set("sortOrder", Number(sortOrder) === 1 ? "ASC" : "DESC");
     }
+    if (search) searchParams.set("search", search);
+    if (status) searchParams.set("status", status);
 
     const res = await api.get(
       `/order/allorder${searchParams.size ? `?${searchParams.toString()}` : ""}`,
@@ -76,6 +75,7 @@ const initialState = {
   orderItems: [],
   orderSummery: [],
   adminOrders: [],
+  adminStats: null,
   pagination: {
     totalItems: 0,
     totalPages: 0,
@@ -134,14 +134,14 @@ const orderSlice = createSlice({
       })
       .addCase(getAdminOrder.fulfilled, (state, action) => {
         state.loading = false;
-        state.adminOrders = action.payload.data ||[];
+        state.adminOrders = action.payload.data || [];
+        state.adminStats = action.payload.stats || null;
         state.adminPagination = action.payload.pagination || {
-          totalItems :0 , 
-          totalPages :0, 
-          currentPage :1, 
-          itemsPerPage : 5, 
-
-        }
+          totalItems: 0,
+          totalPages: 0,
+          currentPage: 1,
+          itemsPerPage: 5,
+        };
       })
       .addCase(getAdminOrder.rejected, (state, action) => {
         state.loading = false;

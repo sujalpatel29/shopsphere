@@ -39,7 +39,12 @@ export const loginUser = createAsyncThunk(
         refreshToken: refreshToken || null,
       };
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Server error");
+      return rejectWithValue(
+        getApiErrorMessage(
+          error,
+          "We could not log you in right now. Please try again.",
+        ),
+      );
     }
   },
 );
@@ -53,7 +58,9 @@ export const registerUser = createAsyncThunk(
         "Direct registration is disabled. Use OTP registration flow.",
       );
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Server error");
+      return rejectWithValue(
+        getApiErrorMessage(error, "We could not complete this request right now."),
+      );
     }
   },
 );
@@ -67,7 +74,12 @@ export const logoutUser = createAsyncThunk(
       return response.data;
     } catch (error) {
       dispatch(clearAuth());
-      return rejectWithValue(error.response?.data?.message || "Server error");
+      return rejectWithValue(
+        getApiErrorMessage(
+          error,
+          "We signed you out locally, but the server could not confirm it.",
+        ),
+      );
     }
   },
 );
@@ -96,7 +108,12 @@ export const refreshAccessToken = createAsyncThunk(
 
       return newAccessToken;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Server error");
+      return rejectWithValue(
+        getApiErrorMessage(
+          error,
+          "Your session could not be refreshed. Please log in again.",
+        ),
+      );
     }
   },
 );

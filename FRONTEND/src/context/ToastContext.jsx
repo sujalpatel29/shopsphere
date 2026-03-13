@@ -12,7 +12,11 @@ export function ToastProvider({ children }) {
 
   return (
     <ToastContext.Provider value={showToast}>
-      <Toast ref={toastRef} position="top-right" />
+      <Toast
+        ref={toastRef}
+        position="top-right"
+        className="app-toast-offset"
+      />
       {children}
     </ToastContext.Provider>
   );

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../../api/api";
 import { initialAddressForm, profileNav } from "./constants";
+import { fetchAllUserOrders } from "./orderData";
 import {
   buildAddressFormState,
   buildAddressPayload,
@@ -14,14 +15,10 @@ import {
 const normalizeProfilePayload = (payload) =>
   Array.isArray(payload) ? payload[0] : payload;
 
-const DEFAULT_ACTIVE_TAB = "profile";
+const DEFAULT_ACTIVE_TAB = "dashboard";
 const activeTabKeys = new Set(profileNav.map((item) => item.key));
 
 const normalizeActiveTab = (tab) => {
-  if (tab === "dashboard") {
-    return DEFAULT_ACTIVE_TAB;
-  }
-
   if (!activeTabKeys.has(tab)) {
     return DEFAULT_ACTIVE_TAB;
   }
@@ -96,7 +93,7 @@ export function useCustomerDashboard() {
     try {
       const [profileRes, ordersRes, addressesRes] = await Promise.all([
         api.get("/users/view-profile"),
-        api.get("/order/user-allorder"),
+        fetchAllUserOrders(api),
         api.get("/users/show-addresses"),
       ]);
 
@@ -111,7 +108,7 @@ export function useCustomerDashboard() {
         : null;
       setAddresses(addressesPayload);
 
-      const ordersPayload = toArray(extractData(ordersRes));
+      const ordersPayload = toArray(ordersRes);
       const sortedOrders = [...ordersPayload].sort((a, b) => {
         const aDate = new Date(a?.created_at || a?.placed_at || 0).getTime();
         const bDate = new Date(b?.created_at || b?.placed_at || 0).getTime();

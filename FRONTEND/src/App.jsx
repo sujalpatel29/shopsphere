@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { ThemeProvider } from './context/ThemeContext';
-import AppRoutes from './routes/AppRoutes';
-import { refreshAccessToken } from './redux/slices/authSlice';
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
+import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider } from "./context/ToastContext";
+import AppRoutes from "./routes/AppRoutes";
+import { refreshAccessToken } from "./redux/slices/authSlice";
 
 function App() {
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('shopsphere-theme') === 'dark');
+  const [darkMode, setDarkMode] = useState(
+    () => localStorage.getItem("shopsphere-theme") === "dark",
+  );
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -14,7 +17,7 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = localStorage.getItem("refreshToken");
     if (refreshToken) {
       dispatch(refreshAccessToken());
     }

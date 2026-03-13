@@ -3,6 +3,7 @@ import { Card } from "primereact/card";
 import { Divider } from "primereact/divider";
 import { useDispatch, useSelector } from "react-redux";
 import { OrderSummery } from "../redux/slices/orderSlice";
+import "../styles/CheckoutFlow.css";
 
 const formatINR = (value) => {
   const amount = Number(value) || 0;
@@ -15,7 +16,10 @@ const formatINR = (value) => {
 
 const toNumber = (value) => Number(value) || 0;
 
-export default function OrderSummaryComponent({ orderData, title = "Order Summary" }) {
+export default function OrderSummaryComponent({
+  orderData,
+  title = "Order Summary",
+}) {
   const dispatch = useDispatch();
 
   useEffect(() => {

@@ -1,3 +1,5 @@
+import getApiErrorMessage from "../../../utils/apiError";
+
 const phonePattern = /^[6-9]\d{9}$/;
 const cityStatePattern = /^[a-zA-Z\s]+$/;
 const postalCodePattern = /^[0-9A-Za-z\s-]{4,10}$/;
@@ -7,21 +9,7 @@ export const toArray = (value) => (Array.isArray(value) ? value : []);
 export const extractData = (response) => response?.data?.data ?? null;
 
 export const extractErrorMessage = (apiError, fallback) => {
-  const responseData = apiError?.response?.data;
-
-  if (typeof responseData === "string" && responseData.trim()) {
-    return responseData;
-  }
-
-  if (responseData?.message) {
-    return responseData.message;
-  }
-
-  if (apiError?.message) {
-    return apiError.message;
-  }
-
-  return fallback;
+  return getApiErrorMessage(apiError, fallback);
 };
 
 export const extractValidationErrorMessage = (apiError) => {
@@ -109,6 +97,29 @@ export function paymentSeverity(status) {
   }
 
   return "secondary";
+}
+
+export function displayPaymentStatus(orderOrStatus, maybeOrder = null) {
+  const order =
+    maybeOrder === null &&
+    typeof orderOrStatus === "object" &&
+    orderOrStatus !== null
+      ? orderOrStatus
+      : maybeOrder;
+
+  const rawStatus =
+    maybeOrder === null &&
+    typeof orderOrStatus === "object" &&
+    orderOrStatus !== null
+      ? orderOrStatus?.payment_status
+      : orderOrStatus;
+
+  const orderStatus = String(order?.order_status || "").toLowerCase();
+  if (orderStatus === "cancelled") {
+    return "N/A";
+  }
+
+  return String(rawStatus || "unknown");
 }
 
 export const buildAddressFormState = (address = null) => ({

@@ -2,6 +2,48 @@ import pool from "../configs/db.js";
 
 import mysql from "mysql2/promise";
 
+const PAYMENT_STATUS_TRANSITIONS = {
+  pending: ["processing", "completed", "failed", "refunded"],
+  processing: ["completed", "failed", "refunded"],
+  completed: ["refunded"],
+  failed: ["processing", "completed"],
+  refunded: [],
+};
+
+const CANCEL_REQUEST_STATUSES = new Set(["pending", "approved", "rejected"]);
+let ensureCancelRequestTablePromise = null;
+
+const ensureCancelRequestTable = async () => {
+  if (!ensureCancelRequestTablePromise) {
+    ensureCancelRequestTablePromise = pool.execute(`
+      CREATE TABLE IF NOT EXISTS order_cancel_requests (
+        request_id INT NOT NULL AUTO_INCREMENT,
+        order_id INT NOT NULL,
+        user_id INT NOT NULL,
+        reason TEXT NULL,
+        status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+        admin_note TEXT NULL,
+        reviewed_by INT NULL,
+        reviewed_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (request_id),
+        KEY idx_order_cancel_requests_order_id (order_id),
+        KEY idx_order_cancel_requests_user_id (user_id),
+        KEY idx_order_cancel_requests_status (status),
+        CONSTRAINT fk_order_cancel_requests_order
+          FOREIGN KEY (order_id) REFERENCES order_master(order_id) ON DELETE CASCADE,
+        CONSTRAINT fk_order_cancel_requests_user
+          FOREIGN KEY (user_id) REFERENCES user_master(user_id) ON DELETE CASCADE,
+        CONSTRAINT fk_order_cancel_requests_reviewed_by
+          FOREIGN KEY (reviewed_by) REFERENCES user_master(user_id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+    `);
+  }
+
+  await ensureCancelRequestTablePromise;
+};
+
 // Fetch cart items for a user including product and portion details
 export const getCart = async (user_id) => {
   const [cart] = await pool.query(
@@ -78,6 +120,8 @@ export const getAllOrder = async (
   sortField = "created_at",
   sortOrder = "DESC",
 ) => {
+  await ensureCancelRequestTable();
+
   const sortableColumns = {
     order_id: "order_id",
     order_number: "order_number",
@@ -91,7 +135,23 @@ export const getAllOrder = async (
   const direction = String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
 
   const [rows] = await pool.query(
-    `SELECT * FROM order_master
+    `SELECT
+       om.*,
+       (
+         SELECT ocr.status
+         FROM order_cancel_requests ocr
+         WHERE ocr.order_id = om.order_id
+         ORDER BY ocr.created_at DESC, ocr.request_id DESC
+         LIMIT 1
+       ) AS cancel_request_status,
+       (
+         SELECT ocr.request_id
+         FROM order_cancel_requests ocr
+         WHERE ocr.order_id = om.order_id
+         ORDER BY ocr.created_at DESC, ocr.request_id DESC
+         LIMIT 1
+       ) AS cancel_request_id
+     FROM order_master om
      WHERE user_id = ? AND is_deleted = 0
      ORDER BY ${orderBy} ${direction}
      LIMIT ? OFFSET ?`,
@@ -200,10 +260,233 @@ export const getOfferDetails = async (offer_id) => {
 // Get single order by id (for ownership checks)
 export const getOrderById = async (order_id) => {
   const [rows] = await pool.query(
-    "SELECT order_id, user_id, order_status FROM order_master WHERE order_id = ? AND is_deleted = 0",
+    "SELECT order_id, user_id, order_number, order_status, payment_status, total_amount, created_at FROM order_master WHERE order_id = ? AND is_deleted = 0",
     [order_id],
   );
   return rows[0] || null;
+};
+
+export const getLatestCancelRequestForOrder = async (orderId) => {
+  await ensureCancelRequestTable();
+
+  const [rows] = await pool.execute(
+    `
+      SELECT ocr.*
+      FROM order_cancel_requests ocr
+      WHERE ocr.order_id = ?
+      ORDER BY ocr.created_at DESC, ocr.request_id DESC
+      LIMIT 1
+    `,
+    [orderId],
+  );
+
+  return rows[0] || null;
+};
+
+export const createCancelRequest = async ({
+  orderId,
+  userId,
+  reason = null,
+}) => {
+  await ensureCancelRequestTable();
+
+  const [existingRows] = await pool.execute(
+    `
+      SELECT request_id, status
+      FROM order_cancel_requests
+      WHERE order_id = ? AND user_id = ? AND status = 'pending'
+      ORDER BY created_at DESC, request_id DESC
+      LIMIT 1
+    `,
+    [orderId, userId],
+  );
+
+  if (existingRows[0]) {
+    return { reason: "ALREADY_PENDING", data: existingRows[0] };
+  }
+
+  const [result] = await pool.execute(
+    `
+      INSERT INTO order_cancel_requests (order_id, user_id, reason, status)
+      VALUES (?, ?, ?, 'pending')
+    `,
+    [orderId, userId, reason ? String(reason).trim() : null],
+  );
+
+  const [rows] = await pool.execute(
+    `
+      SELECT ocr.*, om.order_number, om.order_status, om.payment_status, om.total_amount
+      FROM order_cancel_requests ocr
+      JOIN order_master om ON om.order_id = ocr.order_id
+      WHERE ocr.request_id = ?
+      LIMIT 1
+    `,
+    [result.insertId],
+  );
+
+  return { reason: null, data: rows[0] || null };
+};
+
+export const getCancelRequestsAdmin = async ({
+  status,
+  limit = 100,
+} = {}) => {
+  await ensureCancelRequestTable();
+
+  const conditions = [];
+  const values = [];
+
+  if (status && CANCEL_REQUEST_STATUSES.has(String(status).toLowerCase())) {
+    conditions.push("ocr.status = ?");
+    values.push(String(status).toLowerCase());
+  }
+
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(" AND ")}`
+    : "";
+
+  const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 200);
+
+  const [rows] = await pool.execute(
+    `
+      SELECT
+        ocr.request_id,
+        ocr.order_id,
+        ocr.user_id,
+        ocr.reason,
+        ocr.status,
+        ocr.admin_note,
+        ocr.reviewed_by,
+        ocr.reviewed_at,
+        ocr.created_at,
+        ocr.updated_at,
+        om.order_number,
+        om.order_status,
+        om.payment_status,
+        om.total_amount,
+        u.name AS customer_name,
+        u.email AS customer_email,
+        reviewer.name AS reviewed_by_name
+      FROM order_cancel_requests ocr
+      JOIN order_master om ON om.order_id = ocr.order_id AND om.is_deleted = 0
+      JOIN user_master u ON u.user_id = ocr.user_id
+      LEFT JOIN user_master reviewer ON reviewer.user_id = ocr.reviewed_by
+      ${whereClause}
+      ORDER BY
+        CASE WHEN ocr.status = 'pending' THEN 0 ELSE 1 END,
+        ocr.created_at DESC,
+        ocr.request_id DESC
+      LIMIT ${safeLimit}
+    `,
+    values,
+  );
+
+  return rows;
+};
+
+export const reviewCancelRequest = async ({
+  requestId,
+  action,
+  reviewedBy,
+  adminNote = null,
+}) => {
+  await ensureCancelRequestTable();
+
+  const normalizedAction = String(action || "").toLowerCase();
+  if (!["approve", "reject"].includes(normalizedAction)) {
+    return { affectedRows: 0, reason: "INVALID_ACTION" };
+  }
+
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [requestRows] = await connection.execute(
+      `
+        SELECT
+          ocr.request_id,
+          ocr.order_id,
+          ocr.user_id,
+          ocr.status,
+          om.order_status,
+          om.order_number
+        FROM order_cancel_requests ocr
+        JOIN order_master om ON om.order_id = ocr.order_id AND om.is_deleted = 0
+        WHERE ocr.request_id = ?
+        LIMIT 1
+        FOR UPDATE
+      `,
+      [requestId],
+    );
+
+    const request = requestRows[0];
+    if (!request) {
+      await connection.rollback();
+      return { affectedRows: 0, reason: "NOT_FOUND" };
+    }
+
+    if (String(request.status).toLowerCase() !== "pending") {
+      await connection.rollback();
+      return { affectedRows: 0, reason: "ALREADY_REVIEWED" };
+    }
+
+    if (normalizedAction === "approve") {
+      const currentOrderStatus = String(request.order_status || "").toLowerCase();
+      if (!["pending", "processing"].includes(currentOrderStatus)) {
+        await connection.rollback();
+        return {
+          affectedRows: 0,
+          reason: "ORDER_NOT_CANCELABLE",
+          order_status: currentOrderStatus,
+        };
+      }
+
+      await connection.execute(
+        `
+          UPDATE order_master
+          SET order_status = 'cancelled',
+              updated_at = NOW(),
+              updated_by = ?
+          WHERE order_id = ?
+        `,
+        [reviewedBy, request.order_id],
+      );
+    }
+
+    await connection.execute(
+      `
+        UPDATE order_cancel_requests
+        SET status = ?,
+            admin_note = ?,
+            reviewed_by = ?,
+            reviewed_at = NOW(),
+            updated_at = NOW()
+        WHERE request_id = ?
+      `,
+      [
+        normalizedAction === "approve" ? "approved" : "rejected",
+        adminNote ? String(adminNote).trim() : null,
+        reviewedBy,
+        requestId,
+      ],
+    );
+
+    await connection.commit();
+
+    return {
+      affectedRows: 1,
+      status: normalizedAction === "approve" ? "approved" : "rejected",
+      order_status:
+        normalizedAction === "approve" ? "cancelled" : request.order_status,
+      order_id: request.order_id,
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 };
 
 // Hardened updateOrderStatus (supports audit and optional ownership check)
@@ -239,7 +522,8 @@ const ORDER_TRANSITIONS = {
   pending: ["processing", "cancelled"],
   processing: ["shipped", "cancelled"],
   shipped: ["delivered"],
-  delivered: ["returned"],
+  delivered: ["completed", "returned"],
+  completed: [],
   cancelled: [],
   returned: [],
 };
@@ -386,6 +670,8 @@ export const getAllItemsAdmin = async () => {
  * @returns {Promise<{total: number, data: Array, stats: Object}>}
  */
 export const findAllOrdersAdmin = async (filters = {}, pagination = {}) => {
+  await ensureCancelRequestTable();
+
   // Stats — always reflect all non-deleted orders
   const [statsRows] = await pool.execute(`
       SELECT
@@ -488,7 +774,21 @@ export const findAllOrdersAdmin = async (filters = {}, pagination = {}) => {
              a.full_name AS shipping_name, a.city AS shipping_city, a.state AS shipping_state,
              p.payment_id, p.payment_method, p.status AS payment_gateway_status,
              p.transaction_id, p.is_refunded, p.refund_amount,
-             (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.order_id AND oi.is_deleted = 0) AS item_count
+             (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.order_id AND oi.is_deleted = 0) AS item_count,
+             (
+               SELECT ocr.status
+               FROM order_cancel_requests ocr
+               WHERE ocr.order_id = o.order_id
+               ORDER BY ocr.created_at DESC, ocr.request_id DESC
+               LIMIT 1
+             ) AS cancel_request_status,
+             (
+               SELECT ocr.request_id
+               FROM order_cancel_requests ocr
+               WHERE ocr.order_id = o.order_id
+               ORDER BY ocr.created_at DESC, ocr.request_id DESC
+               LIMIT 1
+             ) AS cancel_request_id
       ${baseSql}
       ${whereClause}
       ${orderClause}
@@ -512,6 +812,8 @@ export const findAllOrdersAdmin = async (filters = {}, pagination = {}) => {
  * @returns {Promise<Object|null>} Combined order object with items[] and payments[], or null if not found
  */
 export const getOrderDetailAdmin = async (orderId) => {
+  await ensureCancelRequestTable();
+
   // Order + user + address
   const [orderRows] = await pool.execute(
     `
@@ -553,7 +855,44 @@ export const getOrderDetailAdmin = async (orderId) => {
     ...orderRows[0],
     items: itemRows,
     payments: paymentRows,
+    cancel_request: await getLatestCancelRequestForOrder(orderId),
   };
+};
+
+const syncOrderPaymentFields = async (
+  executor,
+  orderId,
+  paymentStatus,
+  updatedBy = null,
+) => {
+  const setParts = ["payment_status = ?", "updated_at = NOW()"];
+  const values = [paymentStatus];
+
+  if (paymentStatus === "refunded") {
+    setParts.push(
+      "order_status = CASE WHEN order_status IN ('cancelled', 'refunded') THEN order_status ELSE 'refunded' END",
+    );
+  }
+
+  if (updatedBy !== null) {
+    setParts.push("updated_by = ?");
+    values.push(updatedBy);
+  }
+
+  values.push(orderId);
+
+  await executor.execute(
+    `UPDATE order_master SET ${setParts.join(", ")} WHERE order_id = ? AND is_deleted = 0`,
+    values,
+  );
+};
+
+export const syncOrderPaymentStatus = async (
+  orderId,
+  paymentStatus,
+  updatedBy = null,
+) => {
+  await syncOrderPaymentFields(pool, orderId, paymentStatus, updatedBy);
 };
 
 /**
@@ -566,10 +905,154 @@ export const getOrderDetailAdmin = async (orderId) => {
  * @param {string} paymentStatus - New status (pending|processing|completed|failed|refunded)
  * @returns {Promise<Object>} MySQL result with affectedRows
  */
-export const updatePaymentStatusAdmin = async (orderId, paymentStatus) => {
-  const [rows] = await pool.execute(
-    `UPDATE order_master SET payment_status = ?, updated_at = NOW() WHERE order_id = ?`,
-    [paymentStatus, orderId],
-  );
-  return rows;
+export const updatePaymentStatusAdmin = async (
+  orderId,
+  paymentStatus,
+  updatedBy = null,
+) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [orderRows] = await connection.execute(
+      `
+        SELECT o.order_id, o.order_status, o.payment_status, p.payment_id, p.payment_method, p.status AS payment_record_status
+        FROM order_master o
+        LEFT JOIN payment_master p
+          ON p.order_id = o.order_id
+         AND p.is_deleted = 0
+        WHERE o.order_id = ? AND o.is_deleted = 0
+        ORDER BY p.created_at DESC, p.payment_id DESC
+        LIMIT 1
+      `,
+      [orderId],
+    );
+
+    const order = orderRows[0];
+    if (!order) {
+      await connection.rollback();
+      return { affectedRows: 0, reason: "NOT_FOUND" };
+    }
+
+    const currentPaymentStatus = String(
+      order.payment_record_status || order.payment_status || "pending",
+    ).toLowerCase();
+    const nextPaymentStatus = String(paymentStatus || "").toLowerCase();
+
+    if (!Object.prototype.hasOwnProperty.call(PAYMENT_STATUS_TRANSITIONS, nextPaymentStatus)) {
+      await connection.rollback();
+      return { affectedRows: 0, reason: "INVALID_STATUS" };
+    }
+
+    if (String(order.payment_method || "").toLowerCase() === "stripe") {
+      await connection.rollback();
+      return {
+        affectedRows: 0,
+        reason: "STRIPE_MANAGED",
+        payment_status: currentPaymentStatus,
+        order_status: order.order_status,
+      };
+    }
+
+    if (currentPaymentStatus === nextPaymentStatus) {
+      await connection.rollback();
+      return {
+        affectedRows: 0,
+        reason: "NO_CHANGE",
+        payment_status: currentPaymentStatus,
+        order_status: order.order_status,
+      };
+    }
+
+    const allowedTransitions =
+      PAYMENT_STATUS_TRANSITIONS[currentPaymentStatus] || [];
+    if (!allowedTransitions.includes(nextPaymentStatus)) {
+      await connection.rollback();
+      return {
+        affectedRows: 0,
+        reason: "INVALID_TRANSITION",
+        payment_status: currentPaymentStatus,
+        order_status: order.order_status,
+      };
+    }
+
+    if (
+      nextPaymentStatus === "completed" &&
+      order.payment_method === "cash_on_delivery" &&
+      !["delivered", "completed"].includes(String(order.order_status).toLowerCase())
+    ) {
+      await connection.rollback();
+      return {
+        affectedRows: 0,
+        reason: "COD_NOT_DELIVERED",
+        payment_status: currentPaymentStatus,
+        order_status: order.order_status,
+      };
+    }
+
+    if (
+      nextPaymentStatus === "refunded" &&
+      !["delivered", "completed", "cancelled", "refunded"].includes(
+        String(order.order_status).toLowerCase(),
+      )
+    ) {
+      await connection.rollback();
+      return {
+        affectedRows: 0,
+        reason: "INVALID_REFUND_STATE",
+        payment_status: currentPaymentStatus,
+        order_status: order.order_status,
+      };
+    }
+
+    if (order.payment_id) {
+      const paymentSetParts = ["status = ?", "updated_at = NOW()"];
+      const paymentValues = [nextPaymentStatus];
+
+      if (nextPaymentStatus === "processing") {
+        paymentSetParts.push("processing_started_at = NOW()");
+      }
+      if (nextPaymentStatus === "completed") {
+        paymentSetParts.push("succeeded_at = NOW()");
+      }
+      if (nextPaymentStatus === "failed") {
+        paymentSetParts.push("failed_at = NOW()");
+      }
+      if (nextPaymentStatus === "refunded") {
+        paymentSetParts.push("is_refunded = 1");
+        paymentSetParts.push("refund_amount = amount");
+      }
+      if (updatedBy !== null) {
+        paymentSetParts.push("updated_by = ?");
+        paymentValues.push(updatedBy);
+      }
+
+      paymentValues.push(order.payment_id);
+
+      await connection.execute(
+        `UPDATE payment_master SET ${paymentSetParts.join(", ")} WHERE payment_id = ?`,
+        paymentValues,
+      );
+    }
+
+    await syncOrderPaymentFields(connection, orderId, nextPaymentStatus, updatedBy);
+
+    await connection.commit();
+
+    return {
+      affectedRows: 1,
+      payment_status: nextPaymentStatus,
+      order_status:
+        nextPaymentStatus === "refunded" &&
+        !["cancelled", "refunded"].includes(String(order.order_status).toLowerCase())
+          ? "refunded"
+          : order.order_status,
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 };

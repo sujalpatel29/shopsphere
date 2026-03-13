@@ -1,6 +1,7 @@
 import {
   CreditCard,
   HelpCircle,
+  LayoutDashboard,
   MapPin,
   Package,
   Star,
@@ -15,18 +16,19 @@ export const cardPt = {
 };
 
 export const panelCardClassName =
-  "rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
+  "rounded-2xl border border-[#ddcfb7] bg-[#f8f3ea] p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const metricCardClassName =
-  "rounded-2xl border border-gray-100 bg-gray-50 p-5 dark:border-[#1f2933] dark:bg-[#151e22]";
+  "rounded-2xl border border-[#ddcfb7] bg-[#f3ecdf] p-5 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const sidebarCardClassName =
-  "h-fit rounded-3xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22]";
+  "h-fit rounded-3xl border border-[#ddcfb7] bg-[#f8f3ea] p-4 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const pageHeaderCardClassName =
-  "rounded-3xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
+  "rounded-3xl border border-[#ddcfb7] bg-[#f8f3ea] p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const profileNav = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "profile", label: "Profile", icon: User },
   { key: "orders", label: "Orders", icon: Package },
   { key: "payments", label: "Payment Methods", icon: CreditCard },
