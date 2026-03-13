@@ -4,7 +4,6 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   withCredentials: true, // important for refresh cookies
 });
-
 //  Attach access token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
@@ -32,14 +31,23 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const res = await api.post("/users/refresh-token");
+        const storedRefreshToken = localStorage.getItem("refreshToken");
+        if (!storedRefreshToken) {
+          throw new Error("No refresh token available");
+        }
 
-        const newAccessToken = res.data.accessToken;
+        const res = await api.post("/users/refresh-token", {
+          refreshToken: storedRefreshToken,
+        });
+
+        const newAccessToken = res.data?.data?.accessToken;
+        if (!newAccessToken) {
+          throw new Error("Refresh endpoint did not return access token");
+        }
 
         localStorage.setItem("token", newAccessToken);
 
-        originalRequest.headers.Authorization =
-          "Bearer " + newAccessToken;
+        originalRequest.headers.Authorization = "Bearer " + newAccessToken;
 
         return api(originalRequest);
       } catch (refreshError) {
@@ -55,7 +63,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

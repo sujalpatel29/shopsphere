@@ -1,5 +1,5 @@
 import express from "express";
-import dotenv from "dotenv";
+import "./configs/env.js";
 import categoryRoutes from "./routes/category.routes.js";
 // Import Routes
 import paymentRoutes from "./routes/payments.route.js";
@@ -9,23 +9,36 @@ import orderRouter from "./routes/order_master.route.js";
 import orderItemRouter from "./routes/Order_item.route.js";
 import cartRouter from "./routes/cart.route.js";
 import { route as offerRoute } from "./routes/offer.route.js";
-import reviewRouter from "./routes/review.routes.js";
 import modifierRoute from "./routes/modifier.route.js";
 import cors from 'cors'
 import productRoutes from "./routes/product.route.js";
 import productImageRoutes from "./routes/productImage.route.js";
-
-
-// Load environment variables
-dotenv.config();
+import reviewRouter from "./routes/review.routes.js";
 
 // Initialize Express app
 const app = express();
 
-app.use(cors({
-   origin: "http://localhost:5173",
-  credentials: true
-}));
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+];
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow non-browser clients (no Origin header), and allowed frontend origins.
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 const port = process.env.PORT || 3000;
 
 // ============================================================================
@@ -79,7 +92,7 @@ app.use("/api/users", userRoute);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
 app.use("/api/review", reviewRouter);
-app.use("/api/cart",cartRouter);
+app.use("/api/cart", cartRouter);
 
 
 // app.use("/api/offer", offerRoute);

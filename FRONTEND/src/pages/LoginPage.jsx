@@ -114,6 +114,16 @@ function LoginPage() {
               </Link>
             </p>
 
+            <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">
+              Forgot password?{" "}
+              <Link
+                to="/forgot-password"
+                className="font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+              >
+                Reset here
+              </Link>
+            </p>
+
             <div className="mt-6 rounded-xl bg-gray-50 p-4 text-xs text-gray-500 dark:bg-slate-800 dark:text-slate-400">
               New here? Create an account to get started.
             </div>
