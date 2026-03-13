@@ -21,10 +21,16 @@ export const getProductsByCategories = (params = {}) =>
   API.get("/api/category/bulk/products", { params });
 
 export const getProductsByCategoryFilters = (params = {}) =>
-  API.get("/api/category/filter/products", { params });
+  API.post("/api/category/filter/products", params);
 /*  */
 export const getCategoryProductsPriceRange = (params = {}) =>
-  API.get("/api/category/filter/products/price-range", { params });
+  API.post("/api/category/filter/products/price-range", params);
 
 export const searchCategoriesByName = (params = {}) =>
   API.get("/api/category", { params });
+
+export const getProductRatingSummary = (productId) =>
+  API.get(`/api/review/product/${productId}/summary`);
+
+export const getProductRatingSummariesBulk = (productIds = []) =>
+  API.post("/api/review/product/summary/bulk", { product_ids: productIds });

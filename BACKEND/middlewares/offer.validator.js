@@ -159,6 +159,23 @@ const offerUpdateBaseSchema = z.object({
     .optional(),
 });
 
+const normalizeDateOnly = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const normalizeTimeOnly = (value) => {
+  if (!value) return null;
+  const match = String(value).trim().match(/^(\d{2}:\d{2})/);
+  return match ? match[1] : null;
+};
+
 /**
  * Create-offer business validation:
  * - Enforces valid date range
@@ -166,8 +183,35 @@ const offerUpdateBaseSchema = z.object({
  */
 const refineOfferCreate = (schema) =>
   schema.superRefine((data, ctx) => {
+    const today = normalizeDateOnly(new Date());
+    const startDateOnly = normalizeDateOnly(data.start_date);
+    const endDateOnly = normalizeDateOnly(data.end_date);
+    const currentTime = normalizeTimeOnly(new Date().toTimeString());
+    const startTimeOnly = normalizeTimeOnly(data.start_time);
+
+    if (startDateOnly && today && startDateOnly < today) {
+      ctx.addIssue({
+        path: ["start_date"],
+        message: "start_date cannot be in the past",
+      });
+    }
+
+    if (
+      startDateOnly &&
+      today &&
+      startDateOnly === today &&
+      startTimeOnly &&
+      currentTime &&
+      startTimeOnly < currentTime
+    ) {
+      ctx.addIssue({
+        path: ["start_time"],
+        message: "start_time cannot be in the past for today",
+      });
+    }
+
     // Date validation
-    if (data.start_date && data.end_date) {
+    if (startDateOnly && endDateOnly) {
       if (new Date(data.start_date) > new Date(data.end_date)) {
         ctx.addIssue({
           path: ["start_date"],
@@ -192,8 +236,35 @@ const refineOfferCreate = (schema) =>
  */
 const refineOfferUpdate = (schema) =>
   schema.superRefine((data, ctx) => {
+    const today = normalizeDateOnly(new Date());
+    const startDateOnly = normalizeDateOnly(data.start_date);
+    const endDateOnly = normalizeDateOnly(data.end_date);
+    const currentTime = normalizeTimeOnly(new Date().toTimeString());
+    const startTimeOnly = normalizeTimeOnly(data.start_time);
+
+    if (startDateOnly && today && startDateOnly < today) {
+      ctx.addIssue({
+        path: ["start_date"],
+        message: "start_date cannot be in the past",
+      });
+    }
+
+    if (
+      startDateOnly &&
+      today &&
+      startDateOnly === today &&
+      startTimeOnly &&
+      currentTime &&
+      startTimeOnly < currentTime
+    ) {
+      ctx.addIssue({
+        path: ["start_time"],
+        message: "start_time cannot be in the past for today",
+      });
+    }
+
     // Date validation (only if both exist)
-    if (data.start_date && data.end_date) {
+    if (startDateOnly && endDateOnly) {
       if (new Date(data.start_date) > new Date(data.end_date)) {
         ctx.addIssue({
           path: ["start_date"],

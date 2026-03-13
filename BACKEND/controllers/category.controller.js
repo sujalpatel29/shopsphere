@@ -706,12 +706,17 @@ const resolveCategoryFilters = (query = {}) => {
   return { parentIds, childIds };
 };
 
+const resolveFilterSource = (req) =>
+  req.validated?.body ??
+  req.validated?.query ??
+  req.query ??
+  {};
+
 export const getProductsByCategoryFilters = async (req, res) => {
   try {
-    const { page, limit, search, min_price, max_price } = req.validated.query;
-    const { parentIds, childIds } = resolveCategoryFilters(
-      req.validated.query,
-    );
+    const filterSource = resolveFilterSource(req);
+    const { page, limit, search, min_price, max_price } = filterSource;
+    const { parentIds, childIds } = resolveCategoryFilters(filterSource);
 
     const hasPaging = page !== undefined || limit !== undefined;
     const currentPage = Number(page) || 1;
@@ -783,10 +788,9 @@ export const getProductsByCategoryFilters = async (req, res) => {
 
 export const getProductsPriceRangeByFilters = async (req, res) => {
   try {
-    const { search } = req.validated.query;
-    const { parentIds, childIds } = resolveCategoryFilters(
-      req.validated.query,
-    );
+    const filterSource = resolveFilterSource(req);
+    const { search } = filterSource;
+    const { parentIds, childIds } = resolveCategoryFilters(filterSource);
 
     const [rows] = await Category.getProductsPriceRangeByCategoryFilter(
       parentIds,

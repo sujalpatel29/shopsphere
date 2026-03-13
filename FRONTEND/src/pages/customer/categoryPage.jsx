@@ -646,10 +646,10 @@ function CategoryPage() {
         } else {
           const productRes = await getProductsByCategoryFilters({
             ...(categoryIdGroups.parent.length
-              ? { parent_ids: categoryIdGroups.parent.join(",") }
+              ? { parent_ids: categoryIdGroups.parent }
               : {}),
             ...(categoryIdGroups.child.length
-              ? { child_ids: categoryIdGroups.child.join(",") }
+              ? { child_ids: categoryIdGroups.child }
               : {}),
             ...(hasSearch ? { search: debouncedSearchText } : {}),
             ...priceFilterParams,
@@ -705,10 +705,10 @@ function CategoryPage() {
 
         const priceRes = await getCategoryProductsPriceRange({
           ...(categoryIdGroups.parent.length
-            ? { parent_ids: categoryIdGroups.parent.join(",") }
+            ? { parent_ids: categoryIdGroups.parent }
             : {}),
           ...(categoryIdGroups.child.length
-            ? { child_ids: categoryIdGroups.child.join(",") }
+            ? { child_ids: categoryIdGroups.child }
             : {}),
           ...(hasSearch ? { search: debouncedSearchText } : {}),
           ...(hasCategoryFilter ? {} : {}),

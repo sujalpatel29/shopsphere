@@ -146,6 +146,9 @@ export const categoryProductFilterQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50, "Limit max 50").optional(),
 });
 
+// Body schema for category product filters (same shape as query).
+export const categoryProductFilterBodySchema = categoryProductFilterQuerySchema;
+
 /*
 ========================================
 CREATE

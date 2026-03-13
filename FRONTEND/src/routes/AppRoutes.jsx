@@ -7,11 +7,12 @@ import RegisterPage from "../pages/RegisterPage";
 import HomePage from "../pages/customer/HomePage";
 import DashboardPage from "../pages/customer/DashboardPage";
 import CartPage from "../pages/customer/CartPage";
+import ProductDetailsPage from "../pages/customer/ProductDetailsPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import CheckoutPage from "../pages/customer/CheckoutPage";
 import PaymentPage from "../pages/customer/PaymentPage";
 import CategoryPage from "../pages/customer/categoryPage";
-import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPlaceholder";
+import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPage";
 import ItemsPage from "../pages/customer/ItemsPage";
 
 /** Redirect admin users to their dashboard â€” prevents admins from browsing customer pages */
@@ -51,8 +52,9 @@ function AppRoutes() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/categories" element={<CategoryPage />} />
           <Route path="/products" element={<HomePage />} />
-          <Route path="/products/:id" element={<ProductDetailsPlaceholder />} />
+          
           <Route path="/items/:id" element={<ItemsPage />} />
+          <Route path="/products/:productId" element={<ProductDetailsPage />} />
         </Route>
       </Route>
 
