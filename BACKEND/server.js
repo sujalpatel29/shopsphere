@@ -33,7 +33,7 @@ app.use(cors({
   ],
   credentials: true
 }));
-const port = process.env.PORT || 3000;
+const port = process.env.SERVER_PORT || process.env.PORT || 3000;
 
 // ============================================================================
 // MIDDLEWARE
