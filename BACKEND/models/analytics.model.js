@@ -76,7 +76,9 @@ const AnalyticsModel = {
    * @returns {Promise<Array>} Top products with sales data
    */
   async getTopSellingProducts(limit = 10, days = 30) {
-    const [rows] = await pool.execute(`
+    const normalizedLimit = Math.max(1, Number.parseInt(limit, 10) || 10);
+
+    const [rows] = await pool.query(`
       SELECT
         pm.product_id,
         pm.name,
@@ -95,8 +97,8 @@ const AnalyticsModel = {
       WHERE pm.is_deleted = 0
       GROUP BY pm.product_id
       ORDER BY total_sold DESC
-      LIMIT ?
-    `, [days, parseInt(limit, 10)]);
+      LIMIT ${normalizedLimit}
+    `, [days]);
     return rows;
   },
 
@@ -154,7 +156,9 @@ const AnalyticsModel = {
    * @returns {Promise<Array>} Recent orders
    */
   async getRecentOrders(limit = 10, days = 30) {
-    const [rows] = await pool.execute(`
+    const normalizedLimit = Math.max(1, Number.parseInt(limit, 10) || 10);
+
+    const [rows] = await pool.query(`
       SELECT
         om.order_id,
         om.order_number,
@@ -169,8 +173,8 @@ const AnalyticsModel = {
       WHERE om.is_deleted = 0
         AND om.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
       ORDER BY om.created_at DESC
-      LIMIT ?
-    `, [days, parseInt(limit, 10)]);
+      LIMIT ${normalizedLimit}
+    `, [days]);
     return rows;
   },
 

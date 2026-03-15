@@ -1,15 +1,14 @@
-import axios from 'axios';
+import axios from "axios";
 
 const API = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/',
-    withCredentials: true, // Include cookies for authentication
-})
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/",
+  withCredentials: true, // Include cookies for authentication
+});
 
 export const getAllProducts = (params = undefined) =>
   params ? API.get("/api/products", { params }) : API.get("/api/products");
 
-export const getAllCategories = () =>
-  API.get("/api/category/tree"); 
+export const getAllCategories = () => API.get("/api/category/tree");
 
 export const getCategoryWithChildren = (categoryId) =>
   API.get(`/api/category/${categoryId}`);
@@ -34,3 +33,6 @@ export const getProductRatingSummary = (productId) =>
 
 export const getProductRatingSummariesBulk = (productIds = []) =>
   API.post("/api/review/product/summary/bulk", { product_ids: productIds });
+
+export const getBestSellers = (limit = 8) =>
+  API.get("/api/products/bestsellers", { params: { limit } });

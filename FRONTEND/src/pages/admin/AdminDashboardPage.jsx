@@ -34,7 +34,6 @@ import {
   LogOut,
   Moon,
   Package,
-  Settings,
   Star,
   Sun,
   Users,
@@ -65,7 +64,6 @@ const adminNav = [
   { key: "offers", label: "Offers", icon: Gift },
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "reports", label: "Reports", icon: BarChart3 },
-  { key: "settings", label: "Settings", icon: Settings },
 ];
 
 const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
@@ -75,7 +73,7 @@ const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
 const AdminUsersTab = lazy(() => import("./AdminUsersTab"));
 const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
 const AdminReportsTab = lazy(() => import("./AdminReportsTab"));
-const AdminSettingsTab = lazy(() => import("./AdminSettingsTab"));
+const AdminReviewsTab = lazy(() => import("./AdminReviewsTab"));
 
 // Collect all valid tab keys for hash validation
 const validTabKeys = new Set(
@@ -336,10 +334,10 @@ function AdminDashboardPage() {
                 <AdminUsersTab />
               ) : activeTab === "orders" ? (
                 <AdminOrdersTab />
+              ) : activeTab === "reviews" ? (
+                <AdminReviewsTab />
               ) : activeTab === "reports" ? (
                 <AdminReportsTab />
-              ) : activeTab === "settings" ? (
-                <AdminSettingsTab />
               ) : (
                 <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -356,4 +354,3 @@ function AdminDashboardPage() {
 }
 
 export default AdminDashboardPage;
-          

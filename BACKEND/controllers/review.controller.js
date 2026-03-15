@@ -10,6 +10,7 @@ import {
   serverError,
 } from "../utils/apiResponse.js";
 import {
+  getAllReviewsAdmin,
   getProductRatingSummary,
   getProductRatingSummariesBulk,
   getReviewById,
@@ -23,10 +24,7 @@ import {
 // Normalize user id from JWT payload formats.
 const resolveAuthUserId = (req) => {
   const rawUserId =
-    req.user?.user_id ??
-    req.user?.id ??
-    req.user?.userId ??
-    req.user?.sub;
+    req.user?.user_id ?? req.user?.id ?? req.user?.userId ?? req.user?.sub;
 
   const userId = Number(rawUserId);
   return Number.isFinite(userId) ? userId : null;
@@ -69,7 +67,8 @@ export const reviewController = {
         return badRequest(res, "Invalid token payload: user_id is missing");
       }
 
-      const { product_id, order_id, rating, title, review_text } = req.validatedBody ?? req.body;
+      const { product_id, order_id, rating, title, review_text } =
+        req.validatedBody ?? req.body;
 
       // Step 2 - Check product exists.
       const productExists = await reviewModel.checkProductExists(product_id);
@@ -78,13 +77,22 @@ export const reviewController = {
       }
 
       // Step 3 - Check user purchased product.
-      const purchased = await reviewModel.checkUserPurchased(authUserId, product_id);
+      const purchased = await reviewModel.checkUserPurchased(
+        authUserId,
+        product_id,
+      );
       if (!purchased) {
-        return badRequest(res, "You can review only delivered purchased products");
+        return badRequest(
+          res,
+          "You can review only delivered purchased products",
+        );
       }
 
       // Step 4 - Check already reviewed.
-      const alreadyReviewed = await reviewModel.checkAlreadyReviewed(authUserId, product_id);
+      const alreadyReviewed = await reviewModel.checkAlreadyReviewed(
+        authUserId,
+        product_id,
+      );
       if (alreadyReviewed) {
         return conflict(res, "You have already reviewed this product");
       }
@@ -97,7 +105,10 @@ export const reviewController = {
         );
 
         if (!orderMatches) {
-          return badRequest(res, "Provided order_id is invalid for this delivered purchase");
+          return badRequest(
+            res,
+            "Provided order_id is invalid for this delivered purchase",
+          );
         }
       }
 
@@ -128,7 +139,8 @@ export const reviewController = {
     try {
       // Step 1 - Validate params and query.
       const { product_id } = req.validatedParams ?? req.params;
-      const { page, limit, sort, rating, verified } = req.validatedQuery ?? req.query;
+      const { page, limit, sort, rating, verified } =
+        req.validatedQuery ?? req.query;
 
       // Step 2 - Check product exists.
       const productExists = await reviewModel.checkProductExists(product_id);
@@ -170,7 +182,11 @@ export const reviewController = {
       const summary = await getProductRatingSummary(Number(product_id));
 
       // Step 4 - Return response.
-      return success(res, "Product rating summary fetched successfully", summary);
+      return success(
+        res,
+        "Product rating summary fetched successfully",
+        summary,
+      );
     } catch (error) {
       console.error("Get review summary error:", error);
       return serverError(res, "Internal server error");
@@ -294,6 +310,34 @@ export const reviewController = {
       return success(res, "Review deleted successfully");
     } catch (error) {
       console.error("Delete review error:", error);
+      return serverError(res, "Internal server error");
+    }
+  },
+
+  // GET /api/review/admin (admin only)
+  getAllAdmin: async (req, res) => {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        search = "",
+        rating,
+        sortField = "created_at",
+        sortOrder = "desc",
+      } = req.query;
+
+      const data = await getAllReviewsAdmin({
+        page,
+        limit,
+        search,
+        rating: rating ? Number(rating) : null,
+        sortField,
+        sortOrder,
+      });
+
+      return success(res, "Reviews fetched successfully", data);
+    } catch (error) {
+      console.error("Get admin reviews error:", error);
       return serverError(res, "Internal server error");
     }
   },

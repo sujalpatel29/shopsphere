@@ -97,12 +97,12 @@ const Product = {
     `);
     const { totalAll, totalActive } = statsRows[0];
 
-    const conditions = ["p.is_deleted = 0"];
+    const conditions = ["p.is_deleted = 0", "(p.category_id IS NULL OR c.category_id IS NOT NULL)"];
     const values = [];
 
     let baseSql = `
       FROM product_master p
-      LEFT JOIN category_master c ON p.category_id = c.category_id
+      LEFT JOIN category_master c ON p.category_id = c.category_id AND c.is_deleted = 0
       LEFT JOIN (
         SELECT pp.product_id,
                COUNT(*) AS portion_count,
@@ -182,14 +182,28 @@ const Product = {
         .replace(/[^a-z0-9\s]/g, "")
         .replace(/\s+/g, "");
 
+      const like = `%${normalizedSearch}%`;
       conditions.push(`(
         LOWER(REPLACE(COALESCE(p.name, ''), ' ', '')) LIKE ?
         OR LOWER(REPLACE(COALESCE(p.display_name, ''), ' ', '')) LIKE ?
         OR LOWER(REPLACE(COALESCE(p.description, ''), ' ', '')) LIKE ?
+        OR LOWER(REPLACE(COALESCE(c.category_name, ''), ' ', '')) LIKE ?
+        OR p.category_id IN (
+          SELECT child.category_id FROM category_master child
+          WHERE child.parent_id IN (
+            SELECT anc.category_id FROM category_master anc
+            WHERE LOWER(REPLACE(COALESCE(anc.category_name, ''), ' ', '')) LIKE ?
+          )
+          UNION
+          SELECT gc.category_id FROM category_master gc
+          INNER JOIN category_master mid ON gc.parent_id = mid.category_id
+          WHERE mid.parent_id IN (
+            SELECT anc2.category_id FROM category_master anc2
+            WHERE LOWER(REPLACE(COALESCE(anc2.category_name, ''), ' ', '')) LIKE ?
+          )
+        )
       )`);
-      values.push(`%${normalizedSearch}%`);
-      values.push(`%${normalizedSearch}%`);
-      values.push(`%${normalizedSearch}%`);
+      values.push(like, like, like, like, like, like);
     }
 
     // Status filter
@@ -221,6 +235,7 @@ const Product = {
       price: "p.price",
       stock: "p.stock",
       is_active: "p.is_active",
+      created_at: "p.created_at",
     };
 
     let orderClause = "ORDER BY p.product_id ASC";
@@ -307,3 +322,25 @@ const Product = {
   },
 };
 export default Product;
+
+export const findBestSellers = (limit = 8) => {
+  const sql = `
+    SELECT p.*, c.category_name,
+           COALESCE(SUM(oi.quantity), 0) AS total_sold,
+           (SELECT pi.image_url FROM product_images pi
+            WHERE pi.product_id = p.product_id
+              AND pi.image_level = 'PRODUCT'
+              AND pi.is_deleted = 0
+            ORDER BY pi.is_primary DESC, pi.image_id DESC
+            LIMIT 1) AS image_url
+    FROM product_master p
+    LEFT JOIN category_master c ON p.category_id = c.category_id AND c.is_deleted = 0
+    LEFT JOIN order_items oi ON p.product_id = oi.product_id
+    WHERE p.is_deleted = 0 AND p.is_active = 1
+      AND (p.category_id IS NULL OR c.category_id IS NOT NULL)
+    GROUP BY p.product_id
+    ORDER BY total_sold DESC, p.product_id DESC
+    LIMIT ?
+  `;
+  return db.query(sql, [limit]);
+};

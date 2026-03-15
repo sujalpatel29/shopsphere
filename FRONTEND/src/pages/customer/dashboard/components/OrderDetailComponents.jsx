@@ -399,7 +399,6 @@ export default function OrderDetailComponents({
                   <table className="w-full border-collapse">
                     <thead className="bg-[#f5f0e8] dark:bg-[#1a2528]">
                       <tr>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">ID</th>
                         <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Product</th>
                         <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Qty</th>
                         <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Price</th>
@@ -414,9 +413,6 @@ export default function OrderDetailComponents({
                             key={row.order_item_id}
                             className="border-b border-[rgba(201,184,138,0.16)] last:border-b-0"
                           >
-                            <td className="px-5 py-4 text-[0.95rem] text-slate-600 dark:text-slate-300">
-                              {row.order_item_id}
-                            </td>
                             <td className="px-5 py-4 text-[0.95rem] font-medium text-slate-800 dark:text-slate-100">
                               {formatProductLabel(row.product_name) || "-"}
                             </td>
@@ -437,7 +433,7 @@ export default function OrderDetailComponents({
                       ) : (
                         <tr>
                           <td
-                            colSpan="6"
+                            colSpan="5"
                             className="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400"
                           >
                             No items found.
@@ -470,7 +466,6 @@ export default function OrderDetailComponents({
                   className="admin-products-table order-items-table"
                   emptyMessage="No items found."
                 >
-                  <Column field="order_item_id" sortable header="ID" />
                   <Column
                     field="product_name"
                     sortable

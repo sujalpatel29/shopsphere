@@ -1,362 +1,12 @@
-﻿// import { useRef, useState } from "react";
-// import { Avatar } from "primereact/avatar";
-// import { Button } from "primereact/button";
-// import { Ripple } from "primereact/ripple";
-// import { Sidebar } from "primereact/sidebar";
-// import { StyleClass } from "primereact/styleclass";
-// import { useTheme } from "../../context/ThemeContext";
-
-// const favoriteItems = [
-//   { icon: "pi pi-home", label: "Dashboard" },
-//   { icon: "pi pi-bookmark", label: "Bookmarks" },
-//   { icon: "pi pi-users", label: "Team" },
-//   { icon: "pi pi-comments", label: "Messages" },
-//   { icon: "pi pi-calendar", label: "Calendar" },
-//   { icon: "pi pi-cog", label: "Settings" },
-// ];
-
-// const appItems = [
-//   { icon: "pi pi-folder", label: "Projects" },
-//   { icon: "pi pi-chart-bar", label: "Performance" },
-//   { icon: "pi pi-cog", label: "Settings" },
-// ];
-
-// function CategoryPage() {
-//   const { darkMode } = useTheme();
-//   const [visible, setVisible] = useState(false);
-
-//   const btnRef1 = useRef(null);
-//   const btnRef2 = useRef(null);
-
-//   return (
-//     <div className="space-y-6">
-//       <section
-//   className={`rounded-3xl border p-6 md:p-10 ${
-//     darkMode
-//       ? "border-[#1f2933] bg-[#151e22]"
-//       : "border-amber-200/70 bg-[#fff8ee]"
-//   }`}
-// >
-//   <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-
-//     {/* LEFT SIDE - CATEGORY BUTTON */}
-//     <div className="flex items-center">
-//       <Button
-//   type="button"
-//   label="Categories"
-//   icon="pi pi-list"
-//   iconPos="left"
-//   onClick={() => setVisible(true)}
-//   className="!rounded-lg !border-0 !bg-amber-600 !px-4 !py-2 !text-sm !text-white !font-semibold hover:!bg-amber-700 transition-all duration-200"
-// />
-//     </div>
-
-//     {/* RIGHT SIDE - TEXT CONTENT */}
-//     <div className="text-right md:max-w-xl">
-//       <p className="font-accent text-xs uppercase tracking-[0.25em] text-amber-600">
-//         Categories
-//       </p>
-
-//       <h1
-//         className={`mt-2 font-serif text-3xl md:text-4xl font-semibold ${
-//           darkMode ? "text-slate-100" : "text-gray-900"
-//         }`}
-//       >
-//         Browse Category Menu
-//       </h1>
-
-//       <p
-//         className={`mt-3 text-sm leading-relaxed ${
-//           darkMode ? "text-slate-400" : "text-gray-600"
-//         }`}
-//       >
-//         Explore all product collections and navigate through structured
-//         category sections designed for a smooth shopping experience.
-//       </p>
-//     </div>
-//   </div>
-// </section>
-
-//       <Sidebar
-//         visible={visible}
-//         onHide={() => setVisible(false)}
-//         showCloseIcon={false}
-//         dismissable
-//         blockScroll
-//         className="!w-[90vw] !max-w-[360px]"
-//         content={({ closeIconRef, hide }) => (
-//           <div
-//             className={`h-full ${
-//               darkMode ? "bg-[#151e22] text-slate-100" : "bg-[#fff8ee] text-gray-900"
-//             }`}
-//           >
-//             <div
-//               className={`flex items-center justify-between border-b px-4 py-4 ${
-//                 darkMode ? "border-[#1f2933]" : "border-amber-200/70"
-//               }`}
-//             >
-//               <div className="inline-flex items-center gap-2">
-//                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/20 text-amber-500">
-//                   <i className="pi pi-th-large" />
-//                 </span>
-//                 <span className="font-serif text-xl font-semibold">ShopSphere</span>
-//               </div>
-
-//               <Button
-//                 type="button"
-//                 ref={closeIconRef}
-//                 onClick={(e) => hide(e)}
-//                 icon="pi pi-times"
-//                 rounded
-//                 text
-//                 className={darkMode ? "!text-slate-200" : "!text-gray-700"}
-//               />
-//             </div>
-
-//             <div className="h-[calc(100%-73px)] overflow-y-auto px-3 py-4">
-//               <ul className="m-0 list-none p-0">
-//                 <li>
-//                   <StyleClass
-//                     nodeRef={btnRef1}
-//                     selector="@next"
-//                     enterFromClassName="hidden"
-//                     enterActiveClassName="slidedown"
-//                     leaveToClassName="hidden"
-//                     leaveActiveClassName="slideup"
-//                   >
-//                     <div
-//                       ref={btnRef1}
-//                       className={`p-ripple flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 ${
-//                         darkMode ? "text-slate-200 hover:bg-[#1a2327]" : "text-gray-700 hover:bg-amber-50"
-//                       }`}
-//                     >
-//                       <span className="font-accent text-xs font-semibold uppercase tracking-[0.15em]">
-//                         Favorites
-//                       </span>
-//                       <i className="pi pi-chevron-down text-xs" />
-//                       <Ripple />
-//                     </div>
-//                   </StyleClass>
-
-//                   <ul className="m-0 mt-1 list-none overflow-hidden p-0">
-//                     {favoriteItems.map((item) => (
-//                       <li key={item.label}>
-//                         <a
-//                           className={`p-ripple flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-//                             darkMode
-//                               ? "text-slate-200 hover:bg-[#1a2327] hover:text-amber-300"
-//                               : "text-gray-700 hover:bg-amber-50 hover:text-amber-700"
-//                           }`}
-//                         >
-//                           <i className={item.icon} />
-//                           <span className="font-medium">{item.label}</span>
-//                           <Ripple />
-//                         </a>
-//                       </li>
-//                     ))}
-//                   </ul>
-//                 </li>
-//               </ul>
-
-//               <ul className="m-0 mt-4 list-none p-0">
-//                 <li>
-//                   <StyleClass
-//                     nodeRef={btnRef2}
-//                     selector="@next"
-//                     enterFromClassName="hidden"
-//                     enterActiveClassName="slidedown"
-//                     leaveToClassName="hidden"
-//                     leaveActiveClassName="slideup"
-//                   >
-//                     <div
-//                       ref={btnRef2}
-//                       className={`p-ripple flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 ${
-//                         darkMode ? "text-slate-200 hover:bg-[#1a2327]" : "text-gray-700 hover:bg-amber-50"
-//                       }`}
-//                     >
-//                       <span className="font-accent text-xs font-semibold uppercase tracking-[0.15em]">
-//                         Application
-//                       </span>
-//                       <i className="pi pi-chevron-down text-xs" />
-//                       <Ripple />
-//                     </div>
-//                   </StyleClass>
-
-//                   <ul className="m-0 mt-1 list-none overflow-hidden p-0">
-//                     {appItems.map((item) => (
-//                       <li key={item.label}>
-//                         <a
-//                           className={`p-ripple flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-//                             darkMode
-//                               ? "text-slate-200 hover:bg-[#1a2327] hover:text-amber-300"
-//                               : "text-gray-700 hover:bg-amber-50 hover:text-amber-700"
-//                           }`}
-//                         >
-//                           <i className={item.icon} />
-//                           <span className="font-medium">{item.label}</span>
-//                           <Ripple />
-//                         </a>
-//                       </li>
-//                     ))}
-//                   </ul>
-//                 </li>
-//               </ul>
-
-//               <div
-//                 className={`mt-6 border-t pt-4 ${
-//                   darkMode ? "border-[#1f2933]" : "border-amber-200/70"
-//                 }`}
-//               >
-//                 <a
-//                   className={`p-ripple flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 ${
-//                     darkMode ? "hover:bg-[#1a2327]" : "hover:bg-amber-50"
-//                   }`}
-//                 >
-//                   <Avatar
-//                     image="https://primefaces.org/cdn/primereact/images/avatar/amyelsner.png"
-//                     shape="circle"
-//                   />
-//                   <span className="font-semibold">Amy Elsner</span>
-//                   <Ripple />
-//                 </a>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-//       />
-//     </div>
-//   );
-// }
-
-// export default CategoryPage;
-
-// import { useEffect, useState } from "react";
-// import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
-// import CategorySearchBar from "../../components/category/CategorySearchBar";
-// import SelectedFilters from "../../components/category/SelectedFilters";
-// import ProductGrid from "../../components/category/ProductGrid";
-
-// function CategoryPage() {
-//   const [isLoading, setIsLoading] = useState(true);
-
-//   // Simulate API call
-//   useEffect(() => {
-//     const timer = setTimeout(() => {
-//       setIsLoading(false);
-//     }, 2000);
-
-//     return () => clearTimeout(timer);
-//   }, []);
-
-//   return (
-//     <div className="container mx-auto px-4 py-8">
-//       <div className="flex flex-col lg:flex-row gap-8">
-//         <CategoryFilterSidebar isLoading={isLoading} />
-
-//         <div className="flex-1 space-y-6">
-//           <CategorySearchBar isLoading={isLoading} />
-//           <SelectedFilters isLoading={isLoading} />
-//           <ProductGrid isLoading={isLoading} />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default CategoryPage;
-
-// import { useEffect, useState } from "react";
-// import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
-// import CategorySearchBar from "../../components/category/CategorySearchBar";
-// import SelectedFilters from "../../components/category/SelectedFilters";
-// import ProductGrid from "../../components/category/ProductGrid";
-// import { getAllCategories, getAllProducts } from "../../services/categoryApi";
-
-// function buildCategoryTree(items = []) {
-//   const map = new Map();
-
-//   items.forEach((c) => {
-//     map.set(c.category_id, {
-//       key: String(c.category_id),
-//       label: c.category_name,
-//       children: [],
-//     });
-//   });
-
-//   const roots = [];
-//   items.forEach((c) => {
-//     const node = map.get(c.category_id);
-//     if (c.parent_id && map.has(c.parent_id)) {
-//       map.get(c.parent_id).children.push(node);
-//     } else {
-//       roots.push(node);
-//     }
-//   });
-
-//   return roots;
-// }
-
-// function CategoryPage() {
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [categoryNodes, setCategoryNodes] = useState([]);
-//   const [products, setProducts] = useState([]);
-
-//   useEffect(() => {
-//     const loadPageData = async () => {
-//       try {
-//         setIsLoading(true);
-
-//         const [categoryRes, productRes] = await Promise.all([
-//           getAllCategories(),
-//           getAllProducts(),
-//         ]);
-
-//         const categoryItems = categoryRes?.data?.data?.items || [];
-//         setCategoryNodes(buildCategoryTree(categoryItems));
-
-//         const productItems =
-//           productRes?.data?.data?.items || productRes?.data?.data || [];
-//         setProducts(Array.isArray(productItems) ? productItems : []);
-//       } catch (error) {
-//         console.error("Failed to load category page data:", error);
-//         setCategoryNodes([]);
-//         setProducts([]);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     loadPageData();
-//   }, []);
-
-//   return (
-//     <div className="container mx-auto px-4 py-8">
-//       <div className="flex flex-col lg:flex-row gap-8">
-//         <CategoryFilterSidebar
-//           isLoading={isLoading}
-//           categoryNodes={categoryNodes}
-//         />
-
-//         <div className="flex-1 space-y-6">
-//           <CategorySearchBar isLoading={isLoading} />
-//           <SelectedFilters isLoading={isLoading} />
-//           <ProductGrid isLoading={isLoading} products={products} />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default CategoryPage;
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Toast } from "primereact/toast";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
 import SelectedFilters from "../../components/category/SelectedFilters";
 import ProductGrid from "../../components/category/ProductGrid";
+import PortionPickerModal from "../../components/category/PortionPickerModal";
 import {
   getAllCategories,
   getAllProducts,
@@ -381,9 +31,6 @@ const extractCategoryTree = (res) => {
     return [data.data.item];
   return [];
 };
-
-const getEffectivePrice = (product) =>
-  Number(product?.discounted_price ?? product?.price ?? 0);
 
 const getSelectedCategoryIds = (selectedKeys = {}) =>
   Object.entries(selectedKeys)
@@ -459,6 +106,7 @@ const useDebouncedValue = (value, delayMs = 300) => {
 
 function CategoryPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const toast = useRef(null);
   const { currentUser } = useSelector((state) => state.auth);
 
@@ -474,11 +122,14 @@ function CategoryPage() {
   const [pager, setPager] = useState({ first: 0, rows: 8 });
   const [totalRecords, setTotalRecords] = useState(0);
   const [priceBounds, setPriceBounds] = useState({ min: 0, max: 0 });
+  const [pickerProduct, setPickerProduct] = useState(null);
   const prevFilterSignatureRef = useRef("");
   const productsRequestIdRef = useRef(0);
   const priceRangeRequestIdRef = useRef(0);
   const hasUserPriceSelectionRef = useRef(false);
   const debouncedPriceRange = useDebouncedValue(priceRange, 300);
+  const urlSearch = searchParams.get("search") || "";
+  const urlCategory = searchParams.get("category");
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -504,6 +155,34 @@ function CategoryPage() {
     }, 350);
     return () => clearTimeout(timer);
   }, [searchText]);
+
+  useEffect(() => {
+    setSearchText(urlSearch);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (!treeLoaded) {
+      return;
+    }
+
+    if (!urlCategory) {
+      setSelectedKeys({});
+      return;
+    }
+
+    const categoryId = Number(urlCategory);
+    if (!Number.isInteger(categoryId) || categoryId <= 0) {
+      setSelectedKeys({});
+      return;
+    }
+
+    setSelectedKeys({
+      [String(categoryId)]: {
+        checked: true,
+        partialChecked: false,
+      },
+    });
+  }, [treeLoaded, urlCategory]);
 
   const selectedCategoryIds = useMemo(
     () => getSelectedCategoryIds(selectedKeys),
@@ -549,8 +228,6 @@ function CategoryPage() {
     }),
     [parentSelectionIds, childSelectionIds],
   );
-
-  const usesBackendPagination = true;
 
   const backendPage = useMemo(
     () => Math.floor(pager.first / pager.rows) + 1,
@@ -623,12 +300,6 @@ function CategoryPage() {
         const hasCategoryFilter =
           categoryIdGroups.parent.length > 0 ||
           categoryIdGroups.child.length > 0;
-        console.log("Category selection debug:", {
-          selectedKeys,
-          selectedCategoryIds,
-          categoryIdGroups,
-          hasSearch,
-        });
 
         if (!hasCategoryFilter) {
           const productRes = await getAllProducts({
@@ -691,9 +362,6 @@ function CategoryPage() {
       const requestId = ++priceRangeRequestIdRef.current;
       try {
         const hasSearch = debouncedSearchText.length > 0;
-        const hasCategoryFilter =
-          categoryIdGroups.parent.length > 0 ||
-          categoryIdGroups.child.length > 0;
 
         const priceRes = await getCategoryProductsPriceRange({
           ...(categoryIdGroups.parent.length
@@ -703,7 +371,6 @@ function CategoryPage() {
             ? { child_ids: categoryIdGroups.child }
             : {}),
           ...(hasSearch ? { search: debouncedSearchText } : {}),
-          ...(hasCategoryFilter ? {} : {}),
         });
 
         if (ignore || requestId !== priceRangeRequestIdRef.current) return;
@@ -738,10 +405,6 @@ function CategoryPage() {
       return { ...prev, first: 0 };
     });
   }, [products.length, totalRecords]);
-
-  const pagedProducts = useMemo(() => products, [products]);
-
-  const paginatorTotalRecords = totalRecords;
 
   const combinedCategoryIds = useMemo(
     () => [...new Set([...parentSelectionIds, ...childSelectionIds])],
@@ -782,7 +445,33 @@ function CategoryPage() {
     setPriceRange([priceBounds.min, priceBounds.max]);
   };
 
-  // Add to cart handler
+  const doAddToCart = async (product, portionId, modifierId) => {
+    const productId = product.product_id || product.id;
+    try {
+      await api.post("/cart/items", {
+        productId,
+        quantity: 1,
+        ...(portionId != null && { portionId }),
+        ...(modifierId != null && { modifierId }),
+      });
+      window.dispatchEvent(new CustomEvent("cart:updated"));
+      toast.current?.show({
+        severity: "success",
+        summary: "Added to Cart",
+        detail: `${product.display_name || product.name} added to cart`,
+        life: 3000,
+      });
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: error.response?.data?.message || "Failed to add to cart",
+        life: 3000,
+      });
+    }
+  };
+
   const handleAddToCart = async (product) => {
     if (!currentUser) {
       toast.current?.show({
@@ -807,31 +496,51 @@ function CategoryPage() {
     }
 
     try {
-      await api.post("/cart/items", {
-        productId,
-        quantity: 1,
-      });
-      window.dispatchEvent(new CustomEvent("cart:updated"));
-      toast.current?.show({
-        severity: "success",
-        summary: "Added to Cart",
-        detail: `${product.display_name || product.name} added to cart`,
-        life: 3000,
-      });
-    } catch (error) {
-      console.error("Failed to add to cart:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to add to cart",
-        life: 3000,
-      });
+      const portRes = await api.get(`/portion/getProductPortions/${productId}`);
+      const raw = portRes.data?.data ?? portRes.data ?? [];
+      const portions = Array.isArray(raw) ? raw : [];
+
+      if (portions.length > 1) {
+        setPickerProduct({ ...product, _portions: portions });
+        return;
+      }
+
+      if (portions.length === 1) {
+        const portionId = portions[0].product_portion_id;
+        const modRes = await api.get(`/modifiers/by-portion/${portionId}`);
+        const rawMods = modRes.data?.data ?? modRes.data ?? [];
+        const mods = Array.isArray(rawMods) ? rawMods : [];
+
+        if (mods.length > 0) {
+          setPickerProduct({ ...product, _portions: portions });
+          return;
+        }
+
+        await doAddToCart(product, portionId, null);
+        return;
+      }
+
+      await doAddToCart(product, null, null);
+    } catch {
+      await doAddToCart(product, null, null);
     }
+  };
+
+  const handlePickerConfirm = async (portionId, modifierId) => {
+    await doAddToCart(pickerProduct, portionId, modifierId);
+    setPickerProduct(null);
   };
 
   return (
     <div className="category-page">
       <Toast ref={toast} position="top-right" className="app-toast-offset" />
+      {pickerProduct && (
+        <PortionPickerModal
+          product={pickerProduct}
+          onHide={() => setPickerProduct(null)}
+          onConfirm={handlePickerConfirm}
+        />
+      )}
       <div className="container mx-auto px-4 py-8">
         <div className="category-page-layout flex flex-col lg:flex-row gap-8">
           <CategoryFilterSidebar
@@ -865,13 +574,13 @@ function CategoryPage() {
             />
             <ProductGrid
               isLoading={isProductsLoading}
-              products={pagedProducts}
+              products={products}
               onAddToCart={handleAddToCart}
               paginator={{
                 enabled: true,
                 first: pager.first,
                 rows: pager.rows,
-                totalRecords: paginatorTotalRecords,
+                totalRecords: totalRecords,
                 rowsPerPageOptions: [8, 16, 24, 32],
               }}
               onPageChange={(event) =>

@@ -1,5 +1,4 @@
 import {
-  CreditCard,
   HelpCircle,
   LayoutDashboard,
   MapPin,
@@ -31,7 +30,6 @@ export const profileNav = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "profile", label: "Profile", icon: User },
   { key: "orders", label: "Orders", icon: Package },
-  { key: "payments", label: "Payment Methods", icon: CreditCard },
   { key: "addresses", label: "Addresses", icon: MapPin },
   { key: "wallet", label: "Wallet & Offers", icon: WalletCards },
   { key: "reviews", label: "Reviews", icon: Star },
