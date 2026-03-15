@@ -28,7 +28,7 @@ import {
   deleteCategory,
 } from "../../../api/adminCategoriesApi";
 import getApiErrorMessage from "../../utils/apiError";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 function AdminCategoriesTab() {
   const showToast = useToast();

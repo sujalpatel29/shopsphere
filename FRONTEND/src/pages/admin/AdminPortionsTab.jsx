@@ -28,7 +28,7 @@ import {
   deletePortion,
 } from "../../../api/adminPortionsApi";
 import getApiErrorMessage from "../../utils/apiError";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 function AdminPortionsTab() {
   const showToast = useToast();

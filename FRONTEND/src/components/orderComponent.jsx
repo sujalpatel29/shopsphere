@@ -11,7 +11,7 @@ import { FilterMatchMode } from "primereact/api";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
 import OrderDetailComponents from "./OrderDetailComponents";
-import "../pages/admin/AdminProducts.css";
+import "../pages/admin/AdminShared.css";
 
 const DEFAULT_ORDER_PAGE = 1;
 const DEFAULT_ORDER_ROWS = 5;

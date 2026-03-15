@@ -2,7 +2,7 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Divider } from "primereact/divider";
 import AddressFormFields from "./AddressFormFields";
-import "../../../admin/AdminProducts.css";
+import "../../../admin/AdminShared.css";
 
 function EditAddressModal({
   form,

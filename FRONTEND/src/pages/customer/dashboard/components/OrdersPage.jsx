@@ -14,7 +14,7 @@ import {
   orderSeverity,
   paymentSeverity,
 } from "../utils";
-import "../../../admin/AdminProducts.css";
+import "../../../admin/AdminShared.css";
 
 const DEFAULT_ORDER_PAGE = 1;
 const DEFAULT_ORDER_ROWS = 5;

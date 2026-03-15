@@ -27,7 +27,7 @@ import {
   toggleModifierStatus,
   deleteModifier,
 } from "../../../api/adminModifiersApi";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 function AdminModifiersTab() {
   const toast = useRef(null);

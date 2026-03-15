@@ -15,7 +15,7 @@ import UserDeleteDialog from "./UserDeleteDialog";
 import UserDetailsDialog from "./UserDetailsDialog";
 import AdminUserCreateDialog from "./AdminUserCreateDialog";
 import getApiErrorMessage from "../../utils/apiError";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 function AdminUsersTab() {
   const dispatch = useDispatch();

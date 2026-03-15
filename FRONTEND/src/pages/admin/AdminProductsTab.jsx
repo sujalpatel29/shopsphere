@@ -29,7 +29,7 @@ import {
   deleteAdminProduct,
 } from "../../../api/adminProductsApi";
 import getApiErrorMessage from "../../utils/apiError";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 const PRODUCTS_TABLE_STORAGE_KEY = "admin-products-table-state";
 const DEFAULT_LAZY_PARAMS = {

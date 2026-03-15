@@ -1,5 +1,5 @@
 /**
- * AdminProducts.css
+ * AdminShared.css
  * Shared admin theme overrides for PrimeReact components.
  *
  * This single stylesheet themes every admin tab (Products, Portions,
@@ -663,6 +663,15 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+  }
+  .admin-products-table .p-skeleton {
+    animation: none;
+  }
+}
+
 /* ===== Skeleton Loading ===== */
 .admin-products-table .p-skeleton {
   background: linear-gradient(
@@ -683,7 +692,6 @@
     background-position: 200% 0;
   }
 }
-
 /* ===== Custom Scrollbar — DataTable ===== */
 
 /* Webkit — DataTable body */
@@ -718,6 +726,35 @@
   scrollbar-color: rgba(201, 184, 138, 0.3) transparent;
 }
 .dark .admin-products-table .p-datatable-wrapper {
+  scrollbar-color: rgba(201, 184, 138, 0.15) transparent;
+}
+
+/* ===== Offer View Dialog Scrollbar (matches DataTable) ===== */
+.admin-dialog .admin-offer-view-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-thumb {
+  background: rgba(201, 184, 138, 0.3);
+  border-radius: 3px;
+}
+.admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 184, 138, 0.5);
+}
+.dark .admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-thumb {
+  background: rgba(201, 184, 138, 0.15);
+}
+.dark .admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 184, 138, 0.3);
+}
+.admin-dialog .admin-offer-view-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 184, 138, 0.3) transparent;
+}
+.dark .admin-dialog .admin-offer-view-scroll {
   scrollbar-color: rgba(201, 184, 138, 0.15) transparent;
 }
 
@@ -1119,3 +1156,5 @@
   border-color: #c9b88a;
   box-shadow: 0 0 0 2px rgba(201, 184, 138, 0.15);
 }
+
+

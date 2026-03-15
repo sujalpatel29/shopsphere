@@ -32,7 +32,7 @@ import {
   isPaymentStatusEditable,
   isStripeManagedPayment,
 } from "./orderStatusUtils";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 const orderStatusFilterOptions = [
   { label: "All", value: null },

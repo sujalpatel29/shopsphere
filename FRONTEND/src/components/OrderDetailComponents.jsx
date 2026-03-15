@@ -13,7 +13,7 @@ import { Divider } from "primereact/divider";
 import OrderSummaryComponent from "./OrderSummaryComponent";
 import { CalendarDays, PackageCheck, ReceiptIndianRupee } from "lucide-react";
 import api from "../../api/api";
-import "../pages/admin/AdminProducts.css";
+import "../pages/admin/AdminShared.css";
 
 const ADMIN_ORDER_STATUSES = [
   "pending",

@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { fetchDashboardData } from "../../../api/analyticsApi";
-import "./AdminProducts.css";
+import "./AdminShared.css";
 
 // Chart colors matching the theme
 const CHART_COLORS = {
