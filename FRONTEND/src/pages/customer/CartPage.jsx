@@ -802,24 +802,6 @@ function CartPage() {
                           setShowAddressForm(true);
                         }}
                       />
-                      {DUMMY_ADDRESSES.length > 1 && (
-                        <Dropdown
-                          value={selectedAddress.id}
-                          options={DUMMY_ADDRESSES.map((a) => ({
-                            label: `${a.type.toUpperCase()} - ${a.city}`,
-                            value: a.id,
-                          }))}
-                          onChange={(e) => {
-                            const addr = DUMMY_ADDRESSES.find(
-                              (a) => a.id === e.value,
-                            );
-                            if (addr) setSelectedAddress(addr);
-                          }}
-                          className="p-inputtext-sm text-xs dark:bg-[#1a262f] dark:border-[#243440]"
-                          panelClassName="dark:bg-[#1a262f]"
-                          placeholder="Change"
-                        />
-                      )}
                     </div>
                   </div>
                 </div>

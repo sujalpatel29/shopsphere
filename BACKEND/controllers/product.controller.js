@@ -6,8 +6,6 @@ import {
   badRequest,
   notFound,
   serverError,
-  paginated,
-  validationError,
 } from "../utils/apiResponse.js";
 
 export const createProduct = async (req, res) => {

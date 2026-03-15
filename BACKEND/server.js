@@ -23,16 +23,18 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174"
-  ],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:5175",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174",
+    ],
+    credentials: true,
+  }),
+);
 const port = process.env.PORT || 3000;
 
 // ============================================================================
@@ -67,24 +69,18 @@ app.get("/", (req, res) => {
       payments: "/api/payments",
       modifiers: "/api/modifiers",
       cart: "/api/cart",
-      // products: "/api/products",
+      products: "/api/products",
       category: "/api/category",
       offer: "/api/offer",
       review: "/api/review",
-      // cart: "/api/cart",
-      // orders: "/api/orders",
     },
   });
 });
-// app.use("/", (req, res) => {
-//  res.send("Om prajapati");
-// });
 app.use("/api/order", orderRouter);
 app.use("/api/order-item", orderItemRouter);
 
 // API Routes
 app.use("/api/users", userRoute);
-// app.use("/api/cart", cartRouter);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/portion", portionRouter);
 app.use("/api/review", reviewRouter);
@@ -94,13 +90,10 @@ app.use("/api/cart", cartRouter);
 app.use("/api/modifiers", modifierRoute);
 app.use("/api/category", categoryRoutes);
 app.use("/api/offer", offerRoute);
-// Add more routes here as you create them:
 app.use("/api/products", productRoutes);
 app.use("/api/productImages", productImageRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/settings", settingsRoutes);
-// app.use("/api/categories", categoryRoutes);
-// app.use("/api/orders", orderRoutes);
 
 // ============================================================================
 // ERROR HANDLING

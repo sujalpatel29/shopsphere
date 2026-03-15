@@ -458,12 +458,6 @@ export const refreshToken = async (req, res) => {
     }
 
     // 4️ Generate new access token
-    const accessTokenPayload = {
-      id: decoded.id,
-      email: decoded.email,
-      name: decoded.name,
-      role: decoded.role,
-    };
     const newAccessToken = jwt.sign(
       {
         id: decoded.id,
@@ -507,8 +501,6 @@ export const viewProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user?.id;
-
-    // console.log(userId);
 
     if (!userId) {
       return badRequest(res, "Invalid user");

@@ -164,7 +164,6 @@ const orderSlice = createSlice({
       .addCase(fetchUserAddress.fulfilled, (state, action) => {
         state.loading = false;
         state.userAddresses = action.payload;
-        state.pagination = action.payload.pagination;
       })
       .addCase(fetchUserAddress.rejected, (state, action) => {
         state.loading = false;

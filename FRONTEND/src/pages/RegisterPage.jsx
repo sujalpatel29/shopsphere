@@ -4,6 +4,7 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import api from "../../api/api";
+import SmartImage from "../components/common/SmartImage";
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -97,7 +98,8 @@ function RegisterPage() {
               Explore Shop
             </Link>
             <p className="mt-3 text-sm font-medium text-white/90">
-              Browse products first. Create an account only when you&apos;re ready.
+              Browse products first. Create an account only when you&apos;re
+              ready.
             </p>
           </div>
         </div>
@@ -166,9 +168,15 @@ function RegisterPage() {
                 />
               )}
 
-              {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+              {error && (
+                <p className="text-sm text-red-500 dark:text-red-400">
+                  {error}
+                </p>
+              )}
               {success && (
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">{success}</p>
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                  {success}
+                </p>
               )}
 
               <Button

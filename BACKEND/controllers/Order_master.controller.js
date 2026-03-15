@@ -55,10 +55,7 @@ export const Order_master = async (req, res) => {
 
   try {
     if (!["cash_on_delivery", "stripe"].includes(paymentMethod)) {
-      return badRequest(
-        res,
-        "Please choose a valid payment method.",
-      );
+      return badRequest(res, "Please choose a valid payment method.");
     }
 
     const summary = await calculateOrderValues(user_id);
@@ -105,7 +102,7 @@ export const Order_master = async (req, res) => {
       payment_method: paymentMethod,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return serverError(res);
   }
 };
@@ -132,7 +129,7 @@ export const getOrderSummery = async (req, res) => {
       });
     }
 
-    console.log(err);
+    console.error(err);
     return serverError(res);
   }
 };
@@ -426,7 +423,9 @@ export const cancelOrder = async (req, res) => {
     );
 
     if (result && result.reason === "NOT_OWNER")
-      return res.status(403).json({ message: "You do not have permission to do that." });
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to do that." });
     if (result && result.reason === "INVALID_TRANSITION")
       return badRequest(res, "This order cannot be cancelled right now.");
     if (result && result.reason === "NOT_FOUND")
@@ -540,7 +539,10 @@ export const requestCancelOrderByUser = async (req, res) => {
     if (order.user_id !== req.user.id) {
       return res
         .status(403)
-        .json({ message: "You do not have permission to request cancellation for this order." });
+        .json({
+          message:
+            "You do not have permission to request cancellation for this order.",
+        });
     }
 
     if (!USER_CANCELABLE_STATUSES.has(order.order_status)) {
@@ -556,7 +558,10 @@ export const requestCancelOrderByUser = async (req, res) => {
       latestRequest.user_id === req.user.id &&
       String(latestRequest.status).toLowerCase() === "pending"
     ) {
-      return badRequest(res, "A cancellation request for this order is already pending.");
+      return badRequest(
+        res,
+        "A cancellation request for this order is already pending.",
+      );
     }
 
     const result = await createCancelRequest({
@@ -569,7 +574,11 @@ export const requestCancelOrderByUser = async (req, res) => {
       return badRequest(res, "Cancellation request is already pending");
     }
 
-    return created(res, "Cancellation request submitted successfully", result.data);
+    return created(
+      res,
+      "Cancellation request submitted successfully",
+      result.data,
+    );
   } catch (err) {
     console.error(err);
     return serverError(res);
@@ -631,7 +640,10 @@ export const reviewCancelRequestByAdmin = async (req, res) => {
       return notFound(res, "Cancellation request not found");
     }
     if (result.reason === "ALREADY_REVIEWED") {
-      return badRequest(res, "This cancellation request has already been reviewed.");
+      return badRequest(
+        res,
+        "This cancellation request has already been reviewed.",
+      );
     }
     if (result.reason === "ORDER_NOT_CANCELABLE") {
       return badRequest(
@@ -710,7 +722,10 @@ export const changePaymentStatusByAdmin = async (req, res) => {
       return badRequest(res, "Please choose a valid payment status.");
     }
     if (result && result.reason === "INVALID_TRANSITION") {
-      return badRequest(res, "This payment cannot be moved to that status yet.");
+      return badRequest(
+        res,
+        "This payment cannot be moved to that status yet.",
+      );
     }
     if (result && result.reason === "STRIPE_MANAGED") {
       return badRequest(

@@ -9,7 +9,6 @@ import {
   updateModifier,
   deleteModifier,
   toggleModifierActive,
-  // patchModifier,
   getModifierPortions,
   getModifierPortionById,
   getModifierPortionByIdForAdmin,
@@ -21,7 +20,6 @@ import {
   deleteModifierPortion,
   checkModifierPortionExists,
   toggleModifierPortionActive,
-  // patchModifierPortion,
 } from "../models/modifier.model.js";
 
 import {
@@ -203,30 +201,6 @@ export const toggleModifierController = async (req, res) => {
   }
 };
 
-// //Partial update modifier
-// export const patchModifierController = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const updates = req.body;
-
-//     // Get user ID from token
-//     updates.updated_by = req.user.id;
-
-//     // Check if modifier exists
-//     const existingModifier = await getModifierById(id);
-//     if (!existingModifier) {
-//       return notFound(res, "Modifier not found");
-//     }
-
-//     // Update only provided fields
-//     await patchModifier(id, updates);
-//     return ok(res, "Modifier updated successfully");
-//   } catch (err) {
-//     console.error("Patch Modifier Controller error", err);
-//     return serverError(res, "Internal server error");
-//   }
-// };
-
 // ============================================================================
 // MODIFIER PORTION CONTROLLERS
 // ============================================================================
@@ -290,8 +264,13 @@ export const getModifiersByProductController = async (req, res) => {
 export const createModifierPortionController = async (req, res) => {
   try {
     //get data from body
-    const { modifier_id, product_portion_id, product_id, additional_price, stock } =
-      req.body;
+    const {
+      modifier_id,
+      product_portion_id,
+      product_id,
+      additional_price,
+      stock,
+    } = req.body;
 
     // Check if modifier exists
     const modifierExists = await getModifierByIdForAdmin(modifier_id);
@@ -301,7 +280,10 @@ export const createModifierPortionController = async (req, res) => {
 
     // Validate: need either product_portion_id or product_id
     if (!product_portion_id && !product_id) {
-      return badRequest(res, "Either product_portion_id or product_id is required");
+      return badRequest(
+        res,
+        "Either product_portion_id or product_id is required",
+      );
     }
 
     if (product_portion_id) {
@@ -430,22 +412,3 @@ export const toggleModifierPortionController = async (req, res) => {
     return serverError(res, "Internal server error");
   }
 };
-
-// // Partial update modifier portion
-// export const patchModifierPortionController = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const updates = req.body;
-
-//     // Get user ID from token
-//     updates.updated_by = req.user.id;
-
-//     // Update only provided fields
-//     await patchModifierPortion(id, updates);
-
-//     return ok(res, "Modifier portion updated successfully");
-//   } catch (err) {
-//     console.error("Patch Modifier Portion Controller error", err);
-//     return serverError(res, "Internal server error");
-//   }
-// };

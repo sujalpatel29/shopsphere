@@ -36,11 +36,9 @@ import {
   forgotPasswordOtpVerifySchema,
   updateAddressSchema,
   updateProfileSchema,
-} from "../validations/user.validation.js";
-import { updatePasswordSchema } from "../validations/user.validation.js";
-import { loginSchema } from "../validations/user.validation.js";
-import { idParamSchema } from "../validations/user.validation.js";
-import {
+  updatePasswordSchema,
+  loginSchema,
+  idParamSchema,
   registerOtpRequestSchema,
   registerOtpVerifySchema,
   resetPasswordWithTokenSchema,
