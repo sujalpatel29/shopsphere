@@ -45,6 +45,17 @@ export const toggleReviewHelpful = async (reviewId) => {
   return response.data?.data || null;
 };
 
+export const createReview = async ({ product_id, rating, title, review_text, order_id }) => {
+  const response = await api.post("/review", {
+    product_id,
+    rating,
+    title,
+    review_text,
+    order_id,
+  });
+  return response.data?.data || null;
+};
+
 export const getVisibleProductOffers = async (productId) => {
   const response = await api.get(`/offer/product/${productId}/visible`);
   const payload = response.data?.data || {};
