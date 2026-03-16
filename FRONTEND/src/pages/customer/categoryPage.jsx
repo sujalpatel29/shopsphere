@@ -352,7 +352,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Toast } from "primereact/toast";
 import { Dropdown } from "primereact/dropdown";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
@@ -461,7 +460,6 @@ const useDebouncedValue = (value, delayMs = 300) => {
 
 function CategoryPage() {
   const navigate = useNavigate();
-  const toast = useRef(null);
   const { currentUser } = useSelector((state) => state.auth);
   const { darkMode } = useTheme();
   
@@ -812,24 +810,12 @@ function CategoryPage() {
   // Add to cart handler
   const handleAddToCart = async (product) => {
     if (!currentUser) {
-      toast.current?.show({
-        severity: "warn",
-        summary: "Login Required",
-        detail: "Please login to add items to cart",
-        life: 3000,
-      });
       navigate("/login", { state: { from: "/categories" } });
       return;
     }
 
     const productId = product.product_id || product.id;
     if (!productId) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Invalid product",
-        life: 3000,
-      });
       return;
     }
 
@@ -838,20 +824,8 @@ function CategoryPage() {
         productId,
         quantity: 1,
       });
-      toast.current?.show({
-        severity: "success",
-        summary: "Added to Cart",
-        detail: `${product.display_name || product.name} added to cart`,
-        life: 3000,
-      });
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to add to cart",
-        life: 3000,
-      });
     }
   };
 
