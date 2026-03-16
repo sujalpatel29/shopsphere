@@ -142,6 +142,7 @@ export const categoryProductFilterQuerySchema = z.object({
   search: z.string().trim().max(100, "Search too long").optional().default(""),
   min_price: z.coerce.number().min(0, "Min price must be >= 0").optional(),
   max_price: z.coerce.number().min(0, "Max price must be >= 0").optional(),
+  sort: z.enum(["price_low_high", "price_high_low", "rating_high_low"]).optional(),
   page: z.coerce.number().int().min(1, "Page must be >= 1").optional(),
   limit: z.coerce.number().int().min(1).max(50, "Limit max 50").optional(),
 });

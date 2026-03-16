@@ -221,11 +221,33 @@ function ProductGrid({
                   </div>
 
                   <div className="mt-auto pt-2">
-                    <Button
-                      label="Add to Cart"
-                      icon="pi pi-shopping-cart"
+                    <button
+                      type="button"
+                      className="cart-button w-full"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
+                        const btn = e.currentTarget;
+                        if (btn?.classList.contains("is-locked")) {
+                          return;
+                        }
+                        if (btn) {
+                          btn.classList.remove("clicked");
+                          btn.classList.remove("pulse-success");
+                          btn.classList.add("is-locked");
+                          void btn.offsetWidth;
+                          btn.classList.add("clicked");
+                          setTimeout(() => {
+                            btn.classList.remove("clicked");
+                            btn.classList.add("pulse-success");
+                            setTimeout(() => {
+                              btn.classList.remove("pulse-success");
+                              btn.classList.remove("is-locked");
+                            }, 420);
+                          }, 1500);
+                        }
                         const id = product.product_id || product.id;
                         if (!id) return;
                         if (onAddToCart) {
@@ -234,8 +256,12 @@ function ProductGrid({
                           navigate(`/items/${id}`);
                         }
                       }}
-                      className="outline-none !w-full !px-4 !py-2.5 !bg-transparent !border !border-[var(--primary-color)] !text-[var(--primary-color)]"
-                    />
+                    >
+                      <span className="add-to-cart">Add to Cart</span>
+                      <span className="added">Added</span>
+                      <i className="pi pi-shopping-cart" />
+                      <i className="pi pi-box" />
+                    </button>
                   </div>
                 </div>
               </div>

@@ -112,10 +112,11 @@ export const getAllProducts = async (req, res) => {
     // Sorting
     const sortField = req.query.sortField || null;
     const sortOrder = req.query.sortOrder || "asc";
+    const sort = req.query.sort || null;
 
     const { total, data, totalAll, totalActive } = await Product.findAll(
       filters,
-      { limit, offset, sortField, sortOrder }
+      { limit, offset, sortField, sortOrder, sort }
     );
 
     return res.status(200).json({

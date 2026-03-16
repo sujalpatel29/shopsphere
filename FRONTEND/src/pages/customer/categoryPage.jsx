@@ -352,7 +352,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Toast } from "primereact/toast";
+import { Dropdown } from "primereact/dropdown";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
 import SelectedFilters from "../../components/category/SelectedFilters";
@@ -365,6 +365,7 @@ import {
 } from "../../services/categoryApi";
 import api from "../../../api/api";
 import { incrementCart } from "../../redux/slices/cartSlice";
+import { useTheme } from "../../context/ThemeContext";
 
 const extractProducts = (res) => {
   const data = res?.data;
@@ -461,8 +462,8 @@ const useDebouncedValue = (value, delayMs = 300) => {
 function CategoryPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const toast = useRef(null);
   const { currentUser } = useSelector((state) => state.auth);
+  const { darkMode } = useTheme();
   
   const [isTreeLoading, setIsTreeLoading] = useState(true);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
@@ -473,6 +474,7 @@ function CategoryPage() {
   const [priceRange, setPriceRange] = useState([0, 0]);
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
+  const [sortOption, setSortOption] = useState(null);
   const [pager, setPager] = useState({ first: 0, rows: 8 });
   const [totalRecords, setTotalRecords] = useState(0);
   const [priceBounds, setPriceBounds] = useState({ min: 0, max: 0 });
@@ -570,12 +572,13 @@ function CategoryPage() {
     const priceKey = hasUserPriceSelectionRef.current
       ? `${debouncedPriceRange[0]}-${debouncedPriceRange[1]}`
       : "";
-    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}`;
+    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}|${sortOption || ""}`;
   }, [
     debouncedSearchText,
     parentSelectionIds,
     childSelectionIds,
     debouncedPriceRange,
+    sortOption,
   ]);
 
   const boundsSignature = useMemo(() => {
@@ -637,6 +640,7 @@ function CategoryPage() {
             page: backendPage,
             limit: pager.rows,
             ...(hasSearch ? { search: debouncedSearchText } : {}),
+            ...(sortOption ? { sort: sortOption } : {}),
             ...priceFilterParams,
           });
           items = extractProducts(productRes);
@@ -653,6 +657,7 @@ function CategoryPage() {
               : {}),
             ...(hasSearch ? { search: debouncedSearchText } : {}),
             ...priceFilterParams,
+            ...(sortOption ? { sort: sortOption } : {}),
             page: backendPage,
             limit: pager.rows,
           });
@@ -775,6 +780,15 @@ function CategoryPage() {
     return `₹${priceRange[0].toLocaleString("en-IN")} - ₹${priceRange[1].toLocaleString("en-IN")}`;
   }, [priceRange, priceBounds.min, priceBounds.max]);
 
+  const sortOptions = useMemo(
+    () => [
+      { label: "Price: Low to High", value: "price_low_high" },
+      { label: "Price: High to Low", value: "price_high_low" },
+      { label: "Rating: High to Low", value: "rating_high_low" },
+    ],
+    [],
+  );
+
   const handleRemoveCategoryTag = (categoryId) => {
     setSelectedKeys((prev) => {
       const next = { ...prev };
@@ -798,24 +812,12 @@ function CategoryPage() {
   // Add to cart handler
   const handleAddToCart = async (product) => {
     if (!currentUser) {
-      toast.current?.show({
-        severity: "warn",
-        summary: "Login Required",
-        detail: "Please login to add items to cart",
-        life: 3000,
-      });
       navigate("/login", { state: { from: "/categories" } });
       return;
     }
 
     const productId = product.product_id || product.id;
     if (!productId) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Invalid product",
-        life: 3000,
-      });
       return;
     }
 
@@ -826,26 +828,13 @@ function CategoryPage() {
       });
       // Update cart badge count
       dispatch(incrementCart());
-      toast.current?.show({
-        severity: "success",
-        summary: "Added to Cart",
-        detail: `${product.display_name || product.name} added to cart`,
-        life: 3000,
-      });
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to add to cart",
-        life: 3000,
-      });
     }
   };
 
   return (
     <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b] pt-20">
-      <Toast ref={toast} position="top-right" pt={{ root: { style: { marginTop: '80px', zIndex: 9999 } } }} />
       <div className="container mx-auto px-4 py-8">
         <div className="category-page-layout flex flex-col lg:flex-row gap-8">
         <CategoryFilterSidebar
@@ -864,11 +853,29 @@ function CategoryPage() {
 
 
         <div className="category-results flex-1 space-y-6">
-          <CategorySearchBar
-            isLoading={isTreeLoading}
-            searchText={searchText}
-            onSearchChange={setSearchText}
-          />
+          <div className="category-controls flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="category-control-item flex-1">
+              <CategorySearchBar
+                isLoading={isTreeLoading}
+                searchText={searchText}
+                onSearchChange={setSearchText}
+              />
+            </div>
+            <div className="category-control-item w-full md:w-64">
+              <Dropdown
+                value={sortOption || null}
+                options={sortOptions}
+                onChange={(e) => setSortOption(e.value || null)}
+                placeholder="Sort by"
+                showClear
+                clearIcon="pi pi-times"
+                className={`category-sort-dropdown w-full ${
+                  darkMode ? "category-sort-dropdown-dark" : ""
+                }`}
+                panelClassName="category-sort-panel"
+              />
+            </div>
+          </div>
           <SelectedFilters
             isLoading={isProductsLoading}
             categoryTags={categoryTags}
