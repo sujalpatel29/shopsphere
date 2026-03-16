@@ -81,7 +81,7 @@ async function findCartItem(
   cartId,
   productId,
   productPortionId = null,
-  modifierId = null,
+  modifierKey = null,
 ) {
   let query =
     "SELECT * FROM cart_items WHERE cart_id = ? AND product_id = ? AND is_deleted = 0";
@@ -92,9 +92,11 @@ async function findCartItem(
     params.push(productPortionId);
   }
 
-  if (modifierId !== null) {
-    query += " AND modifier_id = ?";
-    params.push(modifierId);
+  if (modifierKey !== null) {
+    query += " AND modifier_key = ?";
+    params.push(modifierKey);
+  } else {
+    query += " AND modifier_key IS NULL";
   }
 
   query += " LIMIT 1";
@@ -109,16 +111,16 @@ async function insertCartItem({
   quantity,
   price,
   productPortionId = null,
-  modifierId = null,
+  modifierKey = null,
   userId,
 }) {
   const [result] = await pool.query(
-    "INSERT INTO cart_items (cart_id, product_id, product_portion_id, modifier_id, quantity, price, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO cart_items (cart_id, product_id, product_portion_id, modifier_id, modifier_key, quantity, price, created_by, updated_by) VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?)",
     [
       cartId,
       productId,
       productPortionId,
-      modifierId,
+      modifierKey,
       quantity,
       price,
       userId,
@@ -140,6 +142,13 @@ async function deleteCartItem(cartItemId, userId) {
   await pool.query(
     "UPDATE cart_items SET is_deleted = 1, updated_by = ? WHERE cart_item_id = ?",
     [userId, cartItemId],
+  );
+}
+
+async function clearCartItems(cartId, userId) {
+  await pool.query(
+    "UPDATE cart_items SET is_deleted = 1, updated_by = ? WHERE cart_id = ? AND is_deleted = 0",
+    [userId, cartId],
   );
 }
 
@@ -288,14 +297,61 @@ async function getFirstAvailablePortion(productId) {
   };
 }
 
+async function insertCartItemModifiers(cartItemId, modifierIds) {
+  if (!modifierIds || modifierIds.length === 0) return;
+  const values = modifierIds.map((id) => [cartItemId, id]);
+  await pool.query(
+    "INSERT IGNORE INTO cart_item_modifiers (cart_item_id, modifier_id) VALUES ?",
+    [values],
+  );
+}
+
+async function getCartItemModifiers(cartItemIds) {
+  if (!cartItemIds || cartItemIds.length === 0) return [];
+  const [rows] = await pool.query(
+    `SELECT cim.cart_item_id,
+            mm.modifier_id,
+            mm.modifier_type,
+            mm.modifier_name,
+            mm.modifier_value,
+            mm.additional_price
+       FROM cart_item_modifiers cim
+       JOIN modifier_master mm ON mm.modifier_id = cim.modifier_id AND mm.is_deleted = 0
+      WHERE cim.cart_item_id IN (?)`,
+    [cartItemIds],
+  );
+  return rows;
+}
+
+async function getMultipleModifierPricing(modifierIds) {
+  if (!modifierIds || modifierIds.length === 0) return [];
+  const [rows] = await pool.query(
+    `SELECT modifier_id,
+            modifier_name,
+            modifier_value,
+            modifier_type,
+            additional_price
+       FROM modifier_master
+      WHERE modifier_id IN (?)
+        AND is_deleted = 0
+        AND is_active = 1`,
+    [modifierIds],
+  );
+  return rows;
+}
+
 export {
   getOrCreateCartByUserId,
   getCartItemsWithProduct,
   getCartScopeDetails,
   findCartItem,
   insertCartItem,
+  insertCartItemModifiers,
+  getCartItemModifiers,
+  getMultipleModifierPricing,
   updateCartItemQuantity,
   deleteCartItem,
+  clearCartItems,
   getProductPricing,
   getPortionPricing,
   getModifierPricing,

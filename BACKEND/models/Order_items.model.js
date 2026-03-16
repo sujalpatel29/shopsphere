@@ -31,8 +31,8 @@ export const getDiscountOnItem = async (category_id) => {
 };
 
 // Insert order items and clear cart items
-export const insertQuery = async (values, cart_id) => {
-  const insert = await pool.query(
+export const insertQuery = async (values, cart_id, order_id, modifiersMapping) => {
+  const [insert] = await pool.query(
     `INSERT INTO order_items
      (order_id, product_id, product_portion_id, modifier_id,
       product_name, portion_value, modifier_value,
@@ -40,6 +40,24 @@ export const insertQuery = async (values, cart_id) => {
      VALUES ?`,
     [values],
   );
+
+  if (modifiersMapping && modifiersMapping.length > 0) {
+    const [orderItems] = await pool.query(`SELECT order_item_id FROM order_items WHERE order_id = ? ORDER BY order_item_id ASC`, [order_id]);
+    const modifierValues = [];
+    for (let i = 0; i < orderItems.length; i++) {
+       const oItemId = orderItems[i].order_item_id;
+       const mods = modifiersMapping[i];
+       if (mods && mods.length > 0) {
+          for (const mod of mods) {
+             modifierValues.push([oItemId, mod.modifier_id, mod.modifier_name, mod.modifier_value, mod.modifier_type, mod.additional_price || 0]);
+          }
+       }
+    }
+    if (modifierValues.length > 0) {
+       await pool.query(`INSERT IGNORE INTO order_item_modifiers (order_item_id, modifier_id, modifier_name, modifier_value, modifier_type, additional_price) VALUES ?`, [modifierValues]);
+    }
+  }
+
   await pool.query("update cart_items set is_deleted=1 where cart_id = ? ", [
     cart_id,
   ]);

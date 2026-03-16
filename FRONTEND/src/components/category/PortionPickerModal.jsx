@@ -29,7 +29,7 @@ function PortionPickerModal({ product, onHide, onConfirm }) {
   const [portions, setPortions] = useState([]);
   const [modifiers, setModifiers] = useState([]);
   const [selectedPortion, setSelectedPortion] = useState(null);
-  const [selectedModifier, setSelectedModifier] = useState(null);
+  const [selectedModifier, setSelectedModifier] = useState([]);
   const [portionsLoading, setPortionsLoading] = useState(true);
   const [modifiersLoading, setModifiersLoading] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -48,7 +48,7 @@ function PortionPickerModal({ product, onHide, onConfirm }) {
     if (!selectedPortion) return;
     let active = true;
     setModifiersLoading(true);
-    setSelectedModifier(null);
+    setSelectedModifier([]);
     api
       .get(`/modifiers/by-portion/${selectedPortion.product_portion_id}`)
       .then((res) => {
@@ -72,15 +72,16 @@ function PortionPickerModal({ product, onHide, onConfirm }) {
     const base = Number(
       selectedPortion.discounted_price ?? selectedPortion.price ?? 0,
     );
-    const extra = Number(selectedModifier?.additional_price ?? 0);
+    const extra = selectedModifier.reduce((acc, m) => acc + Number(m.additional_price ?? 0), 0);
     return base + extra;
   })();
 
   const handleConfirm = async () => {
     setAdding(true);
+    const modifierIds = selectedModifier.map(m => m.modifier_id);
     await onConfirm(
       selectedPortion?.product_portion_id ?? null,
-      selectedModifier?.modifier_id ?? null,
+      modifierIds
     );
     setAdding(false);
   };
@@ -171,33 +172,53 @@ function PortionPickerModal({ product, onHide, onConfirm }) {
                 </div>
               </div>
             ) : modifiers.length > 0 ? (
-              <div>
-                <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
-                  Add-ons{" "}
-                  <span className="normal-case font-normal text-gray-400">
-                    (optional)
-                  </span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {modifiers.map((m) => (
-                    <PickerButton
-                      key={m.modifier_id}
-                      selected={selectedModifier?.modifier_id === m.modifier_id}
-                      onClick={() =>
-                        setSelectedModifier((prev) =>
-                          prev?.modifier_id === m.modifier_id ? null : m,
-                        )
-                      }
-                    >
-                      {m.modifier_value || m.modifier_name}
-                      {Number(m.additional_price) > 0 && (
-                        <span className="ml-1 text-[11px] opacity-70">
-                          +{formatCurrency(m.additional_price)}
-                        </span>
-                      )}
-                    </PickerButton>
-                  ))}
-                </div>
+              <div className="space-y-4">
+                {Object.entries(
+                  modifiers.reduce((acc, m) => {
+                    const type = m.modifier_type || "Add-ons";
+                    if (!acc[type]) acc[type] = [];
+                    acc[type].push(m);
+                    return acc;
+                  }, {})
+                ).map(([type, mods]) => (
+                  <div key={type}>
+                    <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 flex items-center gap-2">
+                      {type}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {mods.map((m) => (
+                        <PickerButton
+                          key={m.modifier_id}
+                          selected={selectedModifier.some(sm => sm.modifier_id === m.modifier_id)}
+                          onClick={() =>
+                            setSelectedModifier((prev) => {
+                               // If it's already selected, clicking again toggles it off
+                               if (prev.some(sm => sm.modifier_id === m.modifier_id)) {
+                                 return prev.filter(sm => sm.modifier_id !== m.modifier_id);
+                               }
+
+                               // Otherwise, we are selecting it.
+                               // We want to ENFORCE 1 selection per modifier_type.
+                               const currentType = m.modifier_type || "Add-ons";
+
+                               // Remove any currently selected modifier that shares the SAME type
+                               const filtered = prev.filter(sm => (sm.modifier_type || "Add-ons") !== currentType);
+                               
+                               return [...filtered, m];
+                            })
+                          }
+                        >
+                          {m.modifier_value || m.modifier_name}
+                          {Number(m.additional_price) > 0 && (
+                            <span className="ml-1 text-[11px] opacity-70">
+                              +{formatCurrency(m.additional_price)}
+                            </span>
+                          )}
+                        </PickerButton>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : null)}
         </div>

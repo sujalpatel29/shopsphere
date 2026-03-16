@@ -535,7 +535,22 @@ function OrderDetailModal({ visible, onHide, orderId, onMutate }) {
                           {item.portion_value || "—"}
                         </td>
                         <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                          {item.modifier_value || "—"}
+                          {item.modifiers && item.modifiers.length > 0 ? (
+                            <ul className="list-none space-y-1">
+                              {item.modifiers.map((mod, idx) => (
+                                <li key={idx} className="flex flex-col">
+                                  <span>{mod.modifier_value}</span>
+                                  {Number(mod.additional_price) > 0 && (
+                                    <span className="text-gray-400 text-xs">
+                                      (+{formatPrice(Number(mod.additional_price))})
+                                    </span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            item.modifier_value || "—"
+                          )}
                         </td>
                         <td className="px-4 py-3 text-center">
                           {item.quantity}

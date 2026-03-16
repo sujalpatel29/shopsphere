@@ -6,12 +6,10 @@ import { Toast } from "primereact/toast";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Tag } from "primereact/tag";
 import { Skeleton } from "primereact/skeleton";
-import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
-import { Dropdown } from "primereact/dropdown";
 import { EmptyCart } from "../../components/cart/EmptyCart";
 import { CartItemSkeleton } from "../../components/cart/CartItemSkeleton";
 import { ArrowRight } from "lucide-react";
+import AddAddressModal from "./dashboard/components/AddAddressModal";
 import api from "../../../api/api";
 
 const INDIAN_STATES = [
@@ -60,16 +58,20 @@ function CartPage() {
   const toast = useRef(null);
 
   // Address states
+  const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
   const [addressForm, setAddressForm] = useState({
-    name: "",
+    full_name: "",
     phone: "",
-    address: "",
+    address_line1: "",
+    address_line2: "",
     city: "",
     state: "",
-    pincode: "",
-    type: "home",
+    postal_code: "",
+    country: "India",
+    is_default: false,
   });
 
   // Available offers display
@@ -118,9 +120,26 @@ function CartPage() {
     }
   };
 
+  // Fetch all saved addresses and auto-select the default one
+  const fetchAddresses = async () => {
+    try {
+      const res = await api.get("/users/show-addresses");
+      const list = res.data?.data || [];
+      setAddresses(list);
+      // Auto-select the default address if none selected yet
+      const defaultAddr = list.find((a) => a.is_default === 1) || list[0];
+      if (defaultAddr && !selectedAddress) {
+        setSelectedAddress(defaultAddr);
+      }
+    } catch (err) {
+      console.error("Failed to fetch addresses:", err);
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchCart();
+      fetchAddresses();
     } else {
       setLoading(false);
       setCart(null);
@@ -186,6 +205,40 @@ function CartPage() {
             summary: "Error",
             detail: error.response?.data?.message || "Failed to remove item",
             life: 5000,
+          });
+        }
+      },
+    });
+  };
+
+  // Clear all items from cart
+  const clearCart = () => {
+    confirmDialog({
+      message: "Remove all items from your cart?",
+      header: "Clear Cart",
+      icon: "pi pi-exclamation-triangle",
+      acceptClassName:
+        "!bg-red-500 !border-red-500 !text-white hover:!bg-red-600 !px-4 !py-2 !rounded-lg",
+      rejectClassName:
+        "!bg-transparent !border-gray-300 !text-gray-700 hover:!bg-gray-100 dark:!text-gray-300 dark:hover:!bg-gray-800 !px-4 !py-2 !rounded-lg",
+      accept: async () => {
+        try {
+          const response = await api.delete("/cart/items");
+          setCart(response.data.data);
+          window.dispatchEvent(new CustomEvent("cart:updated"));
+          toast.current?.show({
+            severity: "success",
+            summary: "Cleared",
+            detail: "All items removed from your cart",
+            life: 3000,
+          });
+        } catch (error) {
+          console.error("Error clearing cart:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: error.response?.data?.message || "Failed to clear cart",
+            life: 3000,
           });
         }
       },
@@ -409,21 +462,20 @@ function CartPage() {
     navigate("/");
   };
 
-  // Handle address form input changes
-  const handleAddressFormChange = (field, value) => {
-    setAddressForm((prev) => ({ ...prev, [field]: value }));
+  // Handle address form input changes — mirrors the profile dashboard pattern
+  const handleAddressFormChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setAddressForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  // Save new address
-  const saveNewAddress = () => {
-    if (
-      !addressForm.name ||
-      !addressForm.phone ||
-      !addressForm.address ||
-      !addressForm.city ||
-      !addressForm.state ||
-      !addressForm.pincode
-    ) {
+  // Save new address to backend
+  const saveNewAddress = async (e) => {
+    e?.preventDefault();
+    const { full_name, phone, address_line1, city, state, postal_code } = addressForm;
+    if (!full_name || !phone || !address_line1 || !city || !state || !postal_code) {
       toast.current?.show({
         severity: "error",
         summary: "Incomplete",
@@ -433,30 +485,50 @@ function CartPage() {
       return;
     }
 
-    const newAddress = {
-      id: Date.now(),
-      ...addressForm,
-      isDefault: false,
-    };
+    setSavingAddress(true);
+    try {
+      await api.post("/users/add-address", {
+        full_name,
+        phone,
+        address_line1,
+        address_line2: addressForm.address_line2 || null,
+        city,
+        state,
+        postal_code,
+        country: addressForm.country || "India",
+        is_default: addressForm.is_default || addresses.length === 0,
+      });
 
-    setSelectedAddress(newAddress);
-    setShowAddressForm(false);
-    setAddressForm({
-      name: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      pincode: "",
-      type: "home",
-    });
-
-    toast.current?.show({
-      severity: "success",
-      summary: "Address Saved",
-      detail: "New delivery address added",
-      life: 2000,
-    });
+      await fetchAddresses();
+      setShowAddressForm(false);
+      setAddressForm({
+        full_name: "",
+        phone: "",
+        address_line1: "",
+        address_line2: "",
+        city: "",
+        state: "",
+        postal_code: "",
+        country: "India",
+        is_default: false,
+      });
+      toast.current?.show({
+        severity: "success",
+        summary: "Address Saved",
+        detail: "New delivery address added",
+        life: 2000,
+      });
+    } catch (err) {
+      console.error("Save address error:", err);
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: err.response?.data?.message || "Failed to save address",
+        life: 3000,
+      });
+    } finally {
+      setSavingAddress(false);
+    }
   };
 
   // Get product-specific offers for items in cart
@@ -550,10 +622,21 @@ function CartPage() {
               Shopping Cart
             </span>
           </nav>
-          <h1 className="font-serif text-3xl md:text-4xl font-semibold text-gray-900 dark:text-slate-100">
-            Shopping Cart ({cart.items.length}{" "}
-            {cart.items.length === 1 ? "item" : "items"})
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 className="font-serif text-3xl md:text-4xl font-semibold text-gray-900 dark:text-slate-100">
+              Shopping Cart ({cart.items.length}{" "}
+              {cart.items.length === 1 ? "item" : "items"})
+            </h1>
+            {cart.items.length > 0 && (
+              <button
+                type="button"
+                onClick={clearCart}
+                className="text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+              >
+                Clear Cart
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Mobile Order Summary Bar */}
@@ -625,7 +708,7 @@ function CartPage() {
                         </p>
 
                         {/* Portion & Modifier Details */}
-                        {(item.portionId || item.modifierId) && (
+                        {(item.portionId || (item.modifiers && item.modifiers.length > 0) || item.modifierId) && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {item.portionValue && (
                               <Tag
@@ -634,9 +717,18 @@ function CartPage() {
                                 className="text-xs"
                               />
                             )}
-                            {item.modifierName && (
+                            {item.modifiers && item.modifiers.length > 0 ? (
+                              item.modifiers.map((mod, idx) => (
+                                <Tag
+                                  key={idx}
+                                  value={`${mod.modifierValue || mod.modifierName}${Number(mod.additionalPrice) > 0 ? ` (+₹${mod.additionalPrice})` : ""}`}
+                                  severity="secondary"
+                                  className="text-xs"
+                                />
+                              ))
+                            ) : item.modifierValue && (
                               <Tag
-                                value={item.modifierName}
+                                value={item.modifierValue}
                                 severity="secondary"
                                 className="text-xs"
                               />
@@ -762,54 +854,58 @@ function CartPage() {
                 />
               </div>
 
-              {selectedAddress ? (
-                <div className="p-3 sm:p-4 border-2 border-[#2f7a6f] rounded-xl bg-[#2f7a6f]/5">
-                  <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-medium text-gray-900 dark:text-slate-100 text-sm sm:text-base">
-                          {selectedAddress.name}
-                        </span>
-                        <Tag
-                          value={
-                            selectedAddress.type === "home" ? "Home" : "Work"
-                          }
-                          severity="info"
-                          className="text-xs"
-                        />
-                        {selectedAddress.isDefault && (
-                          <Tag
-                            value="Default"
-                            severity="success"
-                            className="text-xs"
-                          />
-                        )}
+              {/* Saved address list */}
+              {addresses.length > 0 ? (
+                <div className="space-y-3">
+                  {addresses.map((addr) => {
+                    const isSelected = selectedAddress?.address_id === addr.address_id;
+                    return (
+                      <div
+                        key={addr.address_id}
+                        onClick={() => setSelectedAddress(addr)}
+                        className={`p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-[#2f7a6f] bg-[#2f7a6f]/5"
+                            : "border-[#e8dccf] dark:border-[#243440] hover:border-[#2f7a6f]/50"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className={`mt-1 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                              isSelected ? "border-[#2f7a6f] bg-[#2f7a6f]" : "border-gray-300 dark:border-slate-600"
+                            }`}>
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className="font-medium text-gray-900 dark:text-slate-100 text-sm">
+                                  {addr.full_name}
+                                </span>
+                                <Tag
+                                  value={addr.address_type === "home" ? "Home" : "Work"}
+                                  severity="info"
+                                  className="text-xs"
+                                />
+                                {addr.is_default === 1 && (
+                                  <Tag value="Default" severity="success" className="text-xs" />
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-slate-400">{addr.phone}</p>
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mt-0.5">
+                                {addr.address_line1}{addr.address_line2 ? `, ${addr.address_line2}` : ""}, {addr.city}, {addr.state} - {addr.postal_code}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400">
-                        {selectedAddress.phone}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mt-1">
-                        {selectedAddress.address}, {selectedAddress.city},{" "}
-                        {selectedAddress.state} - {selectedAddress.pincode}
-                      </p>
-                    </div>
-                    <div className="flex gap-2 self-end sm:self-auto">
-                      <Button
-                        icon="pi pi-pencil"
-                        className="p-button-text p-button-sm text-gray-500"
-                        onClick={() => {
-                          setAddressForm(selectedAddress);
-                          setShowAddressForm(true);
-                        }}
-                      />
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-center py-10 sm:py-12 rounded-xl border border-dashed border-[#e8dccf] dark:border-[#243440] bg-[#fff8ee]/30 dark:bg-[#0f171c]/30">
                   <i className="pi pi-map-marker text-4xl text-gray-300 dark:text-slate-600 mb-4" />
                   <p className="text-gray-600 dark:text-slate-300 text-sm font-medium">
-                    No delivery address selected
+                    No delivery address found
                   </p>
                   <p className="text-gray-500 dark:text-slate-400 text-xs mt-1 mb-5">
                     Add an address to place your order.
@@ -1113,154 +1209,18 @@ function CartPage() {
         </div>
       </div>
 
-      {/* Address Form Dialog */}
-      <Dialog
-        header="Add Delivery Address"
+      {/* Address Form Modal — same as profile dashboard */}
+      <AddAddressModal
         visible={showAddressForm}
-        style={{ width: "90%", maxWidth: "500px" }}
-        className="dark:bg-[#151e22]"
-        contentClassName="dark:bg-[#151e22]"
-        headerClassName="dark:bg-[#151e22] dark:text-slate-100"
+        addressForm={addressForm}
+        addingAddress={savingAddress}
+        onChange={handleAddressFormChange}
+        onSubmit={saveNewAddress}
         onHide={() => setShowAddressForm(false)}
-        footer={
-          <div className="flex gap-2 justify-end dark:bg-[#151e22]">
-            <Button
-              label="Cancel"
-              className="p-button-text dark:text-slate-300"
-              onClick={() => setShowAddressForm(false)}
-            />
-            <Button
-              label="Save Address"
-              className="bg-[#2f7a6f] text-white border-none"
-              onClick={saveNewAddress}
-            />
-          </div>
-        }
-      >
-        <div className="space-y-4 p-4 dark:bg-[#151e22]">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                Full Name *
-              </label>
-              <InputText
-                value={addressForm.name}
-                onChange={(e) =>
-                  handleAddressFormChange("name", e.target.value)
-                }
-                placeholder="Enter full name"
-                className="w-full dark:bg-[#1a262f] dark:border-[#243440] dark:text-slate-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                Phone Number *
-              </label>
-              <InputText
-                value={addressForm.phone}
-                onChange={(e) =>
-                  handleAddressFormChange("phone", e.target.value)
-                }
-                placeholder="+91 00000 00000"
-                className="w-full dark:bg-[#1a262f] dark:border-[#243440] dark:text-slate-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-              Street Address *
-            </label>
-            <InputText
-              value={addressForm.address}
-              onChange={(e) =>
-                handleAddressFormChange("address", e.target.value)
-              }
-              placeholder="House/Flat No., Street, Area"
-              className="w-full dark:bg-[#1a262f] dark:border-[#243440] dark:text-slate-100"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                City *
-              </label>
-              <InputText
-                value={addressForm.city}
-                onChange={(e) =>
-                  handleAddressFormChange("city", e.target.value)
-                }
-                placeholder="City"
-                className="w-full dark:bg-[#1a262f] dark:border-[#243440] dark:text-slate-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                Pincode *
-              </label>
-              <InputText
-                value={addressForm.pincode}
-                onChange={(e) =>
-                  handleAddressFormChange("pincode", e.target.value)
-                }
-                placeholder="000000"
-                className="w-full dark:bg-[#1a262f] dark:border-[#243440] dark:text-slate-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-              State *
-            </label>
-            <Dropdown
-              value={addressForm.state}
-              options={INDIAN_STATES.map((s) => ({ label: s, value: s }))}
-              onChange={(e) => handleAddressFormChange("state", e.value)}
-              placeholder="Select State"
-              className="w-full dark:bg-[#1a262f] dark:border-[#243440]"
-              panelClassName="dark:bg-[#1a262f]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-              Address Type
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="addressType"
-                  value="home"
-                  checked={addressForm.type === "home"}
-                  onChange={() => handleAddressFormChange("type", "home")}
-                  className="accent-[#2f7a6f] w-4 h-4"
-                />
-                <span className="text-sm text-gray-700 dark:text-slate-300">
-                  <i className="pi pi-home mr-1" /> Home
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="addressType"
-                  value="work"
-                  checked={addressForm.type === "work"}
-                  onChange={() => handleAddressFormChange("type", "work")}
-                  className="accent-[#2f7a6f] w-4 h-4"
-                />
-                <span className="text-sm text-gray-700 dark:text-slate-300">
-                  <i className="pi pi-building mr-1" /> Work
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
-      </Dialog>
+      />
     </div>
   );
 }
 
 export default CartPage;
+

@@ -5,11 +5,13 @@ import {
   getCartItemsWithProduct,
   findCartItem,
   insertCartItem,
+  insertCartItemModifiers,
   updateCartItemQuantity,
   deleteCartItem,
+  clearCartItems,
   getProductPricing,
   getPortionPricing,
-  getModifierPricing,
+  getMultipleModifierPricing,
   getFirstAvailablePortion,
 } from "../models/cart.model.js";
 
@@ -250,11 +252,7 @@ async function buildCartResponse(cartId, items, cartOffer = null) {
 
       portionValue: item.portion_value,
 
-      modifierId: item.modifier_id,
-
-      modifierName: item.modifier_name,
-
-      modifierValue: item.modifier_value,
+      modifiers: item.modifiers || [],
 
       appliedOffer: appliedItemOffer,
 
@@ -388,19 +386,22 @@ async function getCart(req, res) {
 
 async function addItemToCart(req, res) {
   try {
-    // User ID comes from JWT token (authMiddleware)
     const userId = req.user.id;
-
-    // Cart is attached by validateCart middleware
-    const { productId, quantity, portionId, modifierId } = req.body;
+    const { productId, quantity, portionId, modifierIds } = req.body;
 
     const parsedProductId = parsePositiveInt(productId);
-
     const parsedQuantity = parsePositiveInt(quantity);
-
     const parsedPortionId = portionId ? parsePositiveInt(portionId) : null;
 
-    const parsedModifierId = modifierId ? parsePositiveInt(modifierId) : null;
+    // Parse and deduplicate modifier IDs array
+    let parsedModifierIds = [];
+    if (Array.isArray(modifierIds) && modifierIds.length > 0) {
+      parsedModifierIds = [
+        ...new Set(
+          modifierIds.map((id) => parsePositiveInt(id)).filter(Boolean),
+        ),
+      ];
+    }
 
     if (!parsedProductId || !parsedQuantity) {
       return badRequest(res, "Invalid productId or quantity");
@@ -415,7 +416,7 @@ async function addItemToCart(req, res) {
     let itemPrice = Number(pricing.price);
     let finalPortionId = parsedPortionId;
 
-    // If portion is provided, validate it. If not, auto-select first available portion
+    // Validate portion or auto-select first available
     if (parsedPortionId) {
       const portionPricing = await getPortionPricing(parsedPortionId);
 
@@ -428,42 +429,48 @@ async function addItemToCart(req, res) {
 
       itemPrice = Number(portionPricing.price);
     } else {
-      // Auto-select first available portion
       const defaultPortion = await getFirstAvailablePortion(parsedProductId);
 
       if (defaultPortion) {
         finalPortionId = defaultPortion.productPortionId;
-
         itemPrice = Number(defaultPortion.price);
       } else {
-        // If no portion exists, use base product price
         finalPortionId = null;
         itemPrice = Number(pricing.price);
       }
     }
 
-    // If modifier is provided, add modifier's additional price
-    if (parsedModifierId) {
-      const modifierPricing = await getModifierPricing(parsedModifierId);
-      if (!modifierPricing) {
+    // Validate all modifier IDs and sum their additional prices
+    if (parsedModifierIds.length > 0) {
+      const modifierRows = await getMultipleModifierPricing(parsedModifierIds);
+
+      if (modifierRows.length !== parsedModifierIds.length) {
         return badRequest(
           res,
-          "Invalid modifier specified. This modifier does not exist or is inactive.",
+          "One or more modifiers are invalid or inactive.",
         );
       }
-      itemPrice =
-        Math.round(
-          (itemPrice + Number(modifierPricing.additionalPrice)) * 1000,
-        ) / 1000;
+
+      const additionalTotal = modifierRows.reduce(
+        (sum, m) => sum + Number(m.additional_price),
+        0,
+      );
+      itemPrice = Math.round((itemPrice + additionalTotal) * 1000) / 1000;
     } else {
       itemPrice = Math.round(itemPrice * 1000) / 1000;
     }
+
+    // Denormalized lookup key: sorted modifier IDs joined by comma
+    const modifierKey =
+      parsedModifierIds.length > 0
+        ? [...parsedModifierIds].sort((a, b) => a - b).join(",")
+        : null;
 
     const existingItem = await findCartItem(
       req.cart.cart_id,
       parsedProductId,
       finalPortionId,
-      parsedModifierId,
+      modifierKey,
     );
 
     if (existingItem) {
@@ -475,21 +482,17 @@ async function addItemToCart(req, res) {
         userId,
       );
     } else {
-      await insertCartItem({
+      const newCartItemId = await insertCartItem({
         cartId: req.cart.cart_id,
-
         productId: parsedProductId,
-
         quantity: parsedQuantity,
-
         price: itemPrice,
-
         productPortionId: finalPortionId,
-
-        modifierId: parsedModifierId,
-
+        modifierKey,
         userId,
       });
+
+      await insertCartItemModifiers(newCartItemId, parsedModifierIds);
     }
 
     const items = await getCartItemsWithOffer(req.cart.cart_id);
@@ -946,11 +949,30 @@ async function getApplicableOffers(req, res) {
   }
 }
 
+async function clearCart(req, res) {
+  try {
+    const userId = req.user.id;
+    const cartId = req.cart.cart_id;
+
+    await clearCartItems(cartId, userId);
+    await removeOfferFromCart(cartId, userId);
+
+    const response = await buildCartResponse(cartId, []);
+
+    return ok(res, "Cart cleared", response);
+  } catch (err) {
+    console.error("Error in clearCart:", err);
+
+    return serverError(res, "Internal server error");
+  }
+}
+
 export {
   getCart,
   addItemToCart,
   updateCartItem,
   removeCartItem,
+  clearCart,
   applyCartOffer,
   removeCartOffer,
   applyCartItemOffer,

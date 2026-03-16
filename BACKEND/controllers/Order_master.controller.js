@@ -283,18 +283,28 @@ export const postOrderItems = async (
   // Fetch primary category for each product
   const productCategories = await getCompareProductCategory(productIds);
   const categoryIds = productCategories.map((item) => item.category_id);
-  const modifierIds = cart.map((item) => item.modifier_id);
+  
+  // Collect all modifier IDs across all cart items
+  const allModifierIds = [];
+  cart.forEach((item) => {
+    if (item.modifier_ids && item.modifier_ids.length > 0) {
+      allModifierIds.push(...item.modifier_ids);
+    }
+  });
+  const uniqueModifierIds = [...new Set(allModifierIds)];
+
   const portionIds = cart.map((item) => item.product_portion_id);
   const portionRows = await getPortionValue(portionIds);
-  const modifierRows = await getModifierValue(modifierIds);
+  const modifierRows = uniqueModifierIds.length > 0 ? await getModifierValue(uniqueModifierIds) : [];
   const quantities = cart.map((item) => item.quantity);
   const portionMap = Object.fromEntries(
     portionRows.map((p) => [p.portion_id, p.portion_value]),
   );
 
-  const modifierMap = Object.fromEntries(
-    modifierRows.map((m) => [m.modifier_id, m.modifier_value]),
-  );
+  const modifierMap = {};
+  modifierRows.forEach(m => {
+     modifierMap[m.modifier_id] = m;
+  });
 
   // Fetch product names
   const values = [];
@@ -307,6 +317,9 @@ export const postOrderItems = async (
   if (!totalDisCountArray || totalDisCountArray.length === 0) {
     totalDisCountArray = new Array(cart.length).fill(0);
   }
+
+  const modifiersMapping = [];
+
   // Build order item records with calculated totals
   for (let i = 0; i < cart.length; i++) {
     // Apply shipping charges based on item price
@@ -318,15 +331,22 @@ export const postOrderItems = async (
     const d = Number(totalDisCountArray[i]?.offer_id) || 0;
     const finalTotal = p + t - d;
 
+    const itemModifiers = cart[i].modifier_ids || [];
+    const itemModifierObjects = itemModifiers.map(id => modifierMap[id]).filter(Boolean);
+    const primaryModifierId = itemModifierObjects.length > 0 ? itemModifierObjects[0].modifier_id : null;
+    const primaryModifierValue = itemModifierObjects.length > 0 ? itemModifierObjects[0].modifier_value : null;
+
+    modifiersMapping.push(itemModifierObjects);
+
     // Prepare order item data
     const value = [
       orderId,
       productIds[i],
       portionIds[i],
-      modifierIds[i],
+      primaryModifierId,
       productMap[productIds[i]] || null,
       portionMap[portionIds[i]] || null,
-      modifierMap[modifierIds[i]] || null,
+      primaryModifierValue,
       quantities[i],
       p,
       d,
@@ -338,7 +358,7 @@ export const postOrderItems = async (
     values.push(value);
   }
   // Insert all order items into database
-  await insertQuery(values, cart_id);
+  await insertQuery(values, cart_id, orderId, modifiersMapping);
 };
 
 // Find root category ID for tax calculation

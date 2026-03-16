@@ -47,13 +47,35 @@ const ensureCancelRequestTable = async () => {
 // Fetch cart items for a user including product and portion details
 export const getCart = async (user_id) => {
   const [cart] = await pool.query(
-    `select ci.product_id,cm.cart_id,
+    `select ci.cart_item_id, ci.product_id,cm.cart_id,
         ci.quantity,
         ci.product_portion_id, 
         ci.modifier_id
          from cart_items ci join cart_master cm on ci.cart_id  = cm.cart_id  where cm.user_id =? and ci.is_deleted=0`,
     [user_id],
   );
+
+  if (cart.length > 0) {
+    const cartItemIds = cart.map((c) => c.cart_item_id);
+    const [modifierRows] = await pool.query(
+      `SELECT cim.cart_item_id, cim.modifier_id 
+       FROM cart_item_modifiers cim 
+       WHERE cim.cart_item_id IN (?)`,
+      [cartItemIds]
+    );
+    const modMap = {};
+    modifierRows.forEach((m) => {
+      if (!modMap[m.cart_item_id]) modMap[m.cart_item_id] = [];
+      modMap[m.cart_item_id].push(m.modifier_id);
+    });
+    cart.forEach((c) => {
+      const multi = modMap[c.cart_item_id] || [];
+      if (c.modifier_id && !multi.includes(c.modifier_id)) {
+        multi.push(c.modifier_id);
+      }
+      c.modifier_ids = multi;
+    });
+  }
 
   return cart;
 };
@@ -198,8 +220,9 @@ export const getPortionValue = async (portionIds) => {
 
 // Get modifier values for modifiers used in order items
 export const getModifierValue = async (modifierIds) => {
+  if (!modifierIds || modifierIds.length === 0) return [];
   const [rows] = await pool.query(
-    "select modifier_id, modifier_value from modifier_master where modifier_id in (?)",
+    "select modifier_id, modifier_value, modifier_name, modifier_type, additional_price from modifier_master where modifier_id in (?)",
     [modifierIds],
   );
   return rows;
@@ -840,6 +863,31 @@ export const getOrderDetailAdmin = async (orderId) => {
     `,
     [orderId],
   );
+
+  // Fetch multiple modifiers if they exist
+  if (itemRows.length > 0) {
+    const orderItemIds = itemRows.map(i => i.order_item_id);
+    const [modifierRows] = await pool.query(
+      `SELECT * FROM order_item_modifiers WHERE order_item_id IN (?)`,
+      [orderItemIds]
+    );
+    const modMap = {};
+    modifierRows.forEach(m => {
+       if (!modMap[m.order_item_id]) modMap[m.order_item_id] = [];
+       modMap[m.order_item_id].push(m);
+    });
+    itemRows.forEach(item => {
+       item.modifiers = modMap[item.order_item_id] || [];
+       if (item.modifiers.length === 0 && item.modifier_value) {
+          item.modifiers.push({
+             modifier_id: item.modifier_id,
+             modifier_name: null,
+             modifier_value: item.modifier_value,
+             additional_price: 0
+          });
+       }
+    });
+  }
 
   // Payments
   const [paymentRows] = await pool.execute(

@@ -445,14 +445,14 @@ function CategoryPage() {
     setPriceRange([priceBounds.min, priceBounds.max]);
   };
 
-  const doAddToCart = async (product, portionId, modifierId) => {
+  const doAddToCart = async (product, portionId, modifierIds) => {
     const productId = product.product_id || product.id;
     try {
       await api.post("/cart/items", {
         productId,
         quantity: 1,
         ...(portionId != null && { portionId }),
-        ...(modifierId != null && { modifierId }),
+        ...(modifierIds != null && { modifierIds }),
       });
       window.dispatchEvent(new CustomEvent("cart:updated"));
       toast.current?.show({
@@ -526,8 +526,8 @@ function CategoryPage() {
     }
   };
 
-  const handlePickerConfirm = async (portionId, modifierId) => {
-    await doAddToCart(pickerProduct, portionId, modifierId);
+  const handlePickerConfirm = async (portionId, modifierIds) => {
+    await doAddToCart(pickerProduct, portionId, modifierIds);
     setPickerProduct(null);
   };
 

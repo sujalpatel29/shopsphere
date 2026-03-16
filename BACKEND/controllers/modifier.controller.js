@@ -76,7 +76,7 @@ export const getModifierByIdController = async (req, res) => {
 export const createModifierController = async (req, res) => {
   try {
     //Get data form body
-    const { modifier_name, modifier_value, additional_price } = req.body;
+    const { modifier_name, modifier_value, modifier_type, additional_price } = req.body;
 
     // Check if duplicate exists
     const exists = await checkModifierExists(modifier_name, modifier_value);
@@ -94,6 +94,7 @@ export const createModifierController = async (req, res) => {
     const modifier_id = await createModifier({
       modifier_name,
       modifier_value,
+      modifier_type: modifier_type || null,
       additional_price,
       created_by,
     });
@@ -118,7 +119,7 @@ export const updateModifierController = async (req, res) => {
     const { id } = req.params;
 
     //get update data from body
-    const { modifier_name, modifier_value, additional_price, is_active } =
+    const { modifier_name, modifier_value, modifier_type, additional_price, is_active } =
       req.body;
 
     //set default update_by
@@ -134,6 +135,7 @@ export const updateModifierController = async (req, res) => {
     await updateModifier(id, {
       modifier_name,
       modifier_value,
+      modifier_type: modifier_type ?? null,
       additional_price,
       is_active,
       updated_by,
