@@ -7,6 +7,7 @@ const formatDate = (value) => {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
+
   return date.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -21,14 +22,25 @@ const formatNumber = (value) => {
   return num.toLocaleString();
 };
 
+const formatCurrency = (value) => {
+  if (value === null || value === undefined || value === "") return "-";
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  return `Rs ${num.toLocaleString()}`;
+};
+
 const formatDuration = (startDate, endDate) => {
   if (!startDate || !endDate) return "-";
+
   const start = new Date(startDate);
   const end = new Date(endDate);
+
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "-";
+
   const msPerDay = 24 * 60 * 60 * 1000;
   const diff = Math.floor((end - start) / msPerDay) + 1;
   if (diff <= 0) return "-";
+
   return `${diff} day${diff > 1 ? "s" : ""}`;
 };
 
@@ -108,8 +120,10 @@ function OfferViewDialog({ visible, onHide, offer }) {
             {infoItem(
               "Lifecycle",
               <Tag
-                value={lifecycle.label}
-                className={`!font-medium !text-xs !px-2 !py-1 !rounded-full ${lifecycle.className}`}
+                value={lifecycle?.label || "Unknown"}
+                className={`!font-medium !text-xs !px-2 !py-1 !rounded-full ${
+                  lifecycle?.className || "!bg-gray-100 !text-gray-700"
+                }`}
               />,
             )}
             {infoItem(
@@ -125,15 +139,6 @@ function OfferViewDialog({ visible, onHide, offer }) {
               </span>,
             )}
             {infoItem("Discount Type", offer.discount_type || "-")}
-const formatCurrency = (value) => {
-  if (value === null || value === undefined || value === "") return "-";
-  const num = Number(value);
-  if (Number.isNaN(num)) return "-";
-  return `Rs ${num.toLocaleString()}`;
-};
-
-// ... elsewhere in the component ...
-
             {infoItem(
               "Maximum Discount Amount",
               formatCurrency(offer.maximum_discount_amount),
@@ -141,12 +146,6 @@ const formatCurrency = (value) => {
             {infoItem(
               "Minimum Purchase Amount",
               formatCurrency(offer.min_purchase_amount),
-            )}
-              `Rs ${formatNumber(offer.maximum_discount_amount)}`,
-            )}
-            {infoItem(
-              "Minimum Purchase Amount",
-              `Rs ${formatNumber(offer.min_purchase_amount)}`,
             )}
             {infoItem(
               "Usage Limit Per User",
@@ -156,7 +155,8 @@ const formatCurrency = (value) => {
               "Duration",
               formatDuration(offer.start_date, offer.end_date),
             )}
-            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <div className="md:col-span-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
               {infoItem("Start Date", formatDate(offer.start_date))}
               {infoItem("End Date", formatDate(offer.end_date))}
               {infoItem("Start Time", formatTime(offer.start_time, "start"))}

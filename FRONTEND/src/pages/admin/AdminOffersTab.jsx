@@ -20,6 +20,7 @@ import OfferDeleteDialog from "./OfferDeleteDialog";
 import OfferUsageDialog from "./OfferUsageDialog";
 import OfferViewDialog from "./OfferViewDialog";
 import "./AdminShared.css";
+import "./AdminOffers.css";
 
 const EMPTY_FORM = {
   offer_name: "",

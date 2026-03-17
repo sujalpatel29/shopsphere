@@ -50,7 +50,7 @@ function OfferFormModal({
         content: { className: "px-6 py-5 font-sans" },
       }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
           <label htmlFor="offer_name" className="block text-sm font-medium mb-1">
             Offer Name <span className="text-red-500">*</span>
@@ -83,6 +83,54 @@ function OfferFormModal({
           />
           {showError("description") && (
             <small className="text-red-500 text-xs mt-1 block">{errors.description}</small>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Offer Type <span className="text-red-500">*</span>
+          </label>
+          <Dropdown
+            value={form.offer_type}
+            options={OFFER_TYPES}
+            onChange={(e) => onChange("offer_type", e.value)}
+            onBlur={() => onBlurField("offer_type")}
+            optionLabel="label"
+            optionValue="value"
+            className="w-full"
+            panelClassName="admin-dropdown-panel rounded-lg"
+            pt={{
+              root: { className: "admin-dropdown-root rounded-lg h-10" },
+              input: { className: "px-3 text-sm" },
+              trigger: { className: "" },
+            }}
+          />
+          {showError("offer_type") && (
+            <small className="text-red-500 text-xs mt-1 block">{errors.offer_type}</small>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Discount Type <span className="text-red-500">*</span>
+          </label>
+          <Dropdown
+            value={form.discount_type}
+            options={DISCOUNT_TYPES}
+            onChange={(e) => onChange("discount_type", e.value)}
+            onBlur={() => onBlurField("discount_type")}
+            optionLabel="label"
+            optionValue="value"
+            className="w-full"
+            panelClassName="admin-dropdown-panel rounded-lg"
+            pt={{
+              root: { className: "admin-dropdown-root rounded-lg h-10" },
+              input: { className: "px-3 text-sm" },
+              trigger: { className: "" },
+            }}
+          />
+          {showError("discount_type") && (
+            <small className="text-red-500 text-xs mt-1 block">{errors.discount_type}</small>
           )}
         </div>
 
@@ -149,54 +197,6 @@ function OfferFormModal({
             )}
           </div>
         )}
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Offer Type <span className="text-red-500">*</span>
-          </label>
-          <Dropdown
-            value={form.offer_type}
-            options={OFFER_TYPES}
-            onChange={(e) => onChange("offer_type", e.value)}
-            onBlur={() => onBlurField("offer_type")}
-            optionLabel="label"
-            optionValue="value"
-            className="w-full"
-            panelClassName="admin-dropdown-panel rounded-lg"
-            pt={{
-              root: { className: "admin-dropdown-root rounded-lg h-10" },
-              input: { className: "px-3 text-sm" },
-              trigger: { className: "" },
-            }}
-          />
-          {showError("offer_type") && (
-            <small className="text-red-500 text-xs mt-1 block">{errors.offer_type}</small>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Discount Type <span className="text-red-500">*</span>
-          </label>
-          <Dropdown
-            value={form.discount_type}
-            options={DISCOUNT_TYPES}
-            onChange={(e) => onChange("discount_type", e.value)}
-            onBlur={() => onBlurField("discount_type")}
-            optionLabel="label"
-            optionValue="value"
-            className="w-full"
-            panelClassName="admin-dropdown-panel rounded-lg"
-            pt={{
-              root: { className: "admin-dropdown-root rounded-lg h-10" },
-              input: { className: "px-3 text-sm" },
-              trigger: { className: "" },
-            }}
-          />
-          {showError("discount_type") && (
-            <small className="text-red-500 text-xs mt-1 block">{errors.discount_type}</small>
-          )}
-        </div>
 
         <div>
           <label htmlFor="discount_value" className="block text-sm font-medium mb-1">
