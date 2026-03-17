@@ -366,11 +366,7 @@ export const getOfferByProductIdController = async (req, res) => {
     const productId = req.params.id;
     const result = await getOfferByProductId(productId);
 
-    if (!result || result.length === 0) {
-      return notFound(res, "No offers found for this product");
-    }
-
-    return ok(res, "Offers fetched successfully by product id", result);
+    return ok(res, "Offers fetched successfully by product id", result || []);
   } catch (error) {
     console.error(error);
     return serverError(res, error.message || "Internal server error");
@@ -385,11 +381,7 @@ export const getOfferByCategoryIdController = async (req, res) => {
     const categoryId = req.params.id;
     const result = await getOfferByCategoryId(categoryId);
 
-    if (!result || result.length === 0) {
-      return notFound(res, "No offers found for this category");
-    }
-
-    return ok(res, "Offers fetched successfully by category id", result);
+    return ok(res, "Offers fetched successfully by category id", result || []);
   } catch (error) {
     console.error(error);
     return serverError(res, error.message || "Internal server error");
@@ -407,11 +399,10 @@ export const getVisibleOffersByProductIdController = async (req, res) => {
     const productCount = result.product_offers?.length ?? 0;
     const categoryCount = result.category_offers?.length ?? 0;
 
-    if (productCount === 0 && categoryCount === 0) {
-      return notFound(res, "No offers found for this product");
-    }
-
-    return ok(res, "Visible offers fetched successfully by product id", result);
+    return ok(res, "Visible offers fetched successfully by product id", {
+      product_offers: result.product_offers || [],
+      category_offers: result.category_offers || [],
+    });
   } catch (error) {
     console.error(error);
     return serverError(res, error.message || "Internal server error");
