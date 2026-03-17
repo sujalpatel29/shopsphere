@@ -269,7 +269,7 @@ async function getModifiersByProductPortion(product_portion_id) {
             mm.modifier_name,
             mm.modifier_value,
             mm.modifier_type,
-            mp.additional_price,
+            COALESCE(NULLIF(mp.additional_price, 0), mm.additional_price, 0) AS additional_price,
             mp.stock,
             mp.is_active,
             mp.modifier_portion_id
@@ -293,7 +293,7 @@ async function getModifiersByProduct(product_id) {
             mm.modifier_name,
             mm.modifier_value,
             mm.modifier_type,
-            mp.additional_price,
+            COALESCE(NULLIF(mp.additional_price, 0), mm.additional_price, 0) AS additional_price,
             mp.stock,
             mp.is_active,
             mp.modifier_portion_id

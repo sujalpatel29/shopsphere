@@ -31,24 +31,44 @@ async function getCartItemsWithProduct(cartId) {
             ci.price AS effective_price,
             ci.product_portion_id,
             ci.modifier_id,
+            ci.combination_id,
+            ci.modifier_key,
+            ci.offer_id AS item_offer_id,
             pm.display_name,
             pm.short_description,
+            pp.portion_id,
             por.portion_value,
             pp.price AS portion_price,
             pp.discounted_price AS portion_discounted_price,
-            mt.modifier_name,
-            mt.modifier_value
+            mc.name AS combination_name,
+            mc.additional_price AS combination_additional_price,
+            pi.image_url
        FROM cart_items ci
        JOIN product_master pm ON pm.product_id = ci.product_id
        LEFT JOIN product_portion pp ON pp.product_portion_id = ci.product_portion_id AND pp.product_id = ci.product_id
        LEFT JOIN portion_master por ON por.portion_id = pp.portion_id
-       LEFT JOIN modifier_master mt ON mt.modifier_id = ci.modifier_id
+       LEFT JOIN modifier_combination mc ON mc.combination_id = ci.combination_id AND mc.is_deleted = 0
+       LEFT JOIN product_images pi ON pi.product_id = ci.product_id AND pi.is_primary = 1 AND pi.is_deleted = 0
       WHERE ci.cart_id = ? AND ci.is_deleted = 0
       ORDER BY ci.cart_item_id`,
     [cartId],
   );
 
-  return rows;
+  // Fetch many-to-many modifiers for each item
+  const cartItemIds = rows.map(r => r.cart_item_id);
+  let modifiersMap = {};
+  if (cartItemIds.length > 0) {
+    const mods = await getCartItemModifiers(cartItemIds);
+    mods.forEach(m => {
+      if (!modifiersMap[m.cart_item_id]) modifiersMap[m.cart_item_id] = [];
+      modifiersMap[m.cart_item_id].push(m);
+    });
+  }
+
+  return rows.map(row => ({
+    ...row,
+    modifiers: modifiersMap[row.cart_item_id] || []
+  }));
 }
 
 async function getCartScopeDetails(cartId) {
@@ -81,6 +101,7 @@ async function findCartItem(
   cartId,
   productId,
   productPortionId = null,
+  combinationId = null,
   modifierKey = null,
 ) {
   let query =
@@ -90,6 +111,15 @@ async function findCartItem(
   if (productPortionId !== null) {
     query += " AND product_portion_id = ?";
     params.push(productPortionId);
+  } else {
+    query += " AND product_portion_id IS NULL";
+  }
+
+  if (combinationId !== null) {
+    query += " AND combination_id = ?";
+    params.push(combinationId);
+  } else {
+    query += " AND combination_id IS NULL";
   }
 
   if (modifierKey !== null) {
@@ -111,15 +141,17 @@ async function insertCartItem({
   quantity,
   price,
   productPortionId = null,
+  combinationId = null,
   modifierKey = null,
   userId,
 }) {
   const [result] = await pool.query(
-    "INSERT INTO cart_items (cart_id, product_id, product_portion_id, modifier_id, modifier_key, quantity, price, created_by, updated_by) VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?)",
+    "INSERT INTO cart_items (cart_id, product_id, product_portion_id, combination_id, modifier_key, quantity, price, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     [
       cartId,
       productId,
       productPortionId,
+      combinationId,
       modifierKey,
       quantity,
       price,
@@ -223,6 +255,32 @@ async function getPortionPricing(productPortionId) {
     portionValue: portion.portion_value,
 
     price: portion.discounted_price ?? portion.price,
+  };
+}
+
+async function getCombinationPricing(combinationId) {
+  const [rows] = await pool.query(
+    `SELECT combination_id,
+            name,
+            additional_price,
+            stock,
+            is_active,
+            is_deleted
+       FROM modifier_combination
+      WHERE combination_id = ?
+      LIMIT 1`,
+    [combinationId],
+  );
+
+  const combo = rows[0];
+  if (!combo || combo.is_deleted || !combo.is_active) return null;
+  if (combo.stock <= 0) return null;  // out of stock
+
+  return {
+    combinationId: combo.combination_id,
+    name: combo.name,
+    additionalPrice: Number(combo.additional_price) || 0,
+    stock: combo.stock,
   };
 }
 
@@ -349,6 +407,7 @@ export {
   insertCartItemModifiers,
   getCartItemModifiers,
   getMultipleModifierPricing,
+  getCombinationPricing,
   updateCartItemQuantity,
   deleteCartItem,
   clearCartItems,

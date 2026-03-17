@@ -6,7 +6,6 @@ import {
   Star,
   Shield,
   User,
-  WalletCards,
 } from "lucide-react";
 
 export const cardPt = {
@@ -31,17 +30,12 @@ export const profileNav = [
   { key: "profile", label: "Profile", icon: User },
   { key: "orders", label: "Orders", icon: Package },
   { key: "addresses", label: "Addresses", icon: MapPin },
-  { key: "wallet", label: "Wallet & Offers", icon: WalletCards },
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "security", label: "Login & Security", icon: Shield },
   { key: "support", label: "Help & Support", icon: HelpCircle },
 ];
 
 export const dashboardPlaceholderContent = {
-  wallet: {
-    title: "Wallet & Offers",
-    text: "Offer usage and wallet history will appear here as soon as those APIs are integrated in the frontend.",
-  },
   wishlist: {
     title: "Wishlist",
     text: "Wishlist UI is ready. Next step is wiring product save/remove endpoints.",

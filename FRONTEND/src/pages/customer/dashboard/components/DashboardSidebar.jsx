@@ -23,7 +23,7 @@ function DashboardSidebar({
 
   return (
     <aside
-      className={`rounded-3xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22] overflow-hidden flex flex-col transition-all duration-300 lg:max-h-[calc(100vh-3rem)] lg:sticky lg:top-6 ${sidebarOpen ? "opacity-100" : "lg:hidden"}`}
+      className={`rounded-3xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22] overflow-hidden flex flex-col transition-all duration-300 lg:max-h-[calc(100vh-7rem)] lg:sticky lg:top-28 ${sidebarOpen ? "opacity-100" : "lg:hidden"}`}
     >
       <div className="relative overflow-hidden rounded-2xl bg-[#163332] px-6 py-8 text-white">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.06),transparent_70%)]" />

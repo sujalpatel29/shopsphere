@@ -11,6 +11,7 @@ import OrderSummaryComponent from "./OrderSummaryComponent";
 import { CalendarDays, PackageCheck, ReceiptIndianRupee } from "lucide-react";
 import api from "../../../../../api/api";
 import "../../../admin/AdminShared.css";
+import CancelReasonDialog from "./CancelReasonDialog";
 
 const ADMIN_ORDER_STATUSES = [
   "pending",
@@ -55,6 +56,7 @@ export default function OrderDetailComponents({
   onClose,
   isDialog = false,
   onOrderStatusChange,
+  onRefresh,
   showToast,
 }) {
   const dispatch = useDispatch();
@@ -75,6 +77,7 @@ export default function OrderDetailComponents({
   const [currentOrderData, setCurrentOrderData] = useState(resolvedOrderData);
   const [statusSaving, setStatusSaving] = useState(false);
   const [statusError, setStatusError] = useState("");
+  const [reasonDialogVisible, setReasonDialogVisible] = useState(false);
 
   const isAdmin = currentUser?.role === "admin";
   const orderData = currentOrderData || resolvedOrderData;
@@ -145,6 +148,9 @@ export default function OrderDetailComponents({
       if (onOrderStatusChange) {
         onOrderStatusChange(nextStatus);
       }
+      if (onRefresh) {
+        onRefresh();
+      }
       showToast?.("success", "Success", "Order status updated successfully.");
     } catch (err) {
       setStatusError(
@@ -155,31 +161,15 @@ export default function OrderDetailComponents({
     }
   };
 
-  const handleCancelOrder = async () => {
-    if (!resolvedOrderId || !canCancelOrder) return;
-
-    setStatusSaving(true);
-    setStatusError("");
-
-    try {
-      await api.post(`/order/${resolvedOrderId}/cancel-request`);
-
-      setCurrentOrderData((prev) => ({
-        ...(prev || {}),
-        cancel_request_status: "pending",
-      }));
-      showToast?.(
-        "success",
-        "Success",
-        "Cancellation request submitted successfully.",
-      );
-    } catch (err) {
-      setStatusError(
-        err?.response?.data?.message ||
-          "Unable to submit cancellation request.",
-      );
-    } finally {
-      setStatusSaving(false);
+  const handleCancelRequestSuccess = (updatedData) => {
+    setCurrentOrderData((prev) => ({
+      ...(prev || {}),
+      cancel_request_status: "pending",
+      cancel_request_reason: updatedData?.request?.reason || prev?.cancel_request_reason,
+      cancel_request_created_at: new Date().toISOString()
+    }));
+    if (onRefresh) {
+      onRefresh();
     }
   };
 
@@ -205,6 +195,9 @@ export default function OrderDetailComponents({
 
       if (onOrderStatusChange) {
         onOrderStatusChange("returned");
+      }
+      if (onRefresh) {
+        onRefresh();
       }
       showToast?.("success", "Success", "Return request submitted successfully.");
     } catch (err) {
@@ -283,7 +276,7 @@ export default function OrderDetailComponents({
                 }
                 icon="pi pi-times"
                 outlined
-                onClick={handleCancelOrder}
+                onClick={() => setReasonDialogVisible(true)}
                 disabled={statusSaving}
                 className="order-flow-secondary-button !border-red-300 !text-red-700 hover:!bg-red-50 dark:!border-red-500/40 dark:!text-red-300 dark:hover:!bg-red-500/10"
               />
@@ -504,10 +497,74 @@ export default function OrderDetailComponents({
           </Card>
         </div>
 
-        <div className={isDialog ? "lg:sticky lg:top-0 self-start" : ""}>
+        <div className={isDialog ? "lg:sticky lg:top-0 self-start space-y-4" : "space-y-4"}>
           <OrderSummaryComponent title="Order Summary" orderData={orderData} />
+          
+          {(orderData?.cancel_request_status || orderData?.order_status === 'cancelled') && (
+            <Card className="order-flow-card !bg-slate-50/50 dark:!bg-slate-900/30" pt={{ body: { className: "p-4" }, content: { className: "p-0" } }}>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100 mb-4 px-1">
+                Cancellation Status
+              </h4>
+              
+              <div className="relative space-y-6 pl-4 border-l-2 border-slate-200 dark:border-slate-800 ml-2">
+                {/* Step 1: Requested */}
+                <div className="relative">
+                  <span className="absolute -left-[25px] top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 ring-4 ring-white dark:ring-slate-950">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Cancellation Requested</p>
+                    <p className="text-xs text-slate-500">{formatDate(orderData?.cancel_request_created_at || orderData?.updated_at)}</p>
+                    {orderData?.cancel_request_reason && (
+                      <div className="mt-2 rounded-lg bg-white dark:bg-slate-800 p-2 text-xs border border-slate-100 dark:border-slate-700 italic text-slate-600 dark:text-slate-400">
+                        "{orderData.cancel_request_reason}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Step 2: Review (Pending or Reviewed) */}
+                {orderData?.cancel_request_status === 'pending' ? (
+                  <div className="relative">
+                    <span className="absolute -left-[25px] top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 animate-pulse">
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Awaiting Admin Review</p>
+                      <p className="text-xs text-slate-500 uppercase tracking-tighter">In Progress</p>
+                    </div>
+                  </div>
+                ) : (orderData?.cancel_request_status === 'approved' || orderData?.cancel_request_status === 'rejected' || orderData?.order_status === 'cancelled') && (
+                  <div className="relative">
+                    <span className={`absolute -left-[25px] top-1 flex h-4 w-4 items-center justify-center rounded-full ${orderData?.cancel_request_status === 'rejected' ? 'bg-rose-500' : 'bg-emerald-500'} ring-4 ring-white dark:ring-slate-950`}>
+                      <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
+                    </span>
+                    <div>
+                      <p className={`text-sm font-semibold ${orderData?.cancel_request_status === 'rejected' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        {orderData?.cancel_request_status === 'rejected' ? 'Request Rejected' : 'Cancellation Approved'}
+                      </p>
+                      <p className="text-xs text-slate-500">{formatDate(orderData?.cancel_request_reviewed_at || orderData?.updated_at)}</p>
+                      {orderData?.cancel_request_status === 'rejected' && orderData?.cancel_request_admin_note && (
+                        <div className="mt-2 rounded-lg bg-rose-50 dark:bg-rose-900/10 p-2 text-xs border border-rose-100 dark:border-rose-900/30 text-rose-700 dark:text-rose-300">
+                          <p className="font-semibold mb-1">Reason for Rejection:</p>
+                          {orderData.cancel_request_admin_note}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
         </div>
       </div>
+
+      <CancelReasonDialog 
+        visible={reasonDialogVisible}
+        onHide={() => setReasonDialogVisible(false)}
+        orderId={resolvedOrderId}
+        onSuccess={handleCancelRequestSuccess}
+        showToast={showToast}
+      />
     </div>
   );
 }

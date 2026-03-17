@@ -11,8 +11,9 @@ import {
   clearCartItems,
   getProductPricing,
   getPortionPricing,
-  getMultipleModifierPricing,
+  getCombinationPricing,
   getFirstAvailablePortion,
+  getMultipleModifierPricing,
 } from "../models/cart.model.js";
 
 import {
@@ -252,6 +253,10 @@ async function buildCartResponse(cartId, items, cartOffer = null) {
 
       portionValue: item.portion_value,
 
+      combinationId: item.combination_id ?? null,
+
+      combinationName: item.combination_name ?? null,
+
       modifiers: item.modifiers || [],
 
       appliedOffer: appliedItemOffer,
@@ -387,28 +392,18 @@ async function getCart(req, res) {
 async function addItemToCart(req, res) {
   try {
     const userId = req.user.id;
-    const { productId, quantity, portionId, modifierIds } = req.body;
+    const { productId, quantity, portionId, combinationId, modifierIds } = req.body;
 
     const parsedProductId = parsePositiveInt(productId);
     const parsedQuantity = parsePositiveInt(quantity);
     const parsedPortionId = portionId ? parsePositiveInt(portionId) : null;
-
-    // Parse and deduplicate modifier IDs array
-    let parsedModifierIds = [];
-    if (Array.isArray(modifierIds) && modifierIds.length > 0) {
-      parsedModifierIds = [
-        ...new Set(
-          modifierIds.map((id) => parsePositiveInt(id)).filter(Boolean),
-        ),
-      ];
-    }
+    const parsedCombinationId = combinationId ? parsePositiveInt(combinationId) : null;
 
     if (!parsedProductId || !parsedQuantity) {
       return badRequest(res, "Invalid productId or quantity");
     }
 
     const pricing = await getProductPricing(parsedProductId);
-
     if (!pricing) {
       return notFound(res, "Product not found or inactive");
     }
@@ -419,90 +414,76 @@ async function addItemToCart(req, res) {
     // Validate portion or auto-select first available
     if (parsedPortionId) {
       const portionPricing = await getPortionPricing(parsedPortionId);
-
       if (!portionPricing) {
-        return badRequest(
-          res,
-          "Invalid portion specified. This portion does not exist or is inactive.",
-        );
+        return badRequest(res, "Invalid portion specified.");
       }
-
       itemPrice = Number(portionPricing.price);
     } else {
       const defaultPortion = await getFirstAvailablePortion(parsedProductId);
-
       if (defaultPortion) {
         finalPortionId = defaultPortion.productPortionId;
         itemPrice = Number(defaultPortion.price);
-      } else {
-        finalPortionId = null;
-        itemPrice = Number(pricing.price);
       }
     }
 
-    // Validate all modifier IDs and sum their additional prices
-    if (parsedModifierIds.length > 0) {
-      const modifierRows = await getMultipleModifierPricing(parsedModifierIds);
-
-      if (modifierRows.length !== parsedModifierIds.length) {
-        return badRequest(
-          res,
-          "One or more modifiers are invalid or inactive.",
-        );
+    // Validate combination
+    if (parsedCombinationId) {
+      const comboPricing = await getCombinationPricing(parsedCombinationId);
+      if (!comboPricing) {
+        return badRequest(res, "Selected combination is unavailable.");
       }
-
-      const additionalTotal = modifierRows.reduce(
-        (sum, m) => sum + Number(m.additional_price),
-        0,
-      );
-      itemPrice = Math.round((itemPrice + additionalTotal) * 1000) / 1000;
-    } else {
-      itemPrice = Math.round(itemPrice * 1000) / 1000;
+      itemPrice = Math.round((itemPrice + comboPricing.additionalPrice) * 100) / 100;
     }
 
-    // Denormalized lookup key: sorted modifier IDs joined by comma
-    const modifierKey =
-      parsedModifierIds.length > 0
-        ? [...parsedModifierIds].sort((a, b) => a - b).join(",")
-        : null;
+    // Handle Raw Modifiers
+    let modifierKey = null;
+    let rawModifiersTotal = 0;
+    if (modifierIds && Array.isArray(modifierIds) && modifierIds.length > 0) {
+      const modifierDetails = await getMultipleModifierPricing(modifierIds);
+      if (modifierDetails.length !== modifierIds.length) {
+        return badRequest(res, "One or more selected modifiers are invalid or inactive.");
+      }
+      rawModifiersTotal = modifierDetails.reduce((sum, m) => sum + Number(m.additional_price), 0);
+      modifierKey = modifierIds.sort((a, b) => a - b).join("-");
+      itemPrice = Math.round((itemPrice + rawModifiersTotal) * 100) / 100;
+    }
 
     const existingItem = await findCartItem(
       req.cart.cart_id,
       parsedProductId,
       finalPortionId,
-      modifierKey,
+      parsedCombinationId,
+      modifierKey
     );
 
+    let cartItemId;
     if (existingItem) {
+      cartItemId = existingItem.cart_item_id;
       const newQuantity = existingItem.quantity + parsedQuantity;
-
-      await updateCartItemQuantity(
-        existingItem.cart_item_id,
-        newQuantity,
-        userId,
-      );
+      await updateCartItemQuantity(cartItemId, newQuantity, userId);
     } else {
-      const newCartItemId = await insertCartItem({
+      cartItemId = await insertCartItem({
         cartId: req.cart.cart_id,
         productId: parsedProductId,
         quantity: parsedQuantity,
         price: itemPrice,
         productPortionId: finalPortionId,
-        modifierKey,
+        combinationId: parsedCombinationId,
+        modifierKey: modifierKey,
         userId,
       });
 
-      await insertCartItemModifiers(newCartItemId, parsedModifierIds);
+      // Insert into join table
+      if (modifierIds && modifierIds.length > 0) {
+        await insertCartItemModifiers(cartItemId, modifierIds);
+      }
     }
 
-    const items = await getCartItemsWithOffer(req.cart.cart_id);
-
+    const items = await getCartItemsWithProduct(req.cart.cart_id);
     const response = await buildCartResponse(req.cart.cart_id, items);
-
     return created(res, "Item added to cart", response);
   } catch (err) {
     console.error("Error in addItemToCart:", err);
-
     return serverError(res, "Internal server error");
   }
 }

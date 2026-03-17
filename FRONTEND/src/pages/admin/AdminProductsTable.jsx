@@ -313,7 +313,7 @@ function AdminProductsTable({
 
     // Filter modifiers by the selected portion
     const filtered = selectedPpId
-      ? allModifiers.filter((m) => m.ppId === selectedPpId)
+      ? allModifiers.filter((m) => m.ppId === selectedPpId || m.ppId === 0)
       : allModifiers;
 
     if (filtered.length === 0) {

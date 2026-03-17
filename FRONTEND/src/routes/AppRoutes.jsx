@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import AppLayout from "../components/layout/AppLayout";
 import AdminLayout from "../components/layout/AdminLayout";
@@ -8,6 +8,7 @@ import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import HomePage from "../pages/customer/HomePage";
 import DashboardPage from "../pages/customer/DashboardPage";
 import CartPage from "../pages/customer/CartPage";
+import ProductDetailsPage from "../pages/customer/ProductDetailsPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import CategoryPage from "../pages/customer/categoryPage";
 import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPage";
@@ -26,6 +27,11 @@ import ReturnsInfoPage from "../pages/customer/ReturnsInfoPage";
 import SecurityInfoPage from "../pages/customer/SecurityInfoPage";
 import ShippingInfoPage from "../pages/customer/ShippingInfoPage";
 import TermsInfoPage from "../pages/customer/TermsInfoPage";
+
+function RedirectCategoriesToShop() {
+  const location = useLocation();
+  return <Navigate to={`/shop${location.search || ""}`} replace />;
+}
 
 function RedirectIfAdmin({ children }) {
   const { currentUser } = useSelector((state) => state.auth);
@@ -82,10 +88,12 @@ function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/categories" element={<CategoryPage />} />
+          <Route path="/shop" element={<CategoryPage />} />
+          <Route path="/categories" element={<RedirectCategoriesToShop />} />
           <Route path="/products" element={<HomePage />} />
-          <Route path="/products/:id" element={<ProductDetailsPlaceholder />} />
+
           <Route path="/items/:id" element={<ItemsPage />} />
+          <Route path="/products/:productId" element={<ProductDetailsPage />} />
           <Route path="/info/about" element={<AboutInfoPage />} />
           <Route path="/info/contact" element={<ContactInfoPage />} />
           <Route path="/info/payments" element={<PaymentsInfoPage />} />

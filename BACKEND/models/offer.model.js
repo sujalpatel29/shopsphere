@@ -821,6 +821,7 @@ export const getCartItemsWithOffer = async (cartId) => {
             ci.quantity,
             ci.price AS effective_price,
             ci.product_portion_id,
+            ci.combination_id,
             ci.offer_id AS item_offer_id,
             pm.display_name,
             pm.short_description,
@@ -831,9 +832,12 @@ export const getCartItemsWithOffer = async (cartId) => {
               ORDER BY pimg.is_primary DESC, pimg.image_id DESC
               LIMIT 1
             ) AS image_url,
+            pp.portion_id,
             por.portion_value,
             pp.price AS portion_price,
             pp.discounted_price AS portion_discounted_price,
+            mc.name AS combination_name,
+            mc.additional_price AS combination_additional_price,
             item_offer.offer_name AS item_offer_name,
             item_offer.offer_type AS item_offer_type,
             item_offer.discount_type AS item_discount_type,
@@ -843,6 +847,7 @@ export const getCartItemsWithOffer = async (cartId) => {
        JOIN product_master pm ON pm.product_id = ci.product_id
        LEFT JOIN product_portion pp ON pp.product_portion_id = ci.product_portion_id AND pp.product_id = ci.product_id
        LEFT JOIN portion_master por ON por.portion_id = pp.portion_id
+       LEFT JOIN modifier_combination mc ON mc.combination_id = ci.combination_id AND mc.is_deleted = 0
        LEFT JOIN offer_master item_offer ON item_offer.offer_id = ci.offer_id
       WHERE ci.cart_id = ? AND ci.is_deleted = 0
       ORDER BY ci.cart_item_id`,

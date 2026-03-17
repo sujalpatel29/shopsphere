@@ -68,6 +68,7 @@ function AdminOrdersTab() {
   const [cancelRequestsLoading, setCancelRequestsLoading] = useState(false);
   const [reviewingRequestId, setReviewingRequestId] = useState(null);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
+  const [adminNotes, setAdminNotes] = useState({}); // { requestId: note }
 
   const stats = {
     pending: adminStats?.totalPending || 0,
@@ -238,9 +239,18 @@ function AdminOrdersTab() {
     async (request, action) => {
       if (!request?.request_id || !action) return;
 
+      const adminNote = adminNotes[request.request_id] || "";
+      if (action === "reject" && !adminNote.trim()) {
+        showToast("error", "Error", "Please provide a reason for rejection.");
+        return;
+      }
+
       setReviewingRequestId(request.request_id);
       try {
-        const result = await reviewCancelRequest(request.request_id, { action });
+        const result = await reviewCancelRequest(request.request_id, { 
+          action,
+          admin_note: adminNote
+        });
 
         showToast(
           "success",
@@ -279,7 +289,7 @@ function AdminOrdersTab() {
         setReviewingRequestId(null);
       }
     },
-    [loadCancelRequests, loadOrders, patchSelectedOrder, showToast],
+    [adminNotes, loadCancelRequests, loadOrders, patchSelectedOrder, showToast],
   );
 
   const statusTemplate = (rowData) => (
@@ -648,6 +658,27 @@ function AdminOrdersTab() {
                             {request.reason?.trim() || "No reason provided by user."}
                           </span>
                         </p>
+                        
+                        {isPending && (
+                          <div className="mt-3">
+                            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1 block">
+                              Admin Note / Rejection Reason
+                            </label>
+                            <InputText 
+                              value={adminNotes[request.request_id] || ""}
+                              onChange={(e) => setAdminNotes(prev => ({ ...prev, [request.request_id]: e.target.value }))}
+                              placeholder="Write a note or reason for rejection..."
+                              className="admin-search-input w-full text-sm py-1.5"
+                            />
+                          </div>
+                        )}
+                        
+                        {!isPending && request.admin_note && (
+                          <p className="text-sm mt-2">
+                            <span className="font-semibold">Admin Note:</span>{" "}
+                            <span className="text-muted italic">{request.admin_note}</span>
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap gap-2 md:justify-end">

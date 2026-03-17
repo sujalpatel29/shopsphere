@@ -166,13 +166,41 @@ export const getAllOrder = async (
          ORDER BY ocr.created_at DESC, ocr.request_id DESC
          LIMIT 1
        ) AS cancel_request_status,
-       (
-         SELECT ocr.request_id
-         FROM order_cancel_requests ocr
-         WHERE ocr.order_id = om.order_id
-         ORDER BY ocr.created_at DESC, ocr.request_id DESC
-         LIMIT 1
-       ) AS cancel_request_id
+        (
+          SELECT ocr.request_id
+          FROM order_cancel_requests ocr
+          WHERE ocr.order_id = om.order_id
+          ORDER BY ocr.created_at DESC, ocr.request_id DESC
+          LIMIT 1
+        ) AS cancel_request_id,
+        (
+          SELECT ocr.reason
+          FROM order_cancel_requests ocr
+          WHERE ocr.order_id = om.order_id
+          ORDER BY ocr.created_at DESC, ocr.request_id DESC
+          LIMIT 1
+        ) AS cancel_request_reason,
+        (
+          SELECT ocr.admin_note
+          FROM order_cancel_requests ocr
+          WHERE ocr.order_id = om.order_id
+          ORDER BY ocr.created_at DESC, ocr.request_id DESC
+          LIMIT 1
+        ) AS cancel_request_admin_note,
+        (
+          SELECT ocr.reviewed_at
+          FROM order_cancel_requests ocr
+          WHERE ocr.order_id = om.order_id
+          ORDER BY ocr.created_at DESC, ocr.request_id DESC
+          LIMIT 1
+        ) AS cancel_request_reviewed_at,
+        (
+          SELECT ocr.created_at
+          FROM order_cancel_requests ocr
+          WHERE ocr.order_id = om.order_id
+          ORDER BY ocr.created_at DESC, ocr.request_id DESC
+          LIMIT 1
+        ) AS cancel_request_created_at
      FROM order_master om
      WHERE user_id = ? AND is_deleted = 0
      ORDER BY ${orderBy} ${direction}

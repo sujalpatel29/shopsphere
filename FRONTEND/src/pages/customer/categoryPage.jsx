@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Toast } from "primereact/toast";
+import { Dropdown } from "primereact/dropdown";
+import { useTheme } from "../../context/ThemeContext";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
 import SelectedFilters from "../../components/category/SelectedFilters";
@@ -21,6 +22,19 @@ const extractProducts = (res) => {
   if (Array.isArray(data?.data)) return data.data;
   if (Array.isArray(data?.items)) return data.items;
   return [];
+};
+
+const getAnyProductId = (product) =>
+  product?.product_id ??
+  product?.id ??
+  product?.productId ??
+  product?.product?.product_id ??
+  product?.product?.id ??
+  null;
+
+const toPositiveInt = (value) => {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
 };
 
 const extractCategoryTree = (res) => {
@@ -106,9 +120,24 @@ const useDebouncedValue = (value, delayMs = 300) => {
 
 function CategoryPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const toast = useRef(null);
+  const { darkMode } = useTheme();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser } = useSelector((state) => state.auth);
+  const [recentlyAddedId, setRecentlyAddedId] = useState(null);
+  const lastAddBtnRef = useRef(null);
+  const [addingProductId, setAddingProductId] = useState(null);
+  const [addErrorProductId, setAddErrorProductId] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const el = e?.detail?.target;
+      if (el && typeof el.getBoundingClientRect === "function") {
+        lastAddBtnRef.current = el;
+      }
+    };
+    window.addEventListener("shopsphere:addToCartClick", handler);
+    return () => window.removeEventListener("shopsphere:addToCartClick", handler);
+  }, []);
 
   const [isTreeLoading, setIsTreeLoading] = useState(true);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
@@ -130,6 +159,61 @@ function CategoryPage() {
   const debouncedPriceRange = useDebouncedValue(priceRange, 300);
   const urlSearch = searchParams.get("search") || "";
   const urlCategory = searchParams.get("category");
+  const urlSortField = (searchParams.get("sortField") || "").trim();
+  const urlSortOrder = (searchParams.get("sortOrder") || "").trim();
+  const urlSortKey = `${urlSortField}:${urlSortOrder}`;
+
+  const sortOptions = useMemo(
+    () => [
+      { label: "Featured", value: ":" },
+      { label: "Newest", value: "created_at:desc" },
+      { label: "Price: Low to High", value: "price:asc" },
+      { label: "Price: High to Low", value: "price:desc" },
+      { label: "Name: A to Z", value: "name:asc" },
+      { label: "Name: Z to A", value: "name:desc" },
+    ],
+    [],
+  );
+
+  const [sortKey, setSortKey] = useState(":");
+
+  useEffect(() => {
+    const match = sortOptions.some((opt) => opt.value === urlSortKey);
+    setSortKey(match ? urlSortKey : ":");
+  }, [urlSortKey, sortOptions]);
+
+  const [sortField, sortOrder] = useMemo(() => {
+    const [field = "", order = ""] = (sortKey || ":").split(":");
+    return [field, order];
+  }, [sortKey]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    const nextField = sortField || "";
+    const nextOrder = sortOrder || "";
+
+    const currentField = (params.get("sortField") || "").trim();
+    const currentOrder = (params.get("sortOrder") || "").trim();
+
+    if (!nextField) {
+      params.delete("sortField");
+      params.delete("sortOrder");
+    } else {
+      params.set("sortField", nextField);
+      params.set("sortOrder", nextOrder || "asc");
+    }
+
+    const afterField = (params.get("sortField") || "").trim();
+    const afterOrder = (params.get("sortOrder") || "").trim();
+    const changed = currentField !== afterField || currentOrder !== afterOrder;
+    if (changed) setSearchParams(params, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortField, sortOrder]);
+
+  const sortSignature = useMemo(
+    () => (sortField ? `${sortField}:${sortOrder || "asc"}` : ""),
+    [sortField, sortOrder],
+  );
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -245,12 +329,13 @@ function CategoryPage() {
     const priceKey = hasUserPriceSelectionRef.current
       ? `${debouncedPriceRange[0]}-${debouncedPriceRange[1]}`
       : "";
-    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}`;
+    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}|${sortSignature}`;
   }, [
     debouncedSearchText,
     parentSelectionIds,
     childSelectionIds,
     debouncedPriceRange,
+    sortSignature,
   ]);
 
   const boundsSignature = useMemo(() => {
@@ -307,6 +392,7 @@ function CategoryPage() {
             limit: pager.rows,
             ...(hasSearch ? { search: debouncedSearchText } : {}),
             ...priceFilterParams,
+            ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
           });
           items = extractProducts(productRes);
           if (requestId === productsRequestIdRef.current) {
@@ -324,6 +410,7 @@ function CategoryPage() {
             ...priceFilterParams,
             page: backendPage,
             limit: pager.rows,
+            ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
           });
           items = extractProducts(productRes);
           if (requestId === productsRequestIdRef.current) {
@@ -333,6 +420,42 @@ function CategoryPage() {
 
         if (items.length > pager.rows) {
           items = items.slice(0, pager.rows);
+        }
+
+        // Client-side sort fallback (in case backend ignores sortField/sortOrder)
+        if (sortField && items.length > 1) {
+          const orderFactor = (sortOrder || "asc").toLowerCase() === "desc" ? -1 : 1;
+          const safeText = (value) => String(value ?? "").toLowerCase();
+          const safeNumber = (value) => {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : 0;
+          };
+          const safeDate = (value) => {
+            const t = Date.parse(value);
+            return Number.isFinite(t) ? t : 0;
+          };
+
+          const getEffectivePrice = (p) =>
+            safeNumber(p.discounted_price ?? p.price ?? 0);
+
+          const compare = (a, b) => {
+            if (sortField === "price") {
+              return (getEffectivePrice(a) - getEffectivePrice(b)) * orderFactor;
+            }
+            if (sortField === "created_at") {
+              return (safeDate(a.created_at) - safeDate(b.created_at)) * orderFactor;
+            }
+            if (sortField === "name") {
+              const left = safeText(a.display_name ?? a.name);
+              const right = safeText(b.display_name ?? b.name);
+              if (left < right) return -1 * orderFactor;
+              if (left > right) return 1 * orderFactor;
+              return 0;
+            }
+            return 0;
+          };
+
+          items = [...items].sort(compare);
         }
 
         if (requestId === productsRequestIdRef.current) {
@@ -445,95 +568,237 @@ function CategoryPage() {
     setPriceRange([priceBounds.min, priceBounds.max]);
   };
 
-  const doAddToCart = async (product, portionId, modifierIds) => {
-    const productId = product.product_id || product.id;
+  const doAddToCart = async (
+    product,
+    portionId,
+    combinationId,
+    modifierIds = null,
+  ) => {
     try {
+      const pid = toPositiveInt(getAnyProductId(product));
+      if (!pid) {
+        setAddErrorProductId("invalid");
+        window.setTimeout(() => setAddErrorProductId(null), 800);
+        return;
+      }
+      setAddingProductId(pid);
+      setAddErrorProductId(null);
       await api.post("/cart/items", {
-        productId,
+        productId: pid,
+        portionId: portionId ? toPositiveInt(portionId) : undefined,
+        combinationId: combinationId ? toPositiveInt(combinationId) : undefined,
+        modifierIds:
+          Array.isArray(modifierIds) && modifierIds.length > 0
+            ? modifierIds.map((id) => Number(id)).filter(Boolean)
+            : undefined,
         quantity: 1,
-        ...(portionId != null && { portionId }),
-        ...(modifierIds != null && { modifierIds }),
       });
       window.dispatchEvent(new CustomEvent("cart:updated"));
-      toast.current?.show({
-        severity: "success",
-        summary: "Added to Cart",
-        detail: `${product.display_name || product.name} added to cart`,
-        life: 3000,
-      });
+      const id = pid;
+      if (id) {
+        setRecentlyAddedId(id);
+        window.setTimeout(() => setRecentlyAddedId(null), 900);
+      }
+
+      // ── Premium fly-to-cart animation ──────────────────────────────────
+      try {
+        const fromEl = lastAddBtnRef.current;
+        const cartEl = document.getElementById("shopsphere-cart-link");
+        const imgUrl = product.image_url || product.imageUrl || product.image;
+
+        if (fromEl && cartEl) {
+          const fromRect = fromEl.getBoundingClientRect();
+          const toRect   = cartEl.getBoundingClientRect();
+
+          const fromX = fromRect.left + fromRect.width  / 2;
+          const fromY = fromRect.top  + fromRect.height / 2;
+          const toX   = toRect.left   + toRect.width    / 2;
+          const toY   = toRect.top    + toRect.height   / 2;
+
+          const dx = toX - fromX;
+          const dy = toY - fromY;
+          // Arc peak: go up 60px relative to the midpoint
+          const peakY = -Math.abs(dy) * 0.38 - 60;
+
+          const DURATION = 720; // ms
+
+          // ── 1. Particle burst ────────────────────────────────────────
+          const PARTICLE_COLORS = [
+            "#2f7a6f", "#34d399", "#6ee7b7",
+            "#fbbf24", "#f59e0b", "#fff",
+          ];
+          for (let i = 0; i < 10; i++) {
+            const angle = (i / 10) * 2 * Math.PI;
+            const dist  = 28 + Math.random() * 36;
+            const p = document.createElement("div");
+            p.className = "shopsphere-particle";
+            p.style.cssText = `
+              left: ${fromX}px;
+              top:  ${fromY}px;
+              width:  ${4 + Math.random() * 6}px;
+              height: ${4 + Math.random() * 6}px;
+              --p-color: ${PARTICLE_COLORS[i % PARTICLE_COLORS.length]};
+              --p-tx: ${(Math.cos(angle) * dist).toFixed(1)}px;
+              --p-ty: ${(Math.sin(angle) * dist).toFixed(1)}px;
+              --p-dur: ${380 + Math.random() * 220}ms;
+              --p-ease: cubic-bezier(0.22, 1, 0.36, 1);
+              margin-left: -4px;
+              margin-top:  -4px;
+            `;
+            document.body.appendChild(p);
+            window.setTimeout(() => p.remove(), 700);
+          }
+
+          // ── 2. Flying bubble ────────────────────────────────────────
+          const fly = document.createElement("div");
+          fly.className   = "shopsphere-fly-to-cart";
+          fly.style.cssText = `left: ${fromX}px; top: ${fromY}px;`;
+
+          const inner = document.createElement("div");
+          inner.className = "shopsphere-fly-inner";
+
+          if (imgUrl) {
+            const img = document.createElement("img");
+            img.src = imgUrl;
+            img.alt = "";
+            img.className = "shopsphere-fly-img";
+            inner.appendChild(img);
+          } else {
+            inner.classList.add("shopsphere-fly-dot");
+          }
+
+          fly.appendChild(inner);
+          document.body.appendChild(fly);
+
+          // Set CSS custom properties for the arc keyframes
+          fly.style.setProperty("--fly-dx",   `${dx}px`);
+          fly.style.setProperty("--fly-dy",   `0px`);  // Y handled on inner
+          inner.style.setProperty("--fly-dy",   `${dy}px`);
+          inner.style.setProperty("--fly-peak", `${peakY}px`);
+
+          // Apply keyframe animations — X on outer (linear), Y+scale on inner (arc)
+          fly.style.animation   = `flyArcX ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards,
+                                    flyFadeOut ${DURATION}ms ease forwards`;
+          inner.style.animation = `flyArcY ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards`;
+
+          // ── 3. Wiggle the cart icon just before landing ───────────
+          window.setTimeout(() => {
+            cartEl.classList.add("shopsphere-cart-wiggle");
+            const removeWiggle = () => {
+              cartEl.classList.remove("shopsphere-cart-wiggle");
+              cartEl.removeEventListener("animationend", removeWiggle);
+            };
+            cartEl.addEventListener("animationend", removeWiggle);
+          }, DURATION - 80);
+
+          // ── 4. Cleanup ────────────────────────────────────────────
+          window.setTimeout(() => fly.remove(), DURATION + 60);
+        }
+      } catch {
+        // ignore animation failures silently
+      }
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to add to cart",
-        life: 3000,
-      });
+      const pid = toPositiveInt(getAnyProductId(product));
+      if (pid) {
+        setAddErrorProductId(pid);
+        window.setTimeout(() => setAddErrorProductId(null), 800);
+      }
+    } finally {
+      setAddingProductId(null);
     }
+  };
+
+  /**
+   * Parse the encoded portion_details string from the product list API response.
+   * Format: "ppId@@value||price||discountedPrice||stock;;ppId2@@value2||..."
+   */
+  const parseProdPortionDetails = (product) => {
+    const raw = product?.portion_details;
+    if (!raw || typeof raw !== "string") return [];
+    return raw
+      .split(";;")
+      .map((seg) => {
+        const [idPart, rest] = seg.split("@@");
+        if (!idPart || !rest) return null;
+        const [portion_value, price, discounted_price, stock] = rest.split("||");
+        const product_portion_id = Number(idPart);
+        if (!product_portion_id) return null;
+        return { product_portion_id, portion_value, price: Number(price), discounted_price: discounted_price ? Number(discounted_price) : null, stock: Number(stock) };
+      })
+      .filter(Boolean);
   };
 
   const handleAddToCart = async (product) => {
     if (!currentUser) {
-      toast.current?.show({
-        severity: "warn",
-        summary: "Login Required",
-        detail: "Please login to add items to cart",
-        life: 3000,
-      });
-      navigate("/login", { state: { from: "/categories" } });
+      navigate("/login", { state: { from: "/shop" } });
       return;
     }
 
-    const productId = product.product_id || product.id;
+    const productId = toPositiveInt(getAnyProductId(product));
     if (!productId) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Invalid product",
-        life: 3000,
-      });
+      setAddErrorProductId("invalid");
+      window.setTimeout(() => setAddErrorProductId(null), 800);
       return;
     }
+
+    // Declared outside try-catch so it's preserved in the catch/finally path
+    let targetPortionId = null;
 
     try {
-      const portRes = await api.get(`/portion/getProductPortions/${productId}`);
-      const raw = portRes.data?.data ?? portRes.data ?? [];
-      const portions = Array.isArray(raw) ? raw : [];
+      setAddingProductId(productId);
+      setAddErrorProductId(null);
 
+      // ── 1. Get portions — use pre-loaded data from product list API first ──
+      let portions = parseProdPortionDetails(product);
+
+      // Fall back to API only if the product has no embedded portion data
+      // (e.g. navigating from a detail page that doesn't include portion_details)
+      if (!portions.length && Number(product?.portion_count) > 0) {
+        try {
+          const portRes = await api.get(`/portion/getProductPortions/${productId}`);
+          const raw = portRes.data?.data ?? portRes.data ?? [];
+          portions = Array.isArray(raw) ? raw : [];
+        } catch {
+          portions = [];
+        }
+      }
+
+      // ── 2. If multiple portions → show picker ──
       if (portions.length > 1) {
         setPickerProduct({ ...product, _portions: portions });
-        return;
+        return; // finally will clear addingProductId
       }
 
-      if (portions.length === 1) {
-        const portionId = portions[0].product_portion_id;
-        const modRes = await api.get(`/modifiers/by-portion/${portionId}`);
-        const rawMods = modRes.data?.data ?? modRes.data ?? [];
-        const mods = Array.isArray(rawMods) ? rawMods : [];
+      // ── 3. Determine single portionId (or null for products with no portions) ──
+      targetPortionId = portions.length === 1 ? portions[0].product_portion_id : null;
 
-        if (mods.length > 0) {
-          setPickerProduct({ ...product, _portions: portions });
-          return;
-        }
+      // ── 4. Check for modifiers/combinations ──
+      const hasModifiers = Number(product?.modifier_count) > 0;
 
-        await doAddToCart(product, portionId, null);
-        return;
+      if (hasModifiers) {
+        // Product has modifiers — show picker so user can select them
+        setPickerProduct({ ...product, _portions: portions });
+        return; // finally will clear addingProductId
       }
 
-      await doAddToCart(product, null, null);
-    } catch {
-      await doAddToCart(product, null, null);
+      // ── 5. No picker needed — add directly ──
+      await doAddToCart(product, targetPortionId, null);
+    } catch (error) {
+      console.error("Error in handleAddToCart:", error);
+      await doAddToCart(product, targetPortionId, null);
+    } finally {
+      setAddingProductId(null);
     }
   };
 
-  const handlePickerConfirm = async (portionId, modifierIds) => {
-    await doAddToCart(pickerProduct, portionId, modifierIds);
+  const handlePickerConfirm = async (portionId, modifierIds, combinationId) => {
+    await doAddToCart(pickerProduct, portionId, combinationId, modifierIds);
     setPickerProduct(null);
   };
 
   return (
     <div className="category-page">
-      <Toast ref={toast} position="top-right" className="app-toast-offset" />
       {pickerProduct && (
         <PortionPickerModal
           product={pickerProduct}
@@ -558,11 +823,65 @@ function CategoryPage() {
           />
 
           <div className="category-results flex-1 space-y-6">
-            <CategorySearchBar
-              isLoading={isTreeLoading}
-              searchText={searchText}
-              onSearchChange={setSearchText}
-            />
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="flex-1">
+                <CategorySearchBar
+                  isLoading={isTreeLoading}
+                  searchText={searchText}
+                  onSearchChange={setSearchText}
+                />
+              </div>
+              <div
+                className={`w-full lg:w-64 rounded-xl border px-3 py-2.5 ${
+                  darkMode
+                    ? "border-[#1f2933] bg-[#151e22]"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                <div
+                  className={`mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                    darkMode ? "text-slate-400" : "text-gray-500"
+                  }`}
+                >
+                  Sort
+                </div>
+                <Dropdown
+                  value={sortKey}
+                  options={sortOptions}
+                  onChange={(e) => setSortKey(e.value)}
+                  className="w-full"
+                  pt={{
+                    root: {
+                      className:
+                        `w-full !rounded-lg !border !shadow-none ${
+                          darkMode
+                            ? "!border-[#223038] !bg-[#0f161a] !text-slate-100"
+                            : "!border-gray-300 !bg-white !text-gray-800"
+                        }`,
+                    },
+                    label: {
+                      className:
+                        `text-sm ${darkMode ? "text-slate-100" : "text-gray-800"}`,
+                    },
+                    trigger: {
+                      className: darkMode ? "text-slate-300" : "text-gray-500",
+                    },
+                    panel: {
+                      className:
+                        darkMode
+                          ? "border border-[#223038] bg-[#0f161a] text-slate-100"
+                          : "border border-gray-200 bg-white text-gray-800",
+                    },
+                    item: {
+                      className:
+                        `text-sm ${
+                          darkMode ? "hover:bg-[#151e22]" : "hover:bg-amber-50"
+                        }`,
+                    },
+                  }}
+                />
+              </div>
+            </div>
             <SelectedFilters
               isLoading={isProductsLoading}
               categoryTags={categoryTags}
@@ -576,6 +895,9 @@ function CategoryPage() {
               isLoading={isProductsLoading}
               products={products}
               onAddToCart={handleAddToCart}
+              recentlyAddedProductId={recentlyAddedId}
+              addingProductId={addingProductId}
+              addErrorProductId={addErrorProductId}
               paginator={{
                 enabled: true,
                 first: pager.first,

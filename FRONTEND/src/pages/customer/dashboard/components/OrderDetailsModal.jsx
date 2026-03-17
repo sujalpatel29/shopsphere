@@ -46,9 +46,7 @@ const getItemImage = (item) =>
   "";
 
 const canCancel = (status) =>
-  !["cancelled", "completed", "delivered", "returned"].includes(
-    normalizeStatus(status),
-  );
+  ["pending", "processing"].includes(normalizeStatus(status));
 
 const canReturn = (status) =>
   ["delivered", "completed"].includes(normalizeStatus(status));

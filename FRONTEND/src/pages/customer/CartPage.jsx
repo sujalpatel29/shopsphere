@@ -2,14 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "primereact/button";
-import { Toast } from "primereact/toast";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Tag } from "primereact/tag";
 import { Skeleton } from "primereact/skeleton";
 import { EmptyCart } from "../../components/cart/EmptyCart";
 import { CartItemSkeleton } from "../../components/cart/CartItemSkeleton";
 import { ArrowRight } from "lucide-react";
-import AddAddressModal from "./dashboard/components/AddAddressModal";
 import api from "../../../api/api";
 
 const INDIAN_STATES = [
@@ -55,24 +53,7 @@ function CartPage() {
   const [applyingOffer, setApplyingOffer] = useState(false);
   const [offerCode, setOfferCode] = useState("");
   const [applicableOffers, setApplicableOffers] = useState([]);
-  const toast = useRef(null);
-
-  // Address states
-  const [addresses, setAddresses] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState(null);
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [savingAddress, setSavingAddress] = useState(false);
-  const [addressForm, setAddressForm] = useState({
-    full_name: "",
-    phone: "",
-    address_line1: "",
-    address_line2: "",
-    city: "",
-    state: "",
-    postal_code: "",
-    country: "India",
-    is_default: false,
-  });
+  const [pulseCartItemId, setPulseCartItemId] = useState(null);
 
   // Available offers display
   const [showOffers, setShowOffers] = useState(false);
@@ -106,40 +87,15 @@ function CartPage() {
       setApplicableOffers([...cartOffersWithType, ...productOffersWithType]);
     } catch (error) {
       console.error("Error fetching cart:", error);
-      if (error.response?.status !== 401) {
-        toast.current?.show({
-          severity: "error",
-          summary: "Error",
-          detail: "Failed to load cart",
-          life: 3000,
-        });
-      }
       setCart(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch all saved addresses and auto-select the default one
-  const fetchAddresses = async () => {
-    try {
-      const res = await api.get("/users/show-addresses");
-      const list = res.data?.data || [];
-      setAddresses(list);
-      // Auto-select the default address if none selected yet
-      const defaultAddr = list.find((a) => a.is_default === 1) || list[0];
-      if (defaultAddr && !selectedAddress) {
-        setSelectedAddress(defaultAddr);
-      }
-    } catch (err) {
-      console.error("Failed to fetch addresses:", err);
-    }
-  };
-
   useEffect(() => {
     if (currentUser) {
       fetchCart();
-      fetchAddresses();
     } else {
       setLoading(false);
       setCart(null);
@@ -158,20 +114,10 @@ function CartPage() {
       });
       setCart(response.data.data);
       window.dispatchEvent(new CustomEvent("cart:updated"));
-      toast.current?.show({
-        severity: "success",
-        summary: "Updated",
-        detail: "Quantity updated successfully",
-        life: 2000,
-      });
+      setPulseCartItemId(cartItemId);
+      window.setTimeout(() => setPulseCartItemId(null), 650);
     } catch (error) {
       console.error("Error updating quantity:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to update quantity",
-        life: 3000,
-      });
     } finally {
       setUpdatingItem(null);
     }
@@ -192,20 +138,8 @@ function CartPage() {
           const response = await api.delete(`/cart/items/${cartItemId}`);
           setCart(response.data.data);
           window.dispatchEvent(new CustomEvent("cart:updated"));
-          toast.current?.show({
-            severity: "success",
-            summary: "Removed",
-            detail: `"${productName}" removed from cart`,
-            life: 3000,
-          });
         } catch (error) {
           console.error("Error removing item:", error);
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: error.response?.data?.message || "Failed to remove item",
-            life: 5000,
-          });
         }
       },
     });
@@ -226,20 +160,8 @@ function CartPage() {
           const response = await api.delete("/cart/items");
           setCart(response.data.data);
           window.dispatchEvent(new CustomEvent("cart:updated"));
-          toast.current?.show({
-            severity: "success",
-            summary: "Cleared",
-            detail: "All items removed from your cart",
-            life: 3000,
-          });
         } catch (error) {
           console.error("Error clearing cart:", error);
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: error.response?.data?.message || "Failed to clear cart",
-            life: 3000,
-          });
         }
       },
     });
@@ -260,12 +182,6 @@ function CartPage() {
       );
 
       if (!offer) {
-        toast.current?.show({
-          severity: "error",
-          summary: "Invalid Code",
-          detail: "This offer code is not valid or not applicable to your cart",
-          life: 3000,
-        });
         setApplyingOffer(false);
         return;
       }
@@ -277,12 +193,6 @@ function CartPage() {
           (item) => item.productId === offer.product_id,
         );
         if (!cartItem) {
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: "Product not found in cart",
-            life: 3000,
-          });
           setApplyingOffer(false);
           return;
         }
@@ -293,35 +203,17 @@ function CartPage() {
           { offer_id: offer.offer_id },
         );
         setCart(response.data.data);
-        toast.current?.show({
-          severity: "success",
-          summary: "Offer Applied!",
-          detail: `${offer.offer_name} applied to ${cartItem.productName}`,
-          life: 3000,
-        });
       } else {
         // Apply cart-level offer
         const response = await api.post("/cart/offer", {
           offer_id: offer.offer_id,
         });
         setCart(response.data.data);
-        toast.current?.show({
-          severity: "success",
-          summary: "Offer Applied!",
-          detail: `${offer.offer_name} applied successfully`,
-          life: 3000,
-        });
       }
 
       setOfferCode("");
     } catch (error) {
       console.error("Error applying offer:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to apply offer",
-        life: 3000,
-      });
     } finally {
       setApplyingOffer(false);
     }
@@ -336,24 +228,11 @@ function CartPage() {
       (item) => item.productId === offer.product_id,
     );
     if (!cartItem) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Product not found in cart",
-        life: 3000,
-      });
       return;
     }
 
     // Check if item already has an offer applied
     if (cartItem.appliedOffer) {
-      toast.current?.show({
-        severity: "warning",
-        summary: "Offer Already Applied",
-        detail:
-          "This product already has an offer. Remove it first to apply a new one.",
-        life: 3000,
-      });
       return;
     }
 
@@ -363,20 +242,8 @@ function CartPage() {
         { offer_id: offer.offer_id },
       );
       setCart(response.data.data);
-      toast.current?.show({
-        severity: "success",
-        summary: "Offer Applied!",
-        detail: `${offer.offer_name} applied to ${cartItem.productName}`,
-        life: 3000,
-      });
     } catch (error) {
       console.error("Error applying product offer:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to apply offer",
-        life: 3000,
-      });
     }
   };
 
@@ -385,20 +252,8 @@ function CartPage() {
     try {
       const response = await api.delete(`/cart/items/${cartItemId}/offer`);
       setCart(response.data.data);
-      toast.current?.show({
-        severity: "success",
-        summary: "Removed",
-        detail: `${offerName} removed from product`,
-        life: 2000,
-      });
     } catch (error) {
       console.error("Error removing item offer:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to remove offer",
-        life: 3000,
-      });
     }
   };
 
@@ -407,20 +262,8 @@ function CartPage() {
     try {
       const response = await api.delete("/cart/offer");
       setCart(response.data.data);
-      toast.current?.show({
-        severity: "success",
-        summary: "Removed",
-        detail: "Offer removed from cart",
-        life: 2000,
-      });
     } catch (error) {
       console.error("Error removing offer:", error);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: error.response?.data?.message || "Failed to remove offer",
-        life: 3000,
-      });
     }
   };
 
@@ -445,12 +288,6 @@ function CartPage() {
     }
 
     if (!cart?.items?.length) {
-      toast.current?.show({
-        severity: "warning",
-        summary: "Empty Cart",
-        detail: "Please add items to your cart first",
-        life: 3000,
-      });
       return;
     }
 
@@ -460,75 +297,6 @@ function CartPage() {
   // Continue shopping
   const continueShopping = () => {
     navigate("/");
-  };
-
-  // Handle address form input changes — mirrors the profile dashboard pattern
-  const handleAddressFormChange = (e) => {
-    const { name, type, checked, value } = e.target;
-    setAddressForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  // Save new address to backend
-  const saveNewAddress = async (e) => {
-    e?.preventDefault();
-    const { full_name, phone, address_line1, city, state, postal_code } = addressForm;
-    if (!full_name || !phone || !address_line1 || !city || !state || !postal_code) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Incomplete",
-        detail: "Please fill all required fields",
-        life: 3000,
-      });
-      return;
-    }
-
-    setSavingAddress(true);
-    try {
-      await api.post("/users/add-address", {
-        full_name,
-        phone,
-        address_line1,
-        address_line2: addressForm.address_line2 || null,
-        city,
-        state,
-        postal_code,
-        country: addressForm.country || "India",
-        is_default: addressForm.is_default || addresses.length === 0,
-      });
-
-      await fetchAddresses();
-      setShowAddressForm(false);
-      setAddressForm({
-        full_name: "",
-        phone: "",
-        address_line1: "",
-        address_line2: "",
-        city: "",
-        state: "",
-        postal_code: "",
-        country: "India",
-        is_default: false,
-      });
-      toast.current?.show({
-        severity: "success",
-        summary: "Address Saved",
-        detail: "New delivery address added",
-        life: 2000,
-      });
-    } catch (err) {
-      console.error("Save address error:", err);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: err.response?.data?.message || "Failed to save address",
-        life: 3000,
-      });
-    } finally {
-      setSavingAddress(false);
-    }
   };
 
   // Get product-specific offers for items in cart
@@ -559,7 +327,7 @@ function CartPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b] pt-20">
+      <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b]">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="mb-8">
             <Skeleton
@@ -590,7 +358,7 @@ function CartPage() {
   // Empty cart state
   if (!cart?.items?.length) {
     return (
-      <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b] pt-20">
+      <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b]">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <EmptyCart onContinueShopping={continueShopping} />
         </div>
@@ -602,8 +370,7 @@ function CartPage() {
   const hasOffer = cart.appliedCartOffer;
 
   return (
-    <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b] pt-20">
-      <Toast ref={toast} position="top-right" className="app-toast-offset" />
+    <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b]">
       <ConfirmDialog
         className="cart-confirm-dialog"
         contentClassName="dark:bg-[#151e22]"
@@ -665,6 +432,23 @@ function CartPage() {
               }}
             />
           </div>
+          {cart.appliedCartOffer?.offer_name ? (
+            <div className="mb-2 flex items-center justify-center gap-2 text-xs">
+              <span className="text-gray-500 dark:text-slate-400">
+                Discount:
+              </span>
+              <span className="font-semibold text-green-600 dark:text-green-400">
+                {cart.appliedCartOffer.offer_name}
+              </span>
+              <button
+                type="button"
+                onClick={removeOffer}
+                className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+              >
+                Remove
+              </button>
+            </div>
+          ) : null}
           {cart.discount > 0 && (
             <p className="text-xs text-green-600 dark:text-green-400 text-center">
               You're saving ₹{formatINR(cart.discount)} on this order
@@ -678,7 +462,11 @@ function CartPage() {
             {cart.items.map((item) => (
               <div
                 key={item.cartItemId}
-                className="group bg-white dark:bg-[#151e22] rounded-2xl p-4 md:p-6 shadow-sm border border-[#e8dccf] dark:border-[#243440] transition-all hover:shadow-md"
+                className={`group bg-white dark:bg-[#151e22] rounded-2xl p-4 md:p-6 shadow-sm border border-[#e8dccf] dark:border-[#243440] transition-all hover:shadow-md ${
+                  pulseCartItemId === item.cartItemId
+                    ? "shopsphere-cart-pulse"
+                    : ""
+                }`}
               >
                 <div className="flex gap-4 md:gap-6">
                   {/* Product Image */}
@@ -707,8 +495,11 @@ function CartPage() {
                           {item.shortDescription}
                         </p>
 
-                        {/* Portion & Modifier Details */}
-                        {(item.portionId || (item.modifiers && item.modifiers.length > 0) || item.modifierId) && (
+                        {/* Portion & Variant/Combination Details */}
+                        {(item.portionValue ||
+                          item.combinationName ||
+                          (item.modifiers && item.modifiers.length > 0) ||
+                          item.modifierValue) && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {item.portionValue && (
                               <Tag
@@ -717,14 +508,34 @@ function CartPage() {
                                 className="text-xs"
                               />
                             )}
-                            {item.modifiers && item.modifiers.length > 0 ? (
+                            {item.combinationName ? (
+                              <Tag
+                                value={item.combinationName}
+                                severity="secondary"
+                                className="text-xs"
+                              />
+                            ) : item.modifiers && item.modifiers.length > 0 ? (
                               item.modifiers.map((mod, idx) => (
+                                (() => {
+                                  const value =
+                                    mod.modifier_value ??
+                                    mod.modifierValue ??
+                                    mod.modifier_name ??
+                                    mod.modifierName ??
+                                    "Modifier";
+                                  const add =
+                                    Number(
+                                      mod.additional_price ?? mod.additionalPrice ?? 0,
+                                    ) || 0;
+                                  return (
                                 <Tag
                                   key={idx}
-                                  value={`${mod.modifierValue || mod.modifierName}${Number(mod.additionalPrice) > 0 ? ` (+₹${mod.additionalPrice})` : ""}`}
+                                  value={`${value}${add > 0 ? ` (+₹${add})` : ""}`}
                                   severity="secondary"
                                   className="text-xs"
                                 />
+                                  );
+                                })()
                               ))
                             ) : item.modifierValue && (
                               <Tag
@@ -762,9 +573,17 @@ function CartPage() {
 
                       {/* Price */}
                       <div className="text-right sm:text-right">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    ₹{formatINR(item.price)} each
+                  </p>
                         <p className="font-semibold text-gray-900 dark:text-slate-100 text-base sm:text-lg">
                           ₹{formatINR(item.lineTotal)}
                         </p>
+                        {Number(item.taxAmount) > 0 ? (
+                          <p className="mt-0.5 text-[11px] text-gray-500 dark:text-slate-400">
+                            GST {Number(item.taxPercent || 0)}%: ₹{formatINR(item.taxAmount)}
+                          </p>
+                        ) : null}
                         {item.appliedOffer && (
                           <p className="text-xs sm:text-sm text-gray-400 line-through">
                             ₹
@@ -838,87 +657,6 @@ function CartPage() {
               <i className="pi pi-arrow-left" />
               Continue Shopping
             </button>
-
-            {/* Delivery Address Section */}
-            <div className="mt-8 bg-white dark:bg-[#151e22] rounded-2xl p-4 sm:p-6 shadow-sm border border-[#e8dccf] dark:border-[#243440]">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-serif text-lg sm:text-xl font-semibold text-gray-900 dark:text-slate-100">
-                  <i className="pi pi-map-marker text-[#2f7a6f] mr-2" />
-                  Delivery Address
-                </h2>
-                <Button
-                  label="Add New"
-                  icon="pi pi-plus"
-                  className="p-button-text p-button-sm text-[#2f7a6f] text-xs sm:text-sm"
-                  onClick={() => setShowAddressForm(true)}
-                />
-              </div>
-
-              {/* Saved address list */}
-              {addresses.length > 0 ? (
-                <div className="space-y-3">
-                  {addresses.map((addr) => {
-                    const isSelected = selectedAddress?.address_id === addr.address_id;
-                    return (
-                      <div
-                        key={addr.address_id}
-                        onClick={() => setSelectedAddress(addr)}
-                        className={`p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          isSelected
-                            ? "border-[#2f7a6f] bg-[#2f7a6f]/5"
-                            : "border-[#e8dccf] dark:border-[#243440] hover:border-[#2f7a6f]/50"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-start gap-3 flex-1">
-                            <div className={`mt-1 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
-                              isSelected ? "border-[#2f7a6f] bg-[#2f7a6f]" : "border-gray-300 dark:border-slate-600"
-                            }`}>
-                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <span className="font-medium text-gray-900 dark:text-slate-100 text-sm">
-                                  {addr.full_name}
-                                </span>
-                                <Tag
-                                  value={addr.address_type === "home" ? "Home" : "Work"}
-                                  severity="info"
-                                  className="text-xs"
-                                />
-                                {addr.is_default === 1 && (
-                                  <Tag value="Default" severity="success" className="text-xs" />
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-500 dark:text-slate-400">{addr.phone}</p>
-                              <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mt-0.5">
-                                {addr.address_line1}{addr.address_line2 ? `, ${addr.address_line2}` : ""}, {addr.city}, {addr.state} - {addr.postal_code}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-center py-10 sm:py-12 rounded-xl border border-dashed border-[#e8dccf] dark:border-[#243440] bg-[#fff8ee]/30 dark:bg-[#0f171c]/30">
-                  <i className="pi pi-map-marker text-4xl text-gray-300 dark:text-slate-600 mb-4" />
-                  <p className="text-gray-600 dark:text-slate-300 text-sm font-medium">
-                    No delivery address found
-                  </p>
-                  <p className="text-gray-500 dark:text-slate-400 text-xs mt-1 mb-5">
-                    Add an address to place your order.
-                  </p>
-                  <Button
-                    label="Add Address"
-                    icon="pi pi-plus"
-                    className="p-button-sm !bg-[#2f7a6f] !border-none !text-white !rounded-xl hover:!bg-[#265c54] !transition-colors"
-                    onClick={() => setShowAddressForm(true)}
-                  />
-                </div>
-              )}
-            </div>
 
             {/* Available Offers Section */}
             <div className="mt-6 bg-white dark:bg-[#151e22] rounded-2xl p-4 sm:p-6 shadow-sm border border-[#e8dccf] dark:border-[#243440]">
@@ -1083,13 +821,14 @@ function CartPage() {
                                     className="!bg-[#2f7a6f] !border-[#2f7a6f] hover:!bg-[#236b62] !text-white !text-xs !px-2 !py-1"
                                   />
                                 )}
-                              {isApplied && (
-                                <Tag
-                                  value="Applied"
-                                  severity="success"
-                                  icon="pi pi-check"
+                              {isApplied ? (
+                                <Button
+                                  label="Remove"
+                                  size="small"
+                                  onClick={removeOffer}
+                                  className="!bg-transparent !border-red-300 !text-red-600 hover:!bg-red-50 !text-xs !px-2 !py-1 dark:!border-red-500/40 dark:!text-red-400 dark:hover:!bg-red-500/10"
                                 />
-                              )}
+                              ) : null}
                             </div>
                           </div>
                         );
@@ -1111,6 +850,26 @@ function CartPage() {
               <h2 className="font-serif text-lg sm:text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4 sm:mb-6">
                 Order Summary
               </h2>
+
+              {cart.appliedCartOffer?.offer_name ? (
+                <div className="mb-4 flex items-center justify-between rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm dark:border-green-500/30 dark:bg-green-500/10">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-green-700 dark:text-green-300">
+                      Discount applied
+                    </p>
+                    <p className="truncate font-medium text-green-900 dark:text-green-200">
+                      {cart.appliedCartOffer.offer_name}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeOffer}
+                    className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : null}
 
               {/* Price Breakdown */}
               <div className="space-y-3 text-sm border-b border-gray-100 dark:border-[#243440] pb-4 mb-4">
@@ -1208,16 +967,6 @@ function CartPage() {
           </div>
         </div>
       </div>
-
-      {/* Address Form Modal — same as profile dashboard */}
-      <AddAddressModal
-        visible={showAddressForm}
-        addressForm={addressForm}
-        addingAddress={savingAddress}
-        onChange={handleAddressFormChange}
-        onSubmit={saveNewAddress}
-        onHide={() => setShowAddressForm(false)}
-      />
     </div>
   );
 }

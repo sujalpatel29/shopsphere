@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -97,14 +97,14 @@ function Navbar() {
 
   const topNavLinks = useMemo(
     () => [
-      { label: "Shop", href: "/categories" },
+      { label: "Shop", href: "/shop" },
       {
         label: "Today's Deals",
-        href: "/categories?sortField=price&sortOrder=asc",
+        href: "/shop?sortField=price&sortOrder=asc",
       },
       { label: "New Releases", href: "/#new-releases" },
-      { label: "Electronics", href: "/categories?search=electronics" },
-      { label: "Fashion", href: "/categories?search=fashion" },
+      { label: "Electronics", href: "/shop?search=electronics" },
+      { label: "Fashion", href: "/shop?search=fashion" },
       {
         label: "Customer Service",
         href: currentUser ? `${dashboardPath}?tab=support` : "/login",
@@ -122,7 +122,7 @@ function Navbar() {
           { label: "New Releases", href: "/#new-releases" },
           {
             label: "Top Deals",
-            href: "/categories?sortField=price&sortOrder=asc",
+            href: "/shop?sortField=price&sortOrder=asc",
           },
         ],
       },
@@ -176,8 +176,8 @@ function Navbar() {
       const query = searchText.trim();
       navigate(
         query
-          ? `/categories?search=${encodeURIComponent(query)}`
-          : "/categories",
+          ? `/shop?search=${encodeURIComponent(query)}`
+          : "/shop",
       );
       setMenuOpen(false);
     },
@@ -186,7 +186,7 @@ function Navbar() {
 
   const handleCategoryNavigate = useCallback(
     (categoryId) => {
-      navigate(`/categories?category=${categoryId}`);
+      navigate(`/shop?category=${categoryId}`);
       setMenuOpen(false);
     },
     [navigate],
@@ -257,7 +257,7 @@ function Navbar() {
             </Button>
 
             <Link
-              to="/categories"
+              to="/shop"
               className={`hidden transition md:inline-flex ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
             >
               Shop
@@ -266,6 +266,7 @@ function Navbar() {
               to="/cart"
               className={`relative transition ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
               aria-label="Cart"
+              id="shopsphere-cart-link"
             >
               <ShoppingCart className="h-5 w-5" />
               {itemCount > 0 && (

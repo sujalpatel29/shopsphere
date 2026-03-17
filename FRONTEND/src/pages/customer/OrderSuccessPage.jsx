@@ -311,7 +311,7 @@ export default function OrderSuccessPage() {
             <Button
               label="Continue Shopping"
               icon={<ShoppingBag className="mr-2 h-4 w-4" />}
-              onClick={() => navigate("/categories")}
+              onClick={() => navigate("/shop")}
               className="order-flow-secondary-button !w-full !justify-center"
               pt={{ label: { className: "!flex-none" } }}
             />

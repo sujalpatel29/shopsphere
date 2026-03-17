@@ -11,6 +11,7 @@ import { Dialog } from "primereact/dialog";
 import OrderDetailComponents from "./OrderDetailComponents";
 import {
   displayPaymentStatus,
+  formatDate,
   orderSeverity,
   paymentSeverity,
 } from "../utils";
@@ -50,11 +51,14 @@ export default function OrdersPage({ showToast }) {
   const [sortOrder, setSortOrder] = useState(DEFAULT_ORDER_SORT_ORDER);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const skipInitialFetchRef = useRef(
     sortField === DEFAULT_ORDER_SORT_FIELD &&
       sortOrder === DEFAULT_ORDER_SORT_ORDER &&
       orderCount > 0,
   );
+
+  const refreshOrders = () => setRefreshTrigger(prev => prev + 1);
 
   useEffect(() => {
     if (skipInitialFetchRef.current) {
@@ -70,7 +74,7 @@ export default function OrdersPage({ showToast }) {
         sortOrder,
       }),
     );
-  }, [dispatch, sortField, sortOrder]);
+  }, [dispatch, sortField, sortOrder, refreshTrigger]);
 
   useEffect(() => {
     if (!error) {
@@ -141,7 +145,7 @@ export default function OrdersPage({ showToast }) {
   const statusBodyTemplate = (rowData) => {
     return (
       <Tag
-        value={rowData.order_status}
+        value={rowData.order_status?.toUpperCase() || "PENDING"}
         severity={orderSeverity(rowData.order_status)}
         className="text-xs uppercase px-3 py-1 bg-opacity-20 translate-y-[1px]"
       />
@@ -246,7 +250,7 @@ export default function OrdersPage({ showToast }) {
             field="created_at"
             sortable
             header="Order Date"
-            body={(row) => new Date(row.created_at).toLocaleDateString()}
+            body={(row) => formatDate(row.created_at)}
           />
 
           <Column
@@ -276,6 +280,7 @@ export default function OrdersPage({ showToast }) {
             orderId={selectedOrder.order_id}
             orderData={selectedOrder}
             onClose={handleOrderDialogClose}
+            onRefresh={refreshOrders}
             isDialog
             showToast={showToast}
           />

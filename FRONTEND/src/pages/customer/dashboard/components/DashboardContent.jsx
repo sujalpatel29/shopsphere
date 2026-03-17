@@ -3,7 +3,6 @@ import { dashboardPlaceholderContent } from "../constants";
 import AddressesSection from "./AddressesSection";
 import DashboardLoadingState from "./DashboardLoadingState";
 import HelpSupportPage from "./HelpSupportPage";
-import OffersPage from "./OffersPage";
 import OrdersPage from "./OrdersPage";
 import PaymentsPage from "./PaymentsPage";
 import PlaceholderSection from "./PlaceholderSection";
@@ -147,10 +146,6 @@ function DashboardContent({ currentUser, dashboard, showToast }) {
 
   if (dashboard.activeTab === "reviews") {
     return <UserReviewsPage showToast={showToast} />;
-  }
-
-  if (dashboard.activeTab === "wallet") {
-    return <OffersPage showToast={showToast} />;
   }
 
   if (dashboard.activeTab === "security") {

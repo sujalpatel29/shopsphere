@@ -164,13 +164,13 @@ function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/categories"
+                to="/shop"
                 className="rounded-lg bg-amber-600 px-6 py-3 font-accent font-medium text-white shadow-lg shadow-amber-600/20 transition-all hover:bg-amber-700"
               >
                 Explore
               </Link>
               <Link
-                to="/categories"
+                to="/shop"
                 className="rounded-lg border-2 border-amber-600 px-6 py-3 font-accent font-medium text-amber-600 transition-all hover:bg-amber-50 dark:hover:bg-amber-500/10"
               >
                 View Collection
@@ -194,7 +194,7 @@ function HomePage() {
         <SectionHeader
           title="Shop by Category"
           subtitle="Explore the collections already available in the store."
-          href="/categories"
+          href="/shop"
         />
         {loading ? (
           <div className="flex gap-3 overflow-x-auto pb-2">
@@ -210,7 +210,7 @@ function HomePage() {
             {featuredCategories.map((category) => (
               <Link
                 key={category.category_id}
-                to={`/categories?category=${category.category_id}`}
+                to={`/shop?category=${category.category_id}`}
                 className="group flex min-w-[144px] flex-col justify-between rounded-2xl border border-amber-200/70 bg-white/85 px-4 py-3 transition hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-md hover:shadow-amber-100/80 dark:border-[#1f2933] dark:bg-[#151e22] dark:hover:border-amber-500/50"
               >
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-500">
@@ -233,7 +233,7 @@ function HomePage() {
         <SectionHeader
           title="Best Sellers"
           subtitle="Our most popular products based on sales."
-          href="/categories"
+          href="/shop"
         />
         {loading ? (
           <ProductGridSkeleton />
@@ -253,7 +253,7 @@ function HomePage() {
         <SectionHeader
           title="New Releases"
           subtitle="The latest additions to our catalog."
-          href="/categories"
+          href="/shop"
         />
         {loading ? (
           <ProductGridSkeleton />

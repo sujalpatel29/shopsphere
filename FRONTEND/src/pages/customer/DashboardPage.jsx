@@ -175,6 +175,7 @@ function DashboardPage() {
         loading={dashboard.orderItemsLoading}
         error={dashboard.orderItemsError}
         onHide={dashboard.handleCloseOrderDetails}
+        showToast={showToast}
       />
 
       <EditAddressDialog
