@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
@@ -113,7 +113,7 @@ function AdminOffersToolbar({
             },
           }}
         />
-      </div>
+            <span className="text-xs font-bold text-red-600 dark:text-red-300">{(totalAll ?? 0) - (totalActive ?? 0)}</span>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">

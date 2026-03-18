@@ -25,7 +25,7 @@ const formatNumber = (value) => {
 const formatCurrency = (value) => {
   if (value === null || value === undefined || value === "") return "-";
   const num = Number(value);
-  if (!Number.isFinite(num)) return "-";
+  if (Number.isNaN(num)) return "-";
   return `Rs ${num.toLocaleString()}`;
 };
 

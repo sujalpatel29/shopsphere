@@ -163,7 +163,7 @@ function AdminOffersTable({
         emptyMessage="No offers found."
         className="admin-products-table"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-        tableStyle={{ minWidth: "80rem" }}
+        tableStyle={{ minWidth: "110rem" }}
       >
         <Column
           field="offer_id"
