@@ -113,8 +113,7 @@ function AdminOffersToolbar({
             },
           }}
         />
-            <span className="text-xs font-bold text-red-600 dark:text-red-300">{(totalAll ?? 0) - (totalActive ?? 0)}</span>
-
+      </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 dark:border-gray-700 dark:bg-gray-800/50">
