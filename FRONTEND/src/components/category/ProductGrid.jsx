@@ -92,10 +92,75 @@ function ProductGrid({
     return (
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="space-y-3">
-            <Skeleton height="150px" />
-            <Skeleton height="20px" />
-            <Skeleton width="60%" height="20px" />
+          <div
+            key={index}
+            className={`rounded-2xl border p-3 ${
+              darkMode
+                ? "border-[#1f2933] bg-[#0f161a]"
+                : "border-gray-200/60 bg-white"
+            }`}
+          >
+            <div className="relative h-32 w-full overflow-hidden rounded-xl">
+              <Skeleton
+                height="100%"
+                className={`!rounded-xl ${
+                  darkMode ? "bg-[#1f2933]" : "bg-gray-200"
+                }`}
+              />
+            </div>
+            <div className="mt-3 space-y-2">
+              <Skeleton
+                height="14px"
+                className={darkMode ? "bg-[#1f2933]" : "bg-gray-200"}
+              />
+              <Skeleton
+                width="70%"
+                height="12px"
+                className={darkMode ? "bg-[#1f2933]" : "bg-gray-200"}
+              />
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((__, starIndex) => (
+                  <Skeleton
+                    key={starIndex}
+                    width="12px"
+                    height="12px"
+                    className={`!rounded-full ${
+                      darkMode ? "bg-[#1f2933]" : "bg-gray-200"
+                    }`}
+                  />
+                ))}
+                <Skeleton
+                  width="36px"
+                  height="12px"
+                  className={`ml-1 ${
+                    darkMode ? "bg-[#1f2933]" : "bg-gray-200"
+                  }`}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton
+                  width="70px"
+                  height="14px"
+                  className={darkMode ? "bg-[#1f2933]" : "bg-gray-200"}
+                />
+                <Skeleton
+                  width="50px"
+                  height="12px"
+                  className={darkMode ? "bg-[#1f2933]" : "bg-gray-200"}
+                />
+                <Skeleton
+                  width="60px"
+                  height="12px"
+                  className={darkMode ? "bg-[#1f2933]" : "bg-gray-200"}
+                />
+              </div>
+              <Skeleton
+                height="38px"
+                className={`!rounded-lg ${
+                  darkMode ? "bg-[#1f2933]" : "bg-gray-200"
+                }`}
+              />
+            </div>
           </div>
         ))}
       </div>

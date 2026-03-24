@@ -353,6 +353,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Dropdown } from "primereact/dropdown";
+import { Skeleton } from "primereact/skeleton";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
 import SelectedFilters from "../../components/category/SelectedFilters";
@@ -858,18 +859,48 @@ function CategoryPage() {
               />
             </div>
             <div className="category-control-item w-full md:w-64">
-              <Dropdown
-                value={sortOption || null}
-                options={sortOptions}
-                onChange={(e) => setSortOption(e.value || null)}
-                placeholder="Sort by"
-                showClear
-                clearIcon="pi pi-times"
-                className={`category-sort-dropdown w-full ${
-                  darkMode ? "category-sort-dropdown-dark" : ""
-                }`}
-                panelClassName="category-sort-panel"
-              />
+              {isTreeLoading ? (
+                <div
+                  className={`category-sort-dropdown w-full rounded-xl border px-3 py-3 ${
+                    darkMode
+                      ? "border-[#1f2933] bg-[#151e22]"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 pr-3">
+                      <Skeleton
+                        width="96px"
+                        height="16px"
+                        className={`!rounded-md ${
+                          darkMode ? "bg-[#1f2933]" : "bg-gray-200"
+                        }`}
+                      />
+                    </div>
+                    <Skeleton
+                      width="16px"
+                      height="16px"
+                      className={`!rounded-full ${
+                        darkMode ? "bg-[#1f2933]" : "bg-gray-200"
+                      }`}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <Dropdown
+                  value={sortOption || null}
+                  options={sortOptions}
+                  onChange={(e) => setSortOption(e.value || null)}
+                  placeholder="Sort by"
+                  showClear
+                  clearIcon="pi pi-times"
+                  className={`category-sort-dropdown w-full ${
+                    darkMode ? "category-sort-dropdown-dark" : ""
+                  }`}
+                  panelClassName="category-sort-panel"
+                  appendTo="self"
+                />
+              )}
             </div>
           </div>
           <SelectedFilters

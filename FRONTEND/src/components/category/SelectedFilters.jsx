@@ -1,4 +1,5 @@
 import { Chip } from "primereact/chip";
+import { Skeleton } from "primereact/skeleton";
 import { useTheme } from "../../context/ThemeContext";
 
 function SelectedFilters({
@@ -11,7 +12,27 @@ function SelectedFilters({
   onClearPrice,
 }) {
   const { darkMode } = useTheme();
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <Skeleton
+          width="110px"
+          height="28px"
+          className={`!rounded-full ${darkMode ? "bg-[#1f2933]" : "bg-gray-200"}`}
+        />
+        <Skeleton
+          width="90px"
+          height="28px"
+          className={`!rounded-full ${darkMode ? "bg-[#1f2933]" : "bg-gray-200"}`}
+        />
+        <Skeleton
+          width="130px"
+          height="28px"
+          className={`!rounded-full ${darkMode ? "bg-[#1f2933]" : "bg-gray-200"}`}
+        />
+      </div>
+    );
+  }
 
   const hasAny =
     categoryTags.length > 0 || Boolean(searchText) || Boolean(priceTag);
