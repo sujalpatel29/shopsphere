@@ -89,17 +89,28 @@ export const getRelatedProducts = async ({ categoryId, excludeId, limit = 12 }) 
   return all.filter((item) => Number(item.product_id) !== Number(excludeId));
 };
 
+export const getCombinationsByPortion = async (productPortionId) => {
+  const response = await api.get(`/modifiers/combinations/by-portion/${productPortionId}`);
+  return response.data?.data || [];
+};
+
+export const getCombinationsByProduct = async (productId) => {
+  const response = await api.get(`/modifiers/combinations/by-product/${productId}`);
+  return response.data?.data || [];
+};
+
 export const getCart = async () => {
   const response = await api.get("/cart");
   return response.data?.data || null;
 };
 
-export const addCartItem = async ({ productId, quantity, portionId, modifierId }) => {
-  const response = await api.post("/cart/items", {
+export const addCartItem = async ({ productId, quantity, portionId, modifierIds, combinationId }) => {
+  const payload = {
     productId,
     quantity,
     portionId,
-    modifierId,
-  });
+    ...(combinationId ? { combinationId } : modifierIds?.length > 0 ? { modifierIds } : {}),
+  };
+  const response = await api.post("/cart/items", payload);
   return response.data?.data || null;
 };

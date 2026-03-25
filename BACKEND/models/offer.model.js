@@ -1,4 +1,5 @@
 import pool from "../configs/db.js";
+import { getCartItemModifiers } from "./cart.model.js";
 
 // ============================================================================
 // OFFER MODEL QUERIES
@@ -820,15 +821,23 @@ export const getCartItemsWithOffer = async (cartId) => {
             ci.quantity,
             ci.price AS effective_price,
             ci.product_portion_id,
-            ci.modifier_id,
+            ci.combination_id,
             ci.offer_id AS item_offer_id,
             pm.display_name,
             pm.short_description,
+            (
+              SELECT pimg.image_url
+              FROM product_images pimg
+              WHERE pimg.product_id = ci.product_id AND pimg.is_deleted = 0
+              ORDER BY pimg.is_primary DESC, pimg.image_id DESC
+              LIMIT 1
+            ) AS image_url,
+            pp.portion_id,
             por.portion_value,
             pp.price AS portion_price,
             pp.discounted_price AS portion_discounted_price,
-            mt.modifier_name,
-            mt.modifier_value,
+            mc.name AS combination_name,
+            mc.additional_price AS combination_additional_price,
             item_offer.offer_name AS item_offer_name,
             item_offer.offer_type AS item_offer_type,
             item_offer.discount_type AS item_discount_type,
@@ -838,12 +847,32 @@ export const getCartItemsWithOffer = async (cartId) => {
        JOIN product_master pm ON pm.product_id = ci.product_id
        LEFT JOIN product_portion pp ON pp.product_portion_id = ci.product_portion_id AND pp.product_id = ci.product_id
        LEFT JOIN portion_master por ON por.portion_id = pp.portion_id
-       LEFT JOIN modifier_master mt ON mt.modifier_id = ci.modifier_id
+       LEFT JOIN modifier_combination mc ON mc.combination_id = ci.combination_id AND mc.is_deleted = 0
        LEFT JOIN offer_master item_offer ON item_offer.offer_id = ci.offer_id
       WHERE ci.cart_id = ? AND ci.is_deleted = 0
       ORDER BY ci.cart_item_id`,
     [cartId],
   );
+
+  if (rows.length > 0) {
+    const cartItemIds = rows.map((r) => r.cart_item_id);
+    const modifierRows = await getCartItemModifiers(cartItemIds);
+    const modifierMap = {};
+    modifierRows.forEach((m) => {
+      if (!modifierMap[m.cart_item_id]) modifierMap[m.cart_item_id] = [];
+      modifierMap[m.cart_item_id].push({
+        modifierId: m.modifier_id,
+        modifierType: m.modifier_type,
+        modifierName: m.modifier_name,
+        modifierValue: m.modifier_value,
+        additionalPrice: Number(m.additional_price),
+      });
+    });
+    rows.forEach((row) => {
+      row.modifiers = modifierMap[row.cart_item_id] || [];
+    });
+  }
+
   return rows;
 };
 

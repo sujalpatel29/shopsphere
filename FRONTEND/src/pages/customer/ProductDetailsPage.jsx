@@ -37,6 +37,7 @@ import {
   getVisibleProductOffers,
   toggleReviewHelpful,
 } from "../../../api/productDetailsApi";
+import api from "../../../api/api";
 
 const EMPTY_REVIEW_DRAFT = {
   rating: 0,
@@ -147,8 +148,10 @@ function ProductDetailsPage() {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [portions, setPortions] = useState([]);
   const [selectedPortionId, setSelectedPortionId] = useState(null);
-  const [modifierGroups, setModifierGroups] = useState([]);
   const [selectedModifiers, setSelectedModifiers] = useState({});
+  const [rawModifiers, setRawModifiers] = useState([]);
+  const [combinations, setCombinations] = useState([]);
+  const [selectedCombinationId, setSelectedCombinationId] = useState(null);
   const [summary, setSummary] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [reviewPage, setReviewPage] = useState(1);
@@ -190,18 +193,14 @@ function ProductDetailsPage() {
     [portions, selectedPortionId]
   );
 
-  const selectedModifierItems = useMemo(
-    () => Object.values(selectedModifiers).filter(Boolean),
-    [selectedModifiers]
+  const selectedCombination = useMemo(
+    () => combinations.find(c => c.combination_id === selectedCombinationId) || null,
+    [combinations, selectedCombinationId]
   );
 
   const modifierExtraPrice = useMemo(
-    () =>
-      selectedModifierItems.reduce(
-        (sum, item) => sum + Number(item.additional_price || 0),
-        0
-      ),
-    [selectedModifierItems]
+    () => Number(selectedCombination?.additional_price || 0),
+    [selectedCombination]
   );
 
   const baseRegularPrice = selectedPortion
@@ -252,23 +251,18 @@ function ProductDetailsPage() {
       },
       {
         label: "Custom Options",
-        value: `${modifierGroups.length || 0} group${modifierGroups.length === 1 ? "" : "s"}`,
+        value: `${combinations.length || 0} variant${combinations.length === 1 ? "" : "s"}`,
       },
       {
         label: "Active Offers",
         value: `${offers.length || 0}`,
       },
     ],
-    [breadcrumbTrail, modifierGroups.length, offers.length, portions.length, product?.product_id, stockMeta.label]
+    [breadcrumbTrail, combinations.length, offers.length, portions.length, product?.product_id, stockMeta.label]
   );
 
   const activeImage = images[activeImageIndex] || images[0] || null;
 
-  const requiredModifierMissing = useMemo(
-    () =>
-      modifierGroups.some((group) => group.required && !selectedModifiers[group.groupKey]),
-    [modifierGroups, selectedModifiers]
-  );
 
   const canCreateReview = currentUser?.role === "customer";
   const reviewAverage = Number(summary?.average_rating || 0);
@@ -399,41 +393,77 @@ function ProductDetailsPage() {
 
   useEffect(() => {
     if (!selectedPortion && !product) return;
-    const loadModifiers = async () => {
+    const loadVariantsData = async () => {
+      const productId = product?.product_id ?? product?.id;
+      if (!productId) return;
+
       try {
-        const rawModifiers = selectedPortion
-          ? await getModifiersByPortion(selectedPortion.product_portion_id)
-          : await getModifiersByProduct(product.product_id);
+        const comboUrl = selectedPortion
+          ? `/modifiers/combinations/by-portion/${selectedPortion.product_portion_id}`
+          : `/modifiers/combinations/by-product/${productId}`;
+        
+        const rawModUrl = selectedPortion
+          ? `/modifiers/by-portion/${selectedPortion.product_portion_id}`
+          : `/modifiers/by-product/${productId}`;
 
-        const groupsMap = new Map();
-        (rawModifiers || []).forEach((item) => {
-          const groupKey = item.modifier_name || "Options";
-          if (!groupsMap.has(groupKey)) {
-            groupsMap.set(groupKey, {
-              groupKey,
-              label: item.modifier_name || "Options",
-              required: Boolean(item.is_required || item.required),
-              items: [],
-            });
+        const [comboRes, modRes] = await Promise.all([
+          api.get(comboUrl),
+          api.get(rawModUrl)
+        ]);
+
+        let finalCombos = comboRes.data?.data || [];
+        let finalMods = modRes.data?.data || [];
+
+        // Fallback: If portion-specific fetch returned nothing, try product-level
+        if (selectedPortion && finalCombos.length === 0 && finalMods.length === 0) {
+          try {
+            const [fbComboRes, fbModRes] = await Promise.all([
+              api.get(`/modifiers/combinations/by-product/${productId}`),
+              api.get(`/modifiers/by-product/${productId}`)
+            ]);
+            finalCombos = fbComboRes.data?.data || [];
+            finalMods = fbModRes.data?.data || [];
+          } catch (err) {
+            console.error("Fallback fetch failed:", err);
           }
-          groupsMap.get(groupKey).items.push(item);
+        }
+        
+        setCombinations(finalCombos);
+        setRawModifiers(finalMods);
+
+        // Auto-select mandatory modifiers by default
+        const isOptional = (nm) => {
+          const n = nm.toLowerCase();
+          return n.includes("warranty") || n.includes("care") || n.includes("protection") || n.includes("installation") || n.includes("gift wrap");
+        };
+
+        const defaultSelections = {};
+        finalMods.forEach(m => {
+          if (!isOptional(m.modifier_name) && !defaultSelections[m.modifier_name]) {
+            defaultSelections[m.modifier_name] = m.modifier_id;
+          }
         });
+        setSelectedModifiers(defaultSelections); 
 
-        const groups = Array.from(groupsMap.values()).map((group) => ({
-          ...group,
-          items: group.items.filter((item) => Number(item.is_active ?? 1) === 1),
-        }));
-
-        setModifierGroups(groups.filter((group) => group.items.length > 0));
-        setSelectedModifiers({});
-      } catch {
-        setModifierGroups([]);
-        setSelectedModifiers({});
+        // Auto-select the first in-stock combination
+        const firstInStock = finalCombos.find(c => Number(c.stock) > 0);
+        if (firstInStock) {
+          setSelectedCombinationId(firstInStock.combination_id);
+        } else if (finalCombos.length > 0) {
+          setSelectedCombinationId(finalCombos[0].combination_id);
+        } else {
+          setSelectedCombinationId(null);
+        }
+      } catch (err) {
+        console.error("Failed to load variants data:", err);
+        setCombinations([]);
+        setRawModifiers([]);
+        setSelectedCombinationId(null);
       }
     };
-
-    loadModifiers();
+    loadVariantsData();
   }, [selectedPortion, product]);
+
 
   useEffect(() => {
     const anchor = ctaAnchorRef.current;
@@ -470,17 +500,28 @@ function ProductDetailsPage() {
     setWishlistSaved(!wishlistSaved);
   };
 
+  const requiredModifierMissing = useMemo(() => {
+    let missing = false;
+    if (combinations.length > 0 && !selectedCombinationId) missing = true;
+    
+    // For raw modifiers, check if all mandatory groups have a selection
+    // Optional groups include Warranty, Care, Protection, Installation, and Gift Wrap
+    const isOptional = (nm) => {
+      const n = nm.toLowerCase();
+      return n.includes("warranty") || n.includes("care") || n.includes("protection") || n.includes("installation") || n.includes("gift wrap");
+    };
+    
+    const requiredGroups = [...new Set(rawModifiers.map(m => m.modifier_name))].filter(
+      name => !isOptional(name)
+    );
+    if (requiredGroups.some(name => !selectedModifiers[name])) missing = true;
+
+    return missing;
+  }, [combinations, selectedCombinationId, rawModifiers, selectedModifiers]);
+
   const validateSelection = () => {
     if (requiredModifierMissing) {
-      showToast("warn", "Required Selection", "Please select all required modifiers.");
-      return false;
-    }
-    if (Object.values(selectedModifiers).filter(Boolean).length > 1) {
-      showToast(
-        "warn",
-        "Modifier Limit",
-        "Current cart API supports one modifier selection per product."
-      );
+      showToast("warn", "Required Selection", "Please select all required options.");
       return false;
     }
     if (outOfStock) {
@@ -497,12 +538,13 @@ function ProductDetailsPage() {
       return false;
     }
     if (!validateSelection()) return false;
-    const selectedModifier = selectedModifierItems[0] || null;
+    const modifierIds = Object.values(selectedModifiers).filter(Boolean);
     await addCartItem({
       productId: Number(product.product_id),
       quantity,
       portionId: selectedPortion ? Number(selectedPortion.product_portion_id) : undefined,
-      modifierId: selectedModifier ? Number(selectedModifier.modifier_id) : undefined,
+      combinationId: selectedCombinationId,
+      modifierIds: modifierIds.length > 0 ? modifierIds : undefined,
     });
     setQuantityInCart((prev) => prev + quantity);
     showToast("success", "Added to Cart", "Product added successfully.");
@@ -1218,48 +1260,99 @@ function ProductDetailsPage() {
             </div>
           )}
 
-          {modifierGroups.length > 0 && (
+          {combinations.length > 0 && (
             <div className="mt-5 space-y-4">
-              {modifierGroups.map((group) => (
-                <div key={group.groupKey}>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">
-                    {group.label}{" "}
-                    <span className="text-xs text-gray-500">
-                      ({group.required ? "Required" : "Optional"})
-                    </span>
-                  </h3>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {group.items.map((item) => {
-                      const selected =
-                        Number(selectedModifiers[group.groupKey]?.modifier_portion_id) ===
-                        Number(item.modifier_portion_id);
-                      return (
-                        <button
-                          key={item.modifier_portion_id}
-                          type="button"
-                          onClick={() =>
-                            setSelectedModifiers((prev) => ({
-                              ...prev,
-                              [group.groupKey]: selected ? null : item,
-                            }))
-                          }
-                          className={`rounded-lg border px-3 py-2 text-sm ${
-                            selected
-                              ? "border-amber-500 bg-amber-50 text-amber-800"
-                              : "border-gray-200 text-gray-700 dark:border-[#1f2933] dark:text-slate-300"
-                          }`}
-                          aria-pressed={selected}
-                        >
-                          {item.modifier_value}
-                          {Number(item.additional_price || 0) > 0
-                            ? ` (+${formatINR(item.additional_price)})`
-                            : ""}
-                        </button>
-                      );
-                    })}
+              <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">
+                Choose Variant
+              </h3>
+              <div className="flex flex-col gap-2">
+                {combinations.map((combo) => {
+                  const isSelected = selectedCombinationId === combo.combination_id;
+                  const inStock = Number(combo.stock) > 0;
+                  return (
+                    <button
+                      key={combo.combination_id}
+                      type="button"
+                      disabled={!inStock}
+                      onClick={() => inStock && setSelectedCombinationId(combo.combination_id)}
+                      className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
+                        isSelected
+                          ? "border-amber-500 bg-amber-50 text-amber-800 shadow-sm"
+                          : inStock 
+                          ? "border-gray-200 text-gray-700 bg-white hover:border-amber-300 dark:border-[#1f2933] dark:bg-[#151e22] dark:text-slate-300"
+                          : "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed dark:border-transparent dark:bg-white/5"
+                      }`}
+                      aria-pressed={isSelected}
+                    >
+                      <div>
+                        <p className="font-semibold">{combo.name}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-gray-500">
+                          {inStock ? `${combo.stock} available` : "Out of Stock"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        {Number(combo.additional_price || 0) > 0 && (
+                          <p className="text-xs font-bold text-green-600 dark:text-green-400">
+                            +{formatINR(combo.additional_price)}
+                          </p>
+                        )}
+                        {isSelected && <Sparkles className="h-4 w-4 text-amber-500" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {rawModifiers.length > 0 && (
+            <div className="mt-5 space-y-5">
+              {(() => {
+                const groups = {};
+                rawModifiers.forEach(m => {
+                  if (!groups[m.modifier_name]) groups[m.modifier_name] = [];
+                  groups[m.modifier_name].push(m);
+                });
+                return Object.entries(groups).map(([name, mods]) => (
+                  <div key={name}>
+                    <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-slate-400">
+                      {name}
+                    </h3>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {mods.map(m => {
+                        const isSelected = selectedModifiers[name] === m.modifier_id;
+                        return (
+                          <button
+                            key={m.modifier_id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedModifiers(prev => {
+                                if (prev[name] === m.modifier_id) {
+                                  const next = { ...prev };
+                                  delete next[name];
+                                  return next;
+                                }
+                                return { ...prev, [name]: m.modifier_id };
+                              });
+                            }}
+
+                            className={`rounded-lg border px-3 py-2 text-sm transition ${
+                              isSelected
+                                ? "border-amber-500 bg-amber-50 text-amber-800"
+                                : "border-gray-200 text-gray-700 dark:border-[#1f2933] dark:text-slate-300"
+                            }`}
+                          >
+                            {m.modifier_value}
+                            {Number(m.additional_price || 0) > 0 && (
+                              <span className="ml-1 text-xs opacity-60">(+{formatINR(m.additional_price)})</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           )}
 
@@ -1475,62 +1568,68 @@ function ProductDetailsPage() {
                 Option groups and add-ons
               </h3>
 
-              {modifierGroups.length > 0 ? (
+              {combinations.length > 0 ? (
                 <div className="mt-5 grid gap-4 xl:grid-cols-2">
-                  {modifierGroups.map((group) => (
-                    <div
-                      key={group.groupKey}
-                      className="rounded-[24px] border border-gray-200 bg-white/80 p-4 dark:border-[#243440] dark:bg-[#151e22]/85"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-base font-semibold text-gray-900 dark:text-slate-100">
-                          {group.label}
-                        </p>
-                        <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                          group.required
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-                            : "bg-slate-100 text-slate-700 dark:bg-slate-500/10 dark:text-slate-300"
-                        }`}>
-                          {group.required ? "Required" : "Optional"}
-                        </span>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {group.items.map((item) => {
-                          const selected =
-                            Number(selectedModifiers[group.groupKey]?.modifier_portion_id) ===
-                            Number(item.modifier_portion_id);
+                  {combinations.map((combo) => {
+                    const isSelected = selectedCombinationId === combo.combination_id;
+                    const inStock = Number(combo.stock) > 0;
+                    
+                    return (
+                      <button
+                        key={combo.combination_id}
+                        type="button"
+                        disabled={!inStock}
+                        onClick={() => inStock && setSelectedCombinationId(combo.combination_id)}
+                        className={`group relative flex flex-col items-start rounded-[24px] border p-5 text-left transition-all hover:shadow-lg ${
+                          isSelected
+                            ? "border-amber-400 bg-amber-50/50 shadow-md ring-1 ring-amber-400/20 dark:border-amber-400/70 dark:bg-amber-500/5"
+                            : inStock
+                              ? "border-gray-200 bg-white/80 hover:border-amber-300 dark:border-[#243440] dark:bg-[#151e22]/85 dark:hover:border-amber-500/30"
+                              : "border-gray-100 bg-gray-50/50 opacity-60 cursor-not-allowed dark:border-[#243440] dark:bg-[#10171b]/50"
+                        }`}
+                      >
+                        <div className="flex w-full items-center justify-between gap-3">
+                          <p className={`text-lg font-bold ${
+                            isSelected ? "text-amber-700 dark:text-amber-400" : "text-gray-900 dark:text-slate-100"
+                          }`}>
+                            {combo.name}
+                          </p>
+                          {isSelected && <Sparkles className="h-5 w-5 text-amber-500" />}
+                        </div>
+                        
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {(combo.modifiers || []).map((m) => (
+                            <span 
+                              key={m.modifier_id}
+                              className="rounded-lg bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600 dark:bg-[#1c2a33] dark:text-slate-400"
+                            >
+                              {m.modifier_value}
+                            </span>
+                          ))}
+                        </div>
 
-                          return (
-                            <button
-                            key={item.modifier_portion_id}
-                            type="button"
-                            onClick={() =>
-                              setSelectedModifiers((prev) => ({
-                                ...prev,
-                                [group.groupKey]: selected ? null : item,
-                              }))
-                            }
-                            className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                              selected
-                                ? "border-amber-400 bg-amber-50 text-amber-800 shadow-[0_14px_30px_-24px_rgba(245,158,11,0.9)] dark:border-amber-400/70 dark:bg-amber-500/10 dark:text-amber-300"
-                                : "border-gray-200 bg-gray-50 text-gray-700 hover:border-amber-300 hover:bg-amber-50 dark:border-[#243440] dark:bg-[#10171b] dark:text-slate-300 dark:hover:border-amber-500/30"
-                            }`}
-                            aria-pressed={selected}
-                          >
-                            {item.modifier_value}
-                            {Number(item.additional_price || 0) > 0
-                              ? ` • +${formatINR(item.additional_price)}`
-                              : ""}
-                          </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                        <div className="mt-4 flex w-full items-end justify-between gap-3 pt-3 border-t border-gray-100 dark:border-[#1f2933]">
+                          <div>
+                            <span className={`text-xs font-semibold ${inStock ? "text-gray-500 dark:text-slate-400" : "text-red-500"}`}>
+                              {inStock ? `${combo.stock} In Stock` : "Out of Stock"}
+                            </span>
+                          </div>
+                          {Number(combo.additional_price || 0) > 0 && (
+                            <div className="text-right">
+                              <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-0.5">Additional</span>
+                              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                +{formatINR(combo.additional_price)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="mt-5 rounded-[24px] border border-dashed border-gray-300 px-5 py-6 text-sm text-gray-600 dark:border-[#243440] dark:text-slate-300">
-                  No extra modifiers are configured for this item right now.
+                  No variant combinations are configured for this item right now.
                 </div>
               )}
             </section>

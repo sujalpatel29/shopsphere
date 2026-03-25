@@ -23,8 +23,8 @@ import api from "./api";
  * Fetch all dashboard data in one call
  * @returns {Promise<Object>}
  */
-export const fetchDashboardData = async () => {
-  const response = await api.get("/analytics/dashboard");
+export const fetchDashboardData = async (days = 30) => {
+  const response = await api.get(`/analytics/dashboard?days=${days}`);
   return response.data?.data || {};
 };
 

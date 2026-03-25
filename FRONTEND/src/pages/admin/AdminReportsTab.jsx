@@ -15,7 +15,7 @@
  *  - Recent orders list
  *  - Export functionality
  */
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Toast } from "primereact/toast";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -28,7 +28,6 @@ import { TabView, TabPanel } from "primereact/tabview";
 import { Chip } from "primereact/chip";
 import {
   TrendingUp,
-  TrendingDown,
   IndianRupee,
   Users,
   Package,
@@ -36,21 +35,20 @@ import {
   AlertTriangle,
   Download,
   RefreshCw,
-  Calendar,
   BarChart3,
   PieChart,
   Activity,
   CreditCard,
   Gift,
-  Star,
   ArrowUpRight,
   ArrowDownRight,
   Clock,
   CheckCircle,
+  Boxes,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
-import { fetchDashboardData, fetchRevenueChart, fetchMonthlyRevenueComparison } from "../../../api/analyticsApi";
-import "./AdminProducts.css";
+import { fetchDashboardData } from "../../../api/analyticsApi";
+import "./AdminShared.css";
 
 // Chart colors matching the theme
 const CHART_COLORS = {
@@ -86,7 +84,7 @@ function AdminReportsTab() {
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await fetchDashboardData();
+      const data = await fetchDashboardData(timePeriod);
       setDashboardData(data);
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
@@ -99,7 +97,7 @@ function AdminReportsTab() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [timePeriod]);
 
   // Refresh data
   const handleRefresh = useCallback(async () => {
@@ -264,10 +262,11 @@ function AdminReportsTab() {
   // Payment status badge
   const paymentStatusTemplate = (rowData) => {
     const statusColors = {
-      paid: "success",
+      completed: "success",
+      processing: "info",
       pending: "warning",
       failed: "danger",
-      refunded: "info",
+      refunded: "secondary",
     };
     return (
       <Tag
@@ -426,6 +425,11 @@ function AdminReportsTab() {
   };
 
   // Loading skeleton
+  const reportWindowLabel = useMemo(() => {
+    const selected = TIME_PERIODS.find((period) => period.value === timePeriod);
+    return selected?.label || `Last ${timePeriod} Days`;
+  }, [timePeriod]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -449,7 +453,8 @@ function AdminReportsTab() {
     );
   }
 
-  const { overview, charts, topProducts, recentOrders, offerUsage, lowStock } = dashboardData || {};
+  const { overview, charts, topProducts, recentOrders, offerUsage, lowStock } =
+    dashboardData || {};
 
   return (
     <div className="admin-products-container space-y-6">
@@ -463,7 +468,7 @@ function AdminReportsTab() {
             Analytics & Reports
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Comprehensive business insights and performance metrics
+            Live business insights and performance metrics for {reportWindowLabel.toLowerCase()}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:justify-end">
@@ -471,6 +476,8 @@ function AdminReportsTab() {
             value={timePeriod}
             options={TIME_PERIODS}
             onChange={(e) => setTimePeriod(e.value)}
+            optionLabel="label"
+            optionValue="value"
             placeholder="Select Period"
             className="!w-48"
             pt={{
@@ -539,7 +546,7 @@ function AdminReportsTab() {
         <MiniStatCard title="Delivered" value={overview?.delivered_orders} icon={CheckCircle} valueColor="text-green-600" />
         <MiniStatCard title="Active Offers" value={overview?.active_offers} icon={Gift} valueColor="text-purple-600" />
         <MiniStatCard title="Total Users" value={overview?.total_users} icon={Users} valueColor="text-blue-600" />
-        <MiniStatCard title="Products" value={overview?.total_products} icon={Package} valueColor="text-teal-600" />
+        <MiniStatCard title="Categories" value={overview?.total_categories} icon={Boxes} valueColor="text-teal-600" />
       </div>
 
       {/* Charts Row */}

@@ -12,7 +12,8 @@ import { ok, serverError } from "../utils/apiResponse.js";
  */
 export const getOverviewStats = async (req, res) => {
   try {
-    const stats = await AnalyticsModel.getOverviewStats();
+    const days = parseInt(req.query.days) || 30;
+    const stats = await AnalyticsModel.getOverviewStats(days);
     return ok(res, "Overview statistics fetched successfully", stats);
   } catch (err) {
     console.error("Error fetching overview stats:", err);
@@ -41,7 +42,8 @@ export const getRevenueChart = async (req, res) => {
  */
 export const getOrderStatusDistribution = async (req, res) => {
   try {
-    const data = await AnalyticsModel.getOrderStatusDistribution();
+    const days = parseInt(req.query.days) || 30;
+    const data = await AnalyticsModel.getOrderStatusDistribution(days);
     return ok(res, "Order status distribution fetched successfully", data);
   } catch (err) {
     console.error("Error fetching order status distribution:", err);
@@ -56,7 +58,8 @@ export const getOrderStatusDistribution = async (req, res) => {
 export const getTopSellingProducts = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    const data = await AnalyticsModel.getTopSellingProducts(limit);
+    const days = parseInt(req.query.days) || 30;
+    const data = await AnalyticsModel.getTopSellingProducts(limit, days);
     return ok(res, "Top selling products fetched successfully", data);
   } catch (err) {
     console.error("Error fetching top selling products:", err);
@@ -70,7 +73,8 @@ export const getTopSellingProducts = async (req, res) => {
  */
 export const getCategorySales = async (req, res) => {
   try {
-    const data = await AnalyticsModel.getCategorySales();
+    const days = parseInt(req.query.days) || 30;
+    const data = await AnalyticsModel.getCategorySales(days);
     return ok(res, "Category sales fetched successfully", data);
   } catch (err) {
     console.error("Error fetching category sales:", err);
@@ -84,7 +88,8 @@ export const getCategorySales = async (req, res) => {
  */
 export const getPaymentMethodDistribution = async (req, res) => {
   try {
-    const data = await AnalyticsModel.getPaymentMethodDistribution();
+    const days = parseInt(req.query.days) || 30;
+    const data = await AnalyticsModel.getPaymentMethodDistribution(days);
     return ok(res, "Payment method distribution fetched successfully", data);
   } catch (err) {
     console.error("Error fetching payment method distribution:", err);
@@ -99,7 +104,8 @@ export const getPaymentMethodDistribution = async (req, res) => {
 export const getRecentOrders = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    const data = await AnalyticsModel.getRecentOrders(limit);
+    const days = parseInt(req.query.days) || 30;
+    const data = await AnalyticsModel.getRecentOrders(limit, days);
     return ok(res, "Recent orders fetched successfully", data);
   } catch (err) {
     console.error("Error fetching recent orders:", err);
@@ -128,7 +134,8 @@ export const getUserRegistrationTrend = async (req, res) => {
  */
 export const getOfferUsageStats = async (req, res) => {
   try {
-    const data = await AnalyticsModel.getOfferUsageStats();
+    const days = parseInt(req.query.days) || 30;
+    const data = await AnalyticsModel.getOfferUsageStats(days);
     return ok(res, "Offer usage statistics fetched successfully", data);
   } catch (err) {
     console.error("Error fetching offer usage stats:", err);
@@ -186,6 +193,7 @@ export const getAOVTrend = async (req, res) => {
  */
 export const getDashboardData = async (req, res) => {
   try {
+    const days = parseInt(req.query.days) || 30;
     const [
       overview,
       revenueChart,
@@ -200,18 +208,18 @@ export const getDashboardData = async (req, res) => {
       monthlyComparison,
       aovTrend
     ] = await Promise.all([
-      AnalyticsModel.getOverviewStats(),
-      AnalyticsModel.getRevenueChart(30),
-      AnalyticsModel.getOrderStatusDistribution(),
-      AnalyticsModel.getTopSellingProducts(5),
-      AnalyticsModel.getCategorySales(),
-      AnalyticsModel.getPaymentMethodDistribution(),
-      AnalyticsModel.getRecentOrders(5),
-      AnalyticsModel.getUserRegistrationTrend(30),
-      AnalyticsModel.getOfferUsageStats(),
+      AnalyticsModel.getOverviewStats(days),
+      AnalyticsModel.getRevenueChart(days),
+      AnalyticsModel.getOrderStatusDistribution(days),
+      AnalyticsModel.getTopSellingProducts(5, days),
+      AnalyticsModel.getCategorySales(days),
+      AnalyticsModel.getPaymentMethodDistribution(days),
+      AnalyticsModel.getRecentOrders(5, days),
+      AnalyticsModel.getUserRegistrationTrend(days),
+      AnalyticsModel.getOfferUsageStats(days),
       AnalyticsModel.getLowStockProducts(10),
       AnalyticsModel.getMonthlyRevenueComparison(),
-      AnalyticsModel.getAOVTrend(30)
+      AnalyticsModel.getAOVTrend(days)
     ]);
 
     return ok(res, "Dashboard data fetched successfully", {

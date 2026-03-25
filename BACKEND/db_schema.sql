@@ -3,7 +3,7 @@
 -- Merged from: ommm.sql, ecommerce-accrete.sql, offer_updated_schema.txt, db_schema_user.sql
 -- Generated: 2026-02-19
 --
--- Changes merged:
+-- Changes merged: 
 --   [ommm.sql]              Added product_images table
 --   [ommm.sql]              Added review_helpful table
 --   [ommm.sql]              offer_master: added category_id, product_id columns + FKs

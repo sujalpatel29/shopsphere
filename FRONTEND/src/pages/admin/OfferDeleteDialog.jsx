@@ -14,9 +14,9 @@ function OfferDeleteDialog({ visible, onHide, offer, onConfirm, deleting }) {
       <Button
         type="button"
         label={deleting ? "Deleting..." : "Delete"}
-        icon="pi pi-trash"
-        onClick={() => onConfirm(offer)}
-        disabled={deleting}
+        icon={deleting ? "pi pi-spin pi-spinner" : "pi pi-trash"}
+        onClick={() => offer && onConfirm(offer)}
+        disabled={deleting || !offer}
         severity="danger"
         className="!bg-red-600 hover:!bg-red-700 !text-white !border-none px-4 py-2 rounded-lg font-medium shadow-sm transition-colors"
       />
@@ -28,6 +28,7 @@ function OfferDeleteDialog({ visible, onHide, offer, onConfirm, deleting }) {
       header="Confirm Deletion"
       visible={visible}
       onHide={onHide}
+      draggable={false}
       style={{ width: "400px" }}
       breakpoints={{ "641px": "90vw" }}
       footer={footerContent}
@@ -38,7 +39,9 @@ function OfferDeleteDialog({ visible, onHide, offer, onConfirm, deleting }) {
         header: { className: "admin-dialog-header px-6 py-4 border-b" },
         title: { className: "text-lg font-semibold text-red-600 font-serif" },
         content: { className: "p-6 font-sans" },
-        footer: { className: "admin-dialog-footer px-6 py-4 border-t rounded-b-2xl" },
+        footer: {
+          className: "admin-dialog-footer px-6 py-4 border-t rounded-b-2xl",
+        },
         closeButton: {
           className:
             "w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors",

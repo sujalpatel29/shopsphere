@@ -195,7 +195,7 @@ function CategoryFilterSidebar({
 
   return (
     <div
-      className={`category-filter-panel w-full lg:w-72 rounded-2xl border p-5 ${
+      className={`category-filter-panel w-full lg:w-72 rounded-2xl border p-5 lg:sticky lg:top-28 ${
         darkMode
           ? "border-[#1f2933] bg-[#151e22] text-slate-200"
           : "border-gray-200 bg-white text-gray-800"
@@ -242,18 +242,27 @@ function CategoryFilterSidebar({
               Categories
             </h4>
 
-            <Tree
-              value={treeNodes}
-              selectionMode="checkbox"
-              selectionKeys={selectedKeys}
-              onSelectionChange={(e) => onSelectionChange?.(e.value)}
-              propagateSelectionDown
-              propagateSelectionUp
-              metaKeySelection={false}
-              className={`category-filter-tree border-none w-full text-sm ${
-                darkMode ? "category-filter-tree-dark" : ""
+            <div
+              className={`rounded-xl border p-2 ${
+                darkMode
+                  ? "border-[#1f2933] bg-[#0f161a]"
+                  : "border-gray-200 bg-white"
               }`}
-            />
+              style={{ maxHeight: "52vh", overflow: "auto" }}
+            >
+              <Tree
+                value={treeNodes}
+                selectionMode="checkbox"
+                selectionKeys={selectedKeys}
+                onSelectionChange={(e) => onSelectionChange?.(e.value)}
+                propagateSelectionDown
+                propagateSelectionUp
+                metaKeySelection={false}
+                className={`category-filter-tree border-none w-full text-sm ${
+                  darkMode ? "category-filter-tree-dark" : ""
+                }`}
+              />
+            </div>
           </div>
 
           <Divider />
