@@ -57,7 +57,7 @@ const getEffectivePrice = (entity) => {
   const regular = Number(entity.price);
   if (discounted > 0 && discounted < regular) return discounted;
   return regular;
-};  
+};
 
 const getSavingsPct = (regular, discounted) => {
   if (!regular || !discounted || discounted >= regular) return 0;
@@ -137,7 +137,6 @@ function ProductDetailsPage() {
   const recentlyViewedRef = useRef(null);
   const relatedProductsRef = useRef(null);
   const touchStartXRef = useRef(0);
-  const detailsSectionRefs = useRef({});
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -160,7 +159,11 @@ function ProductDetailsPage() {
   const [reviewSubmitLoading, setReviewSubmitLoading] = useState(false);
   const [reviewFormError, setReviewFormError] = useState("");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [tapZoom, setTapZoom] = useState(false);
+  const [imageZoomPreview, setImageZoomPreview] = useState({
+    active: false,
+    x: 50,
+    y: 50,
+  });
   const [quantity, setQuantity] = useState(1);
   const [addLoading, setAddLoading] = useState(false);
   const [buyLoading, setBuyLoading] = useState(false);
@@ -218,16 +221,6 @@ function ProductDetailsPage() {
   const stockMeta = getStockLabel(effectiveStock);
   const outOfStock = effectiveStock <= 0 || !product?.is_active;
   const descriptionParagraphs = useMemo(() => buildDescriptionParagraphs(product), [product]);
-
-  const detailSections = useMemo(
-    () => [
-      { id: "overview", label: "Overview", icon: FileText },
-      { id: "variants", label: "Variants", icon: Boxes },
-      { id: "customize", label: "Customize", icon: Sparkles },
-      { id: "shopping", label: "Shopping Notes", icon: ShieldCheck },
-    ],
-    []
-  );
 
   const breadcrumbTrail = useMemo(() => {
     if (!product?.category_id || categories.length === 0) return [];
@@ -615,13 +608,6 @@ function ProductDetailsPage() {
     }
   };
 
-  const scrollToDetailSection = (sectionId) => {
-    detailsSectionRefs.current[sectionId]?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
-
   const resetReviewDialog = useCallback(() => {
     setReviewDialogVisible(false);
     setReviewDraft(EMPTY_REVIEW_DRAFT);
@@ -696,7 +682,18 @@ function ProductDetailsPage() {
     if (!total) return;
     const normalized = ((nextIndex % total) + total) % total;
     setActiveImageIndex(normalized);
-    setTapZoom(false);
+    setImageZoomPreview({ active: false, x: 50, y: 50 });
+  };
+
+  const handleImageMouseMove = (event) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = clamp(((event.clientX - bounds.left) / bounds.width) * 100, 0, 100);
+    const y = clamp(((event.clientY - bounds.top) / bounds.height) * 100, 0, 100);
+    setImageZoomPreview({ active: true, x, y });
+  };
+
+  const handleImageMouseLeave = () => {
+    setImageZoomPreview((prev) => ({ ...prev, active: false }));
   };
 
   const scrollRailByCard = (railRef, direction) => {
@@ -1021,57 +1018,77 @@ function ProductDetailsPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <Card className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22]">
-          <div
-            className="relative overflow-hidden rounded-xl border border-gray-100 bg-gray-50 dark:border-[#1f2933] dark:bg-[#10171b]"
-            onTouchStart={(event) => {
-              touchStartXRef.current = event.changedTouches[0]?.clientX || 0;
-            }}
-            onTouchEnd={(event) => {
-              const endX = event.changedTouches[0]?.clientX || 0;
-              if (Math.abs(endX - touchStartXRef.current) < 40) return;
-              goToImage(activeImageIndex + (endX < touchStartXRef.current ? 1 : -1));
-            }}
-          >
-            {activeImage?.image_url ? (
-              <button
-                type="button"
-                onClick={() => setTapZoom((prev) => !prev)}
-                className="group h-[450px] w-full overflow-hidden md:h-[560px]"
-                aria-label="Toggle image zoom"
-              >
+          <div className="relative">
+            <div
+              className="relative overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-[#1f2933] dark:bg-[#151e22]"
+              onTouchStart={(event) => {
+                touchStartXRef.current = event.changedTouches[0]?.clientX || 0;
+              }}
+              onTouchEnd={(event) => {
+                const endX = event.changedTouches[0]?.clientX || 0;
+                if (Math.abs(endX - touchStartXRef.current) < 40) return;
+                goToImage(activeImageIndex + (endX < touchStartXRef.current ? 1 : -1));
+              }}
+              onMouseMove={activeImage?.image_url ? handleImageMouseMove : undefined}
+              onMouseLeave={handleImageMouseLeave}
+            >
+              {activeImage?.image_url ? (
+                <div className="relative h-[450px] w-full overflow-hidden md:h-[560px]">
+                  <img
+                    src={activeImage.image_url}
+                    alt={product.display_name || product.name}
+                    className="block h-full w-full object-cover"
+                  />
+                  {imageZoomPreview.active ? (
+                    <div
+                      className="pointer-events-none absolute hidden h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-sky-300/80 bg-sky-200/15 shadow-[0_18px_30px_-24px_rgba(14,165,233,0.9)] lg:block"
+                      style={{
+                        left: `${imageZoomPreview.x}%`,
+                        top: `${imageZoomPreview.y}%`,
+                      }}
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex h-[450px] items-center justify-center text-gray-500 dark:text-slate-400">
+                  No image available
+                </div>
+              )}
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => goToImage(activeImageIndex - 1)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goToImage(activeImageIndex + 1)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+            </div>
+            {activeImage?.image_url && imageZoomPreview.active ? (
+              <div className="pointer-events-none absolute left-full top-0 z-20 ml-5 hidden h-[560px] w-[460px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_30px_60px_-30px_rgba(15,23,42,0.45)] xl:block dark:border-[#243440] dark:bg-[#10171b]">
                 <img
                   src={activeImage.image_url}
-                  alt={product.display_name || product.name}
-                  className={`h-full w-full object-contain transition-transform duration-300 ${
-                    tapZoom ? "scale-150" : "scale-100 group-hover:scale-125"
-                  }`}
+                  alt=""
+                  className="block h-full w-full max-w-none object-cover"
+                  style={{
+                    transform: "scale(2.4)",
+                    transformOrigin: `${imageZoomPreview.x}% ${imageZoomPreview.y}%`,
+                  }}
                 />
-              </button>
-            ) : (
-              <div className="flex h-[450px] items-center justify-center text-gray-500 dark:text-slate-400">
-                No image available
               </div>
-            )}
-            {images.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => goToImage(activeImageIndex - 1)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow"
-                  aria-label="Previous image"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => goToImage(activeImageIndex + 1)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow"
-                  aria-label="Next image"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </>
-            )}
+            ) : null}
           </div>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
             {(images.length ? images : [{ image_url: "" }]).map((item, index) => (
@@ -1102,7 +1119,7 @@ function ProductDetailsPage() {
               <h1 className="font-serif text-3xl text-gray-900 dark:text-slate-100">
                 {product.display_name || product.name}
               </h1>
-              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">
+              <p className="mt-2 whitespace-pre-line text-sm text-gray-600 dark:text-slate-300">
                 {product.short_description || product.description}
               </p>
               <div className="mt-3 flex items-center gap-3">
@@ -1314,44 +1331,20 @@ function ProductDetailsPage() {
       </div>
 
       <Card className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#1f2933] dark:bg-[#151e22]">
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="overflow-hidden rounded-[28px] border border-amber-200/70 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.18),_transparent_58%),linear-gradient(145deg,rgba(255,248,238,0.96),rgba(255,237,213,0.86))] p-5 dark:border-amber-600/25 dark:bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),_transparent_55%),linear-gradient(145deg,rgba(21,30,34,0.98),rgba(16,23,27,0.92))]">
-              <p className="text-xs uppercase tracking-[0.24em] text-amber-700/80 dark:text-amber-300/80">
-                Product Details
-              </p>
-              <h2 className="mt-3 font-serif text-2xl text-gray-900 dark:text-slate-100">
-                Everything in one place
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-slate-300">
-                Scan the essentials, compare available configurations, and review purchase notes without leaving the PDP.
-              </p>
-              <div className="mt-5 space-y-2">
-                {detailSections.map((section) => {
-                  const Icon = section.icon;
-                  return (
-                    <button
-                      key={section.id}
-                      type="button"
-                      onClick={() => scrollToDetailSection(section.id)}
-                      className="flex w-full items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-left text-sm font-medium text-gray-800 transition hover:-translate-y-0.5 hover:border-amber-300 hover:text-amber-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:border-amber-500/40 dark:hover:text-amber-300"
-                    >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-[#2f7a6f] text-white shadow-lg shadow-amber-500/15">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span>{section.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </aside>
+        <div className="space-y-5">
+          <div className="overflow-hidden rounded-[28px] border border-amber-200/70 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.14),_transparent_58%),linear-gradient(145deg,rgba(255,248,238,0.96),rgba(255,255,255,0.9))] p-5 dark:border-amber-600/25 dark:bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.1),_transparent_55%),linear-gradient(145deg,rgba(21,30,34,0.98),rgba(16,23,27,0.92))]">
+            <p className="text-xs uppercase tracking-[0.24em] text-amber-700/80 dark:text-amber-300/80">
+              Product Details
+            </p>
+            <h2 className="mt-3 font-serif text-2xl text-gray-900 dark:text-slate-100">
+              Everything in one place
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600 dark:text-slate-300">
+              Scan the essentials, compare available configurations, and review purchase notes without leaving the PDP.
+            </p>
+          </div>
 
-          <div className="space-y-5">
-            <section
-              ref={(node) => {
-                detailsSectionRefs.current.overview = node;
-              }}
+          <section
               className="rounded-[28px] border border-gray-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.92),rgba(248,250,252,0.9))] p-5 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.35)] dark:border-[#1f2933] dark:bg-[linear-gradient(145deg,rgba(16,23,27,0.98),rgba(21,30,34,0.94))]"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1401,9 +1394,6 @@ function ProductDetailsPage() {
             </section>
 
             <section
-              ref={(node) => {
-                detailsSectionRefs.current.variants = node;
-              }}
               className="rounded-[28px] border border-gray-200/80 bg-white/90 p-5 dark:border-[#1f2933] dark:bg-[#10171b]/90"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1475,9 +1465,6 @@ function ProductDetailsPage() {
             </section>
 
             <section
-              ref={(node) => {
-                detailsSectionRefs.current.customize = node;
-              }}
               className="rounded-[28px] border border-gray-200/80 bg-white/90 p-5 dark:border-[#1f2933] dark:bg-[#10171b]/90"
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
@@ -1549,9 +1536,6 @@ function ProductDetailsPage() {
             </section>
 
             <section
-              ref={(node) => {
-                detailsSectionRefs.current.shopping = node;
-              }}
               className="rounded-[28px] border border-gray-200/80 bg-white/90 p-5 dark:border-[#1f2933] dark:bg-[#10171b]/90"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1618,7 +1602,6 @@ function ProductDetailsPage() {
                 </div>
               </div>
             </section>
-          </div>
         </div>
       </Card>
 
@@ -1888,5 +1871,4 @@ function ProductDetailsPage() {
     </div>
   );
 }
-
 export default ProductDetailsPage;
