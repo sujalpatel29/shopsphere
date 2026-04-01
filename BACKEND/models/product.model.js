@@ -1,5 +1,28 @@
 import db from "../configs/db.js";
 
+const tableExistsCache = new Map();
+
+const hasTable = async (tableName, conn = db) => {
+  const cacheKey = `${conn === db ? "pool" : "conn"}:${tableName}`;
+  if (tableExistsCache.has(cacheKey)) {
+    return tableExistsCache.get(cacheKey);
+  }
+
+  const [rows] = await conn.execute(
+    `
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = DATABASE() AND table_name = ?
+      LIMIT 1
+    `,
+    [tableName],
+  );
+
+  const exists = rows.length > 0;
+  tableExistsCache.set(cacheKey, exists);
+  return exists;
+};
+
 const Product = {
   //  Create Product
   create: (data, conn = db) => {
@@ -87,6 +110,10 @@ const Product = {
 
   // find all product with filtering
   findAll: async (filters = {}, pagination = {}, conn = db) => {
+    const modifierCombinationExists = await hasTable(
+      "modifier_combination",
+      conn,
+    );
     // Unfiltered stats — always reflect entire catalog
     const [statsRows] = await conn.execute(`
       SELECT
@@ -135,6 +162,23 @@ const Product = {
       ) pi ON pi.product_id = p.product_id
     `;
 
+    const modifierCombinationUnion = modifierCombinationExists
+      ? `
+          UNION ALL
+
+          -- Combinations
+          SELECT mc_inner.product_id,
+                 COALESCE(mc_inner.product_portion_id, 0) AS ppId,
+                 mc_inner.combination_id AS id,
+                 mc_inner.name AS label,
+                 COALESCE(mc_inner.additional_price, 0) AS price,
+                 mc_inner.stock,
+                 '' AS img
+          FROM modifier_combination mc_inner
+          WHERE mc_inner.is_deleted = 0
+        `
+      : "";
+
     let baseSql = `
       FROM product_master p
       LEFT JOIN category_master c ON p.category_id = c.category_id AND c.is_deleted = 0
@@ -180,19 +224,7 @@ const Product = {
           LEFT JOIN product_portion pp2 ON pp2.product_portion_id = mp.product_portion_id AND pp2.is_deleted = 0
           JOIN modifier_master mm ON mm.modifier_id = mp.modifier_id AND mm.is_deleted = 0
           WHERE mp.is_deleted = 0
-          
-          UNION ALL
-          
-          -- Combinations
-          SELECT mc_inner.product_id,
-                 COALESCE(mc_inner.product_portion_id, 0) AS ppId,
-                 mc_inner.combination_id AS id,
-                 mc_inner.name AS label,
-                 COALESCE(mc_inner.additional_price, 0) AS price,
-                 mc_inner.stock,
-                 '' AS img
-          FROM modifier_combination mc_inner
-          WHERE mc_inner.is_deleted = 0
+          ${modifierCombinationUnion}
         ) combined_mods
         GROUP BY product_id
       ) mc ON p.product_id = mc.product_id

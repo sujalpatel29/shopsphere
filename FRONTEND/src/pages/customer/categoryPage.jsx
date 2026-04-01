@@ -2,7 +2,7 @@
 import { useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dropdown } from "primereact/dropdown";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme as useAppTheme } from "../../context/ThemeContext";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
 import SelectedFilters from "../../components/category/SelectedFilters";
@@ -15,7 +15,6 @@ import {
   getCategoryProductsPriceRange,
 } from "../../services/categoryApi";
 import api from "../../../api/api";
-import { useTheme } from "../../context/ThemeContext";
 
 const extractProducts = (res) => {
   const data = res?.data;
@@ -121,7 +120,7 @@ const useDebouncedValue = (value, delayMs = 300) => {
 
 function CategoryPage() {
   const navigate = useNavigate();
-  const { darkMode } = useTheme();
+  const { darkMode } = useAppTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser } = useSelector((state) => state.auth);
   const [recentlyAddedId, setRecentlyAddedId] = useState(null);
@@ -551,15 +550,6 @@ function CategoryPage() {
     if (isFullRange) return "";
     return `₹${priceRange[0].toLocaleString("en-IN")} - ₹${priceRange[1].toLocaleString("en-IN")}`;
   }, [priceRange, priceBounds.min, priceBounds.max]);
-
-  const sortOptions = useMemo(
-    () => [
-      { label: "Price: Low to High", value: "price_low_high" },
-      { label: "Price: High to Low", value: "price_high_low" },
-      { label: "Rating: High to Low", value: "rating_high_low" },
-    ],
-    [],
-  );
 
   const handleRemoveCategoryTag = (categoryId) => {
     setSelectedKeys((prev) => {

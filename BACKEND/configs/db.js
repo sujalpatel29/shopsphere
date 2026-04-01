@@ -1,14 +1,14 @@
 import mysql from "mysql2/promise";
 import "./env.js";
 
-const dbPort = Number.parseInt(process.env.DB_PORT, 10) || 3306;
+const dbPort = Number.parseInt(process.env.DB_PORT, 10) || 3303;
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: dbPort,
+  database: process.env.DB_NAME || "ecommerce_accrete" ,
+  port: dbPort ||3303,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
