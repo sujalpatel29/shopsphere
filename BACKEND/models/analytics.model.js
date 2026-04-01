@@ -10,19 +10,26 @@ const AnalyticsModel = {
    * Get overview statistics for dashboard
    * @returns {Promise<Object>} Overview stats
    */
-  async getOverviewStats() {
+  async getOverviewStats(days = 30) {
     const [stats] = await pool.execute(`
       SELECT 
         (SELECT COUNT(*) FROM user_master WHERE is_deleted = 0) AS total_users,
         (SELECT COUNT(*) FROM user_master WHERE is_deleted = 0 AND role = 'customer') AS total_customers,
+        (SELECT COUNT(*) FROM user_master WHERE is_deleted = 0 AND role = 'customer'
+          AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)) AS new_customers,
+        (SELECT COUNT(*) FROM category_master WHERE is_deleted = 0) AS total_categories,
         (SELECT COUNT(*) FROM product_master WHERE is_deleted = 0) AS total_products,
         (SELECT COUNT(*) FROM product_master WHERE is_deleted = 0 AND is_active = 1) AS active_products,
-        (SELECT COUNT(*) FROM order_master WHERE is_deleted = 0) AS total_orders,
-        (SELECT COALESCE(SUM(total_amount), 0) FROM order_master WHERE is_deleted = 0) AS total_revenue,
-        (SELECT COUNT(*) FROM order_master WHERE is_deleted = 0 AND order_status = 'pending') AS pending_orders,
-        (SELECT COUNT(*) FROM order_master WHERE is_deleted = 0 AND order_status = 'delivered') AS delivered_orders,
+        (SELECT COUNT(*) FROM order_master WHERE is_deleted = 0
+          AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)) AS total_orders,
+        (SELECT COALESCE(SUM(total_amount), 0) FROM order_master WHERE is_deleted = 0
+          AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)) AS total_revenue,
+        (SELECT COUNT(*) FROM order_master WHERE is_deleted = 0 AND order_status = 'pending'
+          AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)) AS pending_orders,
+        (SELECT COUNT(*) FROM order_master WHERE is_deleted = 0 AND order_status = 'delivered'
+          AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)) AS delivered_orders,
         (SELECT COUNT(*) FROM offer_master WHERE is_deleted = 0 AND is_active = 1) AS active_offers
-    `);
+    `, [days, days, days, days, days]);
     return stats[0];
   },
 
@@ -50,15 +57,16 @@ const AnalyticsModel = {
    * Get order status distribution
    * @returns {Promise<Array>} Order status counts
    */
-  async getOrderStatusDistribution() {
+  async getOrderStatusDistribution(days = 30) {
     const [rows] = await pool.execute(`
       SELECT 
         order_status,
         COUNT(*) AS count
       FROM order_master
       WHERE is_deleted = 0
+        AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
       GROUP BY order_status
-    `);
+    `, [days]);
     return rows;
   },
 
@@ -67,22 +75,30 @@ const AnalyticsModel = {
    * @param {number} limit - Number of products to return
    * @returns {Promise<Array>} Top products with sales data
    */
-  async getTopSellingProducts(limit = 10) {
-    const [rows] = await pool.execute(`
+  async getTopSellingProducts(limit = 10, days = 30) {
+    const normalizedLimit = Math.max(1, Number.parseInt(limit, 10) || 10);
+
+    const [rows] = await pool.query(`
       SELECT
         pm.product_id,
         pm.name,
         pm.display_name,
         pm.price,
-        COALESCE(SUM(oi.quantity), 0) AS total_sold,
-        COALESCE(SUM(oi.total), 0) AS total_revenue
+        COALESCE(SUM(CASE WHEN om.order_id IS NOT NULL THEN oi.quantity ELSE 0 END), 0) AS total_sold,
+        COALESCE(SUM(CASE WHEN om.order_id IS NOT NULL THEN oi.total ELSE 0 END), 0) AS total_revenue
       FROM product_master pm
-      LEFT JOIN order_items oi ON pm.product_id = oi.product_id
+      LEFT JOIN order_items oi
+        ON pm.product_id = oi.product_id
+       AND oi.is_deleted = 0
+      LEFT JOIN order_master om
+        ON oi.order_id = om.order_id
+       AND om.is_deleted = 0
+       AND om.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
       WHERE pm.is_deleted = 0
       GROUP BY pm.product_id
       ORDER BY total_sold DESC
-      LIMIT ${parseInt(limit)}
-    `);
+      LIMIT ${normalizedLimit}
+    `, [days]);
     return rows;
   },
 
@@ -90,20 +106,26 @@ const AnalyticsModel = {
    * Get category sales distribution
    * @returns {Promise<Array>} Category sales data
    */
-  async getCategorySales() {
+  async getCategorySales(days = 30) {
     const [rows] = await pool.execute(`
       SELECT
         cm.category_name,
-        COALESCE(SUM(oi.quantity), 0) AS items_sold,
-        COALESCE(SUM(oi.total), 0) AS revenue
+        COALESCE(SUM(CASE WHEN om.order_id IS NOT NULL THEN oi.quantity ELSE 0 END), 0) AS items_sold,
+        COALESCE(SUM(CASE WHEN om.order_id IS NOT NULL THEN oi.total ELSE 0 END), 0) AS revenue
       FROM category_master cm
       LEFT JOIN product_categories pc ON cm.category_id = pc.category_id
-      LEFT JOIN order_items oi ON pc.product_id = oi.product_id
+      LEFT JOIN order_items oi
+        ON pc.product_id = oi.product_id
+       AND oi.is_deleted = 0
+      LEFT JOIN order_master om
+        ON oi.order_id = om.order_id
+       AND om.is_deleted = 0
+       AND om.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
       WHERE cm.is_deleted = 0
       GROUP BY cm.category_id
       ORDER BY revenue DESC
       LIMIT 10
-    `);
+    `, [days]);
     return rows;
   },
 
@@ -111,15 +133,20 @@ const AnalyticsModel = {
    * Get payment method distribution
    * @returns {Promise<Array>} Payment method counts
    */
-  async getPaymentMethodDistribution() {
+  async getPaymentMethodDistribution(days = 30) {
     const [rows] = await pool.execute(`
       SELECT 
-        payment_method,
+        pm.payment_method,
         COUNT(*) AS count,
-        COALESCE(SUM(amount), 0) AS total_amount
-      FROM payment_master
+        COALESCE(SUM(pm.amount), 0) AS total_amount
+      FROM payment_master pm
+      JOIN order_master om
+        ON pm.order_id = om.order_id
+       AND om.is_deleted = 0
+      WHERE pm.is_deleted = 0
+        AND om.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
       GROUP BY payment_method
-    `);
+    `, [days]);
     return rows;
   },
 
@@ -128,8 +155,10 @@ const AnalyticsModel = {
    * @param {number} limit - Number of orders to return
    * @returns {Promise<Array>} Recent orders
    */
-  async getRecentOrders(limit = 10) {
-    const [rows] = await pool.execute(`
+  async getRecentOrders(limit = 10, days = 30) {
+    const normalizedLimit = Math.max(1, Number.parseInt(limit, 10) || 10);
+
+    const [rows] = await pool.query(`
       SELECT
         om.order_id,
         om.order_number,
@@ -142,9 +171,10 @@ const AnalyticsModel = {
       FROM order_master om
       JOIN user_master um ON om.user_id = um.user_id
       WHERE om.is_deleted = 0
+        AND om.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
       ORDER BY om.created_at DESC
-      LIMIT ${parseInt(limit)}
-    `);
+      LIMIT ${normalizedLimit}
+    `, [days]);
     return rows;
   },
 
@@ -171,7 +201,7 @@ const AnalyticsModel = {
    * Get offer usage statistics
    * @returns {Promise<Array>} Offer usage data
    */
-  async getOfferUsageStats() {
+  async getOfferUsageStats(days = 30) {
     const [rows] = await pool.execute(`
       SELECT 
         om.offer_id,
@@ -179,15 +209,21 @@ const AnalyticsModel = {
         om.offer_type,
         om.discount_type,
         om.discount_value,
-        COUNT(ou.offer_usage_id) AS total_usage,
-        COALESCE(SUM(ou.discount_amount), 0) AS total_discount_given
+        COUNT(CASE WHEN ord.order_id IS NOT NULL THEN ou.offer_usage_id END) AS total_usage,
+        COALESCE(SUM(CASE WHEN ord.order_id IS NOT NULL THEN ou.discount_amount ELSE 0 END), 0) AS total_discount_given
       FROM offer_master om
-      LEFT JOIN offer_usage ou ON om.offer_id = ou.offer_id
+      LEFT JOIN offer_usage ou
+        ON om.offer_id = ou.offer_id
+       AND ou.is_deleted = 0
+      LEFT JOIN order_master ord
+        ON ou.order_id = ord.order_id
+       AND ord.is_deleted = 0
+       AND ord.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
       WHERE om.is_deleted = 0
       GROUP BY om.offer_id
       ORDER BY total_usage DESC
       LIMIT 10
-    `);
+    `, [days]);
     return rows;
   },
 

@@ -1,363 +1,13 @@
-﻿// import { useRef, useState } from "react";
-// import { Avatar } from "primereact/avatar";
-// import { Button } from "primereact/button";
-// import { Ripple } from "primereact/ripple";
-// import { Sidebar } from "primereact/sidebar";
-// import { StyleClass } from "primereact/styleclass";
-// import { useTheme } from "../../context/ThemeContext";
-
-// const favoriteItems = [
-//   { icon: "pi pi-home", label: "Dashboard" },
-//   { icon: "pi pi-bookmark", label: "Bookmarks" },
-//   { icon: "pi pi-users", label: "Team" },
-//   { icon: "pi pi-comments", label: "Messages" },
-//   { icon: "pi pi-calendar", label: "Calendar" },
-//   { icon: "pi pi-cog", label: "Settings" },
-// ];
-
-// const appItems = [
-//   { icon: "pi pi-folder", label: "Projects" },
-//   { icon: "pi pi-chart-bar", label: "Performance" },
-//   { icon: "pi pi-cog", label: "Settings" },
-// ];
-
-// function CategoryPage() {
-//   const { darkMode } = useTheme();
-//   const [visible, setVisible] = useState(false);
-
-//   const btnRef1 = useRef(null);
-//   const btnRef2 = useRef(null);
-
-//   return (
-//     <div className="space-y-6">
-//       <section
-//   className={`rounded-3xl border p-6 md:p-10 ${
-//     darkMode
-//       ? "border-[#1f2933] bg-[#151e22]"
-//       : "border-amber-200/70 bg-[#fff8ee]"
-//   }`}
-// >
-//   <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-
-//     {/* LEFT SIDE - CATEGORY BUTTON */}
-//     <div className="flex items-center">
-//       <Button
-//   type="button"
-//   label="Categories"
-//   icon="pi pi-list"
-//   iconPos="left"
-//   onClick={() => setVisible(true)}
-//   className="!rounded-lg !border-0 !bg-amber-600 !px-4 !py-2 !text-sm !text-white !font-semibold hover:!bg-amber-700 transition-all duration-200"
-// />
-//     </div>
-
-//     {/* RIGHT SIDE - TEXT CONTENT */}
-//     <div className="text-right md:max-w-xl">
-//       <p className="font-accent text-xs uppercase tracking-[0.25em] text-amber-600">
-//         Categories
-//       </p>
-
-//       <h1
-//         className={`mt-2 font-serif text-3xl md:text-4xl font-semibold ${
-//           darkMode ? "text-slate-100" : "text-gray-900"
-//         }`}
-//       >
-//         Browse Category Menu
-//       </h1>
-
-//       <p
-//         className={`mt-3 text-sm leading-relaxed ${
-//           darkMode ? "text-slate-400" : "text-gray-600"
-//         }`}
-//       >
-//         Explore all product collections and navigate through structured
-//         category sections designed for a smooth shopping experience.
-//       </p>
-//     </div>
-//   </div>
-// </section>
-
-//       <Sidebar
-//         visible={visible}
-//         onHide={() => setVisible(false)}
-//         showCloseIcon={false}
-//         dismissable
-//         blockScroll
-//         className="!w-[90vw] !max-w-[360px]"
-//         content={({ closeIconRef, hide }) => (
-//           <div
-//             className={`h-full ${
-//               darkMode ? "bg-[#151e22] text-slate-100" : "bg-[#fff8ee] text-gray-900"
-//             }`}
-//           >
-//             <div
-//               className={`flex items-center justify-between border-b px-4 py-4 ${
-//                 darkMode ? "border-[#1f2933]" : "border-amber-200/70"
-//               }`}
-//             >
-//               <div className="inline-flex items-center gap-2">
-//                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/20 text-amber-500">
-//                   <i className="pi pi-th-large" />
-//                 </span>
-//                 <span className="font-serif text-xl font-semibold">ShopSphere</span>
-//               </div>
-
-//               <Button
-//                 type="button"
-//                 ref={closeIconRef}
-//                 onClick={(e) => hide(e)}
-//                 icon="pi pi-times"
-//                 rounded
-//                 text
-//                 className={darkMode ? "!text-slate-200" : "!text-gray-700"}
-//               />
-//             </div>
-
-//             <div className="h-[calc(100%-73px)] overflow-y-auto px-3 py-4">
-//               <ul className="m-0 list-none p-0">
-//                 <li>
-//                   <StyleClass
-//                     nodeRef={btnRef1}
-//                     selector="@next"
-//                     enterFromClassName="hidden"
-//                     enterActiveClassName="slidedown"
-//                     leaveToClassName="hidden"
-//                     leaveActiveClassName="slideup"
-//                   >
-//                     <div
-//                       ref={btnRef1}
-//                       className={`p-ripple flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 ${
-//                         darkMode ? "text-slate-200 hover:bg-[#1a2327]" : "text-gray-700 hover:bg-amber-50"
-//                       }`}
-//                     >
-//                       <span className="font-accent text-xs font-semibold uppercase tracking-[0.15em]">
-//                         Favorites
-//                       </span>
-//                       <i className="pi pi-chevron-down text-xs" />
-//                       <Ripple />
-//                     </div>
-//                   </StyleClass>
-
-//                   <ul className="m-0 mt-1 list-none overflow-hidden p-0">
-//                     {favoriteItems.map((item) => (
-//                       <li key={item.label}>
-//                         <a
-//                           className={`p-ripple flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-//                             darkMode
-//                               ? "text-slate-200 hover:bg-[#1a2327] hover:text-amber-300"
-//                               : "text-gray-700 hover:bg-amber-50 hover:text-amber-700"
-//                           }`}
-//                         >
-//                           <i className={item.icon} />
-//                           <span className="font-medium">{item.label}</span>
-//                           <Ripple />
-//                         </a>
-//                       </li>
-//                     ))}
-//                   </ul>
-//                 </li>
-//               </ul>
-
-//               <ul className="m-0 mt-4 list-none p-0">
-//                 <li>
-//                   <StyleClass
-//                     nodeRef={btnRef2}
-//                     selector="@next"
-//                     enterFromClassName="hidden"
-//                     enterActiveClassName="slidedown"
-//                     leaveToClassName="hidden"
-//                     leaveActiveClassName="slideup"
-//                   >
-//                     <div
-//                       ref={btnRef2}
-//                       className={`p-ripple flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 ${
-//                         darkMode ? "text-slate-200 hover:bg-[#1a2327]" : "text-gray-700 hover:bg-amber-50"
-//                       }`}
-//                     >
-//                       <span className="font-accent text-xs font-semibold uppercase tracking-[0.15em]">
-//                         Application
-//                       </span>
-//                       <i className="pi pi-chevron-down text-xs" />
-//                       <Ripple />
-//                     </div>
-//                   </StyleClass>
-
-//                   <ul className="m-0 mt-1 list-none overflow-hidden p-0">
-//                     {appItems.map((item) => (
-//                       <li key={item.label}>
-//                         <a
-//                           className={`p-ripple flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-//                             darkMode
-//                               ? "text-slate-200 hover:bg-[#1a2327] hover:text-amber-300"
-//                               : "text-gray-700 hover:bg-amber-50 hover:text-amber-700"
-//                           }`}
-//                         >
-//                           <i className={item.icon} />
-//                           <span className="font-medium">{item.label}</span>
-//                           <Ripple />
-//                         </a>
-//                       </li>
-//                     ))}
-//                   </ul>
-//                 </li>
-//               </ul>
-
-//               <div
-//                 className={`mt-6 border-t pt-4 ${
-//                   darkMode ? "border-[#1f2933]" : "border-amber-200/70"
-//                 }`}
-//               >
-//                 <a
-//                   className={`p-ripple flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 ${
-//                     darkMode ? "hover:bg-[#1a2327]" : "hover:bg-amber-50"
-//                   }`}
-//                 >
-//                   <Avatar
-//                     image="https://primefaces.org/cdn/primereact/images/avatar/amyelsner.png"
-//                     shape="circle"
-//                   />
-//                   <span className="font-semibold">Amy Elsner</span>
-//                   <Ripple />
-//                 </a>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-//       />
-//     </div>
-//   );
-// }
-
-// export default CategoryPage;
-
-// import { useEffect, useState } from "react";
-// import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
-// import CategorySearchBar from "../../components/category/CategorySearchBar";
-// import SelectedFilters from "../../components/category/SelectedFilters";
-// import ProductGrid from "../../components/category/ProductGrid";
-
-// function CategoryPage() {
-//   const [isLoading, setIsLoading] = useState(true);
-
-//   // Simulate API call
-//   useEffect(() => {
-//     const timer = setTimeout(() => {
-//       setIsLoading(false);
-//     }, 2000);
-
-//     return () => clearTimeout(timer);
-//   }, []);
-
-//   return (
-//     <div className="container mx-auto px-4 py-8">
-//       <div className="flex flex-col lg:flex-row gap-8">
-//         <CategoryFilterSidebar isLoading={isLoading} />
-
-//         <div className="flex-1 space-y-6">
-//           <CategorySearchBar isLoading={isLoading} />
-//           <SelectedFilters isLoading={isLoading} />
-//           <ProductGrid isLoading={isLoading} />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default CategoryPage;
-
-// import { useEffect, useState } from "react";
-// import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
-// import CategorySearchBar from "../../components/category/CategorySearchBar";
-// import SelectedFilters from "../../components/category/SelectedFilters";
-// import ProductGrid from "../../components/category/ProductGrid";
-// import { getAllCategories, getAllProducts } from "../../services/categoryApi";
-
-// function buildCategoryTree(items = []) {
-//   const map = new Map();
-
-//   items.forEach((c) => {
-//     map.set(c.category_id, {
-//       key: String(c.category_id),
-//       label: c.category_name,
-//       children: [],
-//     });
-//   });
-
-//   const roots = [];
-//   items.forEach((c) => {
-//     const node = map.get(c.category_id);
-//     if (c.parent_id && map.has(c.parent_id)) {
-//       map.get(c.parent_id).children.push(node);
-//     } else {
-//       roots.push(node);
-//     }
-//   });
-
-//   return roots;
-// }
-
-// function CategoryPage() {
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [categoryNodes, setCategoryNodes] = useState([]);
-//   const [products, setProducts] = useState([]);
-
-//   useEffect(() => {
-//     const loadPageData = async () => {
-//       try {
-//         setIsLoading(true);
-
-//         const [categoryRes, productRes] = await Promise.all([
-//           getAllCategories(),
-//           getAllProducts(),
-//         ]);
-
-//         const categoryItems = categoryRes?.data?.data?.items || [];
-//         setCategoryNodes(buildCategoryTree(categoryItems));
-
-//         const productItems =
-//           productRes?.data?.data?.items || productRes?.data?.data || [];
-//         setProducts(Array.isArray(productItems) ? productItems : []);
-//       } catch (error) {
-//         console.error("Failed to load category page data:", error);
-//         setCategoryNodes([]);
-//         setProducts([]);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     loadPageData();
-//   }, []);
-
-//   return (
-//     <div className="container mx-auto px-4 py-8">
-//       <div className="flex flex-col lg:flex-row gap-8">
-//         <CategoryFilterSidebar
-//           isLoading={isLoading}
-//           categoryNodes={categoryNodes}
-//         />
-
-//         <div className="flex-1 space-y-6">
-//           <CategorySearchBar isLoading={isLoading} />
-//           <SelectedFilters isLoading={isLoading} />
-//           <ProductGrid isLoading={isLoading} products={products} />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default CategoryPage;
-
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dropdown } from "primereact/dropdown";
-import { Skeleton } from "primereact/skeleton";
+import { useTheme } from "../../context/ThemeContext";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
 import SelectedFilters from "../../components/category/SelectedFilters";
 import ProductGrid from "../../components/category/ProductGrid";
+import PortionPickerModal from "../../components/category/PortionPickerModal";
 import {
   getAllCategories,
   getAllProducts,
@@ -375,23 +25,31 @@ const extractProducts = (res) => {
   return [];
 };
 
+const getAnyProductId = (product) =>
+  product?.product_id ??
+  product?.id ??
+  product?.productId ??
+  product?.product?.product_id ??
+  product?.product?.id ??
+  null;
+
+const toPositiveInt = (value) => {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
 const extractCategoryTree = (res) => {
   const data = res?.data;
   if (Array.isArray(data?.data?.items)) return data.data.items;
   if (Array.isArray(data?.data)) return data.data;
-  if (data?.data?.item && typeof data.data.item === "object") return [data.data.item];
+  if (data?.data?.item && typeof data.data.item === "object")
+    return [data.data.item];
   return [];
 };
 
-const getEffectivePrice = (product) =>
-  Number(product?.discounted_price ?? product?.price ?? 0);
-
 const getSelectedCategoryIds = (selectedKeys = {}) =>
   Object.entries(selectedKeys)
-    .filter(
-      ([, value]) =>
-        value === true || value?.checked === true,
-    )
+    .filter(([, value]) => value === true || value?.checked === true)
     .map(([key]) => Number(key))
     .filter((value) => Number.isFinite(value) && value > 0);
 
@@ -417,7 +75,9 @@ const isDescendantOf = (childId, ancestorId, parentMap) => {
 };
 
 const extractTotalRecords = (res, fallback = 0) =>
-  Number(res?.data?.pagination?.totalItems ?? res?.data?.data?.count ?? fallback);
+  Number(
+    res?.data?.pagination?.totalItems ?? res?.data?.data?.count ?? fallback,
+  );
 
 const buildCategoryLabelMap = (nodes = [], map = new Map()) => {
   nodes.forEach((node) => {
@@ -461,9 +121,25 @@ const useDebouncedValue = (value, delayMs = 300) => {
 
 function CategoryPage() {
   const navigate = useNavigate();
-  const { currentUser } = useSelector((state) => state.auth);
   const { darkMode } = useTheme();
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { currentUser } = useSelector((state) => state.auth);
+  const [recentlyAddedId, setRecentlyAddedId] = useState(null);
+  const lastAddBtnRef = useRef(null);
+  const [addingProductId, setAddingProductId] = useState(null);
+  const [addErrorProductId, setAddErrorProductId] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const el = e?.detail?.target;
+      if (el && typeof el.getBoundingClientRect === "function") {
+        lastAddBtnRef.current = el;
+      }
+    };
+    window.addEventListener("shopsphere:addToCartClick", handler);
+    return () => window.removeEventListener("shopsphere:addToCartClick", handler);
+  }, []);
+
   const [isTreeLoading, setIsTreeLoading] = useState(true);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [products, setProducts] = useState([]);
@@ -477,11 +153,69 @@ function CategoryPage() {
   const [pager, setPager] = useState({ first: 0, rows: 8 });
   const [totalRecords, setTotalRecords] = useState(0);
   const [priceBounds, setPriceBounds] = useState({ min: 0, max: 0 });
+  const [pickerProduct, setPickerProduct] = useState(null);
   const prevFilterSignatureRef = useRef("");
   const productsRequestIdRef = useRef(0);
   const priceRangeRequestIdRef = useRef(0);
   const hasUserPriceSelectionRef = useRef(false);
   const debouncedPriceRange = useDebouncedValue(priceRange, 300);
+  const urlSearch = searchParams.get("search") || "";
+  const urlCategory = searchParams.get("category");
+  const urlSortField = (searchParams.get("sortField") || "").trim();
+  const urlSortOrder = (searchParams.get("sortOrder") || "").trim();
+  const urlSortKey = `${urlSortField}:${urlSortOrder}`;
+
+  const sortOptions = useMemo(
+    () => [
+      { label: "Featured", value: ":" },
+      { label: "Newest", value: "created_at:desc" },
+      { label: "Price: Low to High", value: "price:asc" },
+      { label: "Price: High to Low", value: "price:desc" },
+      { label: "Name: A to Z", value: "name:asc" },
+      { label: "Name: Z to A", value: "name:desc" },
+    ],
+    [],
+  );
+
+  const [sortKey, setSortKey] = useState(":");
+
+  useEffect(() => {
+    const match = sortOptions.some((opt) => opt.value === urlSortKey);
+    setSortKey(match ? urlSortKey : ":");
+  }, [urlSortKey, sortOptions]);
+
+  const [sortField, sortOrder] = useMemo(() => {
+    const [field = "", order = ""] = (sortKey || ":").split(":");
+    return [field, order];
+  }, [sortKey]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    const nextField = sortField || "";
+    const nextOrder = sortOrder || "";
+
+    const currentField = (params.get("sortField") || "").trim();
+    const currentOrder = (params.get("sortOrder") || "").trim();
+
+    if (!nextField) {
+      params.delete("sortField");
+      params.delete("sortOrder");
+    } else {
+      params.set("sortField", nextField);
+      params.set("sortOrder", nextOrder || "asc");
+    }
+
+    const afterField = (params.get("sortField") || "").trim();
+    const afterOrder = (params.get("sortOrder") || "").trim();
+    const changed = currentField !== afterField || currentOrder !== afterOrder;
+    if (changed) setSearchParams(params, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortField, sortOrder]);
+
+  const sortSignature = useMemo(
+    () => (sortField ? `${sortField}:${sortOrder || "asc"}` : ""),
+    [sortField, sortOrder],
+  );
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -507,6 +241,34 @@ function CategoryPage() {
     }, 350);
     return () => clearTimeout(timer);
   }, [searchText]);
+
+  useEffect(() => {
+    setSearchText(urlSearch);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (!treeLoaded) {
+      return;
+    }
+
+    if (!urlCategory) {
+      setSelectedKeys({});
+      return;
+    }
+
+    const categoryId = Number(urlCategory);
+    if (!Number.isInteger(categoryId) || categoryId <= 0) {
+      setSelectedKeys({});
+      return;
+    }
+
+    setSelectedKeys({
+      [String(categoryId)]: {
+        checked: true,
+        partialChecked: false,
+      },
+    });
+  }, [treeLoaded, urlCategory]);
 
   const selectedCategoryIds = useMemo(
     () => getSelectedCategoryIds(selectedKeys),
@@ -553,8 +315,6 @@ function CategoryPage() {
     [parentSelectionIds, childSelectionIds],
   );
 
-  const usesBackendPagination = true;
-
   const backendPage = useMemo(
     () => Math.floor(pager.first / pager.rows) + 1,
     [pager.first, pager.rows],
@@ -571,13 +331,13 @@ function CategoryPage() {
     const priceKey = hasUserPriceSelectionRef.current
       ? `${debouncedPriceRange[0]}-${debouncedPriceRange[1]}`
       : "";
-    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}|${sortOption || ""}`;
+    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}|${sortSignature}`;
   }, [
     debouncedSearchText,
     parentSelectionIds,
     childSelectionIds,
     debouncedPriceRange,
-    sortOption,
+    sortSignature,
   ]);
 
   const boundsSignature = useMemo(() => {
@@ -627,12 +387,6 @@ function CategoryPage() {
         const hasCategoryFilter =
           categoryIdGroups.parent.length > 0 ||
           categoryIdGroups.child.length > 0;
-        console.log("Category selection debug:", {
-          selectedKeys,
-          selectedCategoryIds,
-          categoryIdGroups,
-          hasSearch,
-        });
 
         if (!hasCategoryFilter) {
           const productRes = await getAllProducts({
@@ -641,6 +395,7 @@ function CategoryPage() {
             ...(hasSearch ? { search: debouncedSearchText } : {}),
             ...(sortOption ? { sort: sortOption } : {}),
             ...priceFilterParams,
+            ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
           });
           items = extractProducts(productRes);
           if (requestId === productsRequestIdRef.current) {
@@ -659,6 +414,7 @@ function CategoryPage() {
             ...(sortOption ? { sort: sortOption } : {}),
             page: backendPage,
             limit: pager.rows,
+            ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
           });
           items = extractProducts(productRes);
           if (requestId === productsRequestIdRef.current) {
@@ -666,10 +422,44 @@ function CategoryPage() {
           }
         }
 
-        if (
-          items.length > pager.rows
-        ) {
+        if (items.length > pager.rows) {
           items = items.slice(0, pager.rows);
+        }
+
+        // Client-side sort fallback (in case backend ignores sortField/sortOrder)
+        if (sortField && items.length > 1) {
+          const orderFactor = (sortOrder || "asc").toLowerCase() === "desc" ? -1 : 1;
+          const safeText = (value) => String(value ?? "").toLowerCase();
+          const safeNumber = (value) => {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : 0;
+          };
+          const safeDate = (value) => {
+            const t = Date.parse(value);
+            return Number.isFinite(t) ? t : 0;
+          };
+
+          const getEffectivePrice = (p) =>
+            safeNumber(p.discounted_price ?? p.price ?? 0);
+
+          const compare = (a, b) => {
+            if (sortField === "price") {
+              return (getEffectivePrice(a) - getEffectivePrice(b)) * orderFactor;
+            }
+            if (sortField === "created_at") {
+              return (safeDate(a.created_at) - safeDate(b.created_at)) * orderFactor;
+            }
+            if (sortField === "name") {
+              const left = safeText(a.display_name ?? a.name);
+              const right = safeText(b.display_name ?? b.name);
+              if (left < right) return -1 * orderFactor;
+              if (left > right) return 1 * orderFactor;
+              return 0;
+            }
+            return 0;
+          };
+
+          items = [...items].sort(compare);
         }
 
         if (requestId === productsRequestIdRef.current) {
@@ -688,11 +478,7 @@ function CategoryPage() {
     };
 
     loadProductsBySelection();
-  }, [
-    treeLoaded,
-    paginationFetchKey,
-    filterSignature,
-  ]);
+  }, [treeLoaded, paginationFetchKey, filterSignature]);
 
   useEffect(() => {
     if (!treeLoaded) return;
@@ -703,9 +489,6 @@ function CategoryPage() {
       const requestId = ++priceRangeRequestIdRef.current;
       try {
         const hasSearch = debouncedSearchText.length > 0;
-        const hasCategoryFilter =
-          categoryIdGroups.parent.length > 0 ||
-          categoryIdGroups.child.length > 0;
 
         const priceRes = await getCategoryProductsPriceRange({
           ...(categoryIdGroups.parent.length
@@ -715,7 +498,6 @@ function CategoryPage() {
             ? { child_ids: categoryIdGroups.child }
             : {}),
           ...(hasSearch ? { search: debouncedSearchText } : {}),
-          ...(hasCategoryFilter ? {} : {}),
         });
 
         if (ignore || requestId !== priceRangeRequestIdRef.current) return;
@@ -737,7 +519,8 @@ function CategoryPage() {
 
   useEffect(() => {
     setPriceRange((prev) => {
-      if (prev[0] === priceBounds.min && prev[1] === priceBounds.max) return prev;
+      if (prev[0] === priceBounds.min && prev[1] === priceBounds.max)
+        return prev;
       return [priceBounds.min, priceBounds.max];
     });
   }, [priceBounds.min, priceBounds.max]);
@@ -748,17 +531,7 @@ function CategoryPage() {
       if (prev.first < currentLength) return prev;
       return { ...prev, first: 0 };
     });
-  }, [
-    products.length,
-    totalRecords,
-  ]);
-
-  const pagedProducts = useMemo(
-    () => products,
-    [products],
-  );
-
-  const paginatorTotalRecords = totalRecords;
+  }, [products.length, totalRecords]);
 
   const combinedCategoryIds = useMemo(
     () => [...new Set([...parentSelectionIds, ...childSelectionIds])],
@@ -808,126 +581,348 @@ function CategoryPage() {
     setPriceRange([priceBounds.min, priceBounds.max]);
   };
 
-  // Add to cart handler
-  const handleAddToCart = async (product) => {
-    if (!currentUser) {
-      navigate("/login", { state: { from: "/categories" } });
-      return;
-    }
-
-    const productId = product.product_id || product.id;
-    if (!productId) {
-      return;
-    }
-
+  const doAddToCart = async (
+    product,
+    portionId,
+    combinationId,
+    modifierIds = null,
+  ) => {
     try {
+      const pid = toPositiveInt(getAnyProductId(product));
+      if (!pid) {
+        setAddErrorProductId("invalid");
+        window.setTimeout(() => setAddErrorProductId(null), 800);
+        return;
+      }
+      setAddingProductId(pid);
+      setAddErrorProductId(null);
       await api.post("/cart/items", {
-        productId,
+        productId: pid,
+        portionId: portionId ? toPositiveInt(portionId) : undefined,
+        combinationId: combinationId ? toPositiveInt(combinationId) : undefined,
+        modifierIds:
+          Array.isArray(modifierIds) && modifierIds.length > 0
+            ? modifierIds.map((id) => Number(id)).filter(Boolean)
+            : undefined,
         quantity: 1,
       });
+      window.dispatchEvent(new CustomEvent("cart:updated"));
+      const id = pid;
+      if (id) {
+        setRecentlyAddedId(id);
+        window.setTimeout(() => setRecentlyAddedId(null), 900);
+      }
+
+      // ── Premium fly-to-cart animation ──────────────────────────────────
+      try {
+        const fromEl = lastAddBtnRef.current;
+        const cartEl = document.getElementById("shopsphere-cart-link");
+        const imgUrl = product.image_url || product.imageUrl || product.image;
+
+        if (fromEl && cartEl) {
+          const fromRect = fromEl.getBoundingClientRect();
+          const toRect   = cartEl.getBoundingClientRect();
+
+          const fromX = fromRect.left + fromRect.width  / 2;
+          const fromY = fromRect.top  + fromRect.height / 2;
+          const toX   = toRect.left   + toRect.width    / 2;
+          const toY   = toRect.top    + toRect.height   / 2;
+
+          const dx = toX - fromX;
+          const dy = toY - fromY;
+          // Arc peak: go up 60px relative to the midpoint
+          const peakY = -Math.abs(dy) * 0.38 - 60;
+
+          const DURATION = 720; // ms
+
+          // ── 1. Particle burst ────────────────────────────────────────
+          const PARTICLE_COLORS = [
+            "#2f7a6f", "#34d399", "#6ee7b7",
+            "#fbbf24", "#f59e0b", "#fff",
+          ];
+          for (let i = 0; i < 10; i++) {
+            const angle = (i / 10) * 2 * Math.PI;
+            const dist  = 28 + Math.random() * 36;
+            const p = document.createElement("div");
+            p.className = "shopsphere-particle";
+            p.style.cssText = `
+              left: ${fromX}px;
+              top:  ${fromY}px;
+              width:  ${4 + Math.random() * 6}px;
+              height: ${4 + Math.random() * 6}px;
+              --p-color: ${PARTICLE_COLORS[i % PARTICLE_COLORS.length]};
+              --p-tx: ${(Math.cos(angle) * dist).toFixed(1)}px;
+              --p-ty: ${(Math.sin(angle) * dist).toFixed(1)}px;
+              --p-dur: ${380 + Math.random() * 220}ms;
+              --p-ease: cubic-bezier(0.22, 1, 0.36, 1);
+              margin-left: -4px;
+              margin-top:  -4px;
+            `;
+            document.body.appendChild(p);
+            window.setTimeout(() => p.remove(), 700);
+          }
+
+          // ── 2. Flying bubble ────────────────────────────────────────
+          const fly = document.createElement("div");
+          fly.className   = "shopsphere-fly-to-cart";
+          fly.style.cssText = `left: ${fromX}px; top: ${fromY}px;`;
+
+          const inner = document.createElement("div");
+          inner.className = "shopsphere-fly-inner";
+
+          if (imgUrl) {
+            const img = document.createElement("img");
+            img.src = imgUrl;
+            img.alt = "";
+            img.className = "shopsphere-fly-img";
+            inner.appendChild(img);
+          } else {
+            inner.classList.add("shopsphere-fly-dot");
+          }
+
+          fly.appendChild(inner);
+          document.body.appendChild(fly);
+
+          // Set CSS custom properties for the arc keyframes
+          fly.style.setProperty("--fly-dx",   `${dx}px`);
+          fly.style.setProperty("--fly-dy",   `0px`);  // Y handled on inner
+          inner.style.setProperty("--fly-dy",   `${dy}px`);
+          inner.style.setProperty("--fly-peak", `${peakY}px`);
+
+          // Apply keyframe animations — X on outer (linear), Y+scale on inner (arc)
+          fly.style.animation   = `flyArcX ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards,
+                                    flyFadeOut ${DURATION}ms ease forwards`;
+          inner.style.animation = `flyArcY ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards`;
+
+          // ── 3. Wiggle the cart icon just before landing ───────────
+          window.setTimeout(() => {
+            cartEl.classList.add("shopsphere-cart-wiggle");
+            const removeWiggle = () => {
+              cartEl.classList.remove("shopsphere-cart-wiggle");
+              cartEl.removeEventListener("animationend", removeWiggle);
+            };
+            cartEl.addEventListener("animationend", removeWiggle);
+          }, DURATION - 80);
+
+          // ── 4. Cleanup ────────────────────────────────────────────
+          window.setTimeout(() => fly.remove(), DURATION + 60);
+        }
+      } catch {
+        // ignore animation failures silently
+      }
     } catch (error) {
       console.error("Failed to add to cart:", error);
+      const pid = toPositiveInt(getAnyProductId(product));
+      if (pid) {
+        setAddErrorProductId(pid);
+        window.setTimeout(() => setAddErrorProductId(null), 800);
+      }
+    } finally {
+      setAddingProductId(null);
     }
+  };
+
+  /**
+   * Parse the encoded portion_details string from the product list API response.
+   * Format: "ppId@@value||price||discountedPrice||stock;;ppId2@@value2||..."
+   */
+  const parseProdPortionDetails = (product) => {
+    const raw = product?.portion_details;
+    if (!raw || typeof raw !== "string") return [];
+    return raw
+      .split(";;")
+      .map((seg) => {
+        const [idPart, rest] = seg.split("@@");
+        if (!idPart || !rest) return null;
+        const [portion_value, price, discounted_price, stock] = rest.split("||");
+        const product_portion_id = Number(idPart);
+        if (!product_portion_id) return null;
+        return { product_portion_id, portion_value, price: Number(price), discounted_price: discounted_price ? Number(discounted_price) : null, stock: Number(stock) };
+      })
+      .filter(Boolean);
+  };
+
+  const handleAddToCart = async (product) => {
+    if (!currentUser) {
+      navigate("/login", { state: { from: "/shop" } });
+      return;
+    }
+
+    const productId = toPositiveInt(getAnyProductId(product));
+    if (!productId) {
+      setAddErrorProductId("invalid");
+      window.setTimeout(() => setAddErrorProductId(null), 800);
+      return;
+    }
+
+    // Declared outside try-catch so it's preserved in the catch/finally path
+    let targetPortionId = null;
+
+    try {
+      setAddingProductId(productId);
+      setAddErrorProductId(null);
+
+      // ── 1. Get portions — use pre-loaded data from product list API first ──
+      let portions = parseProdPortionDetails(product);
+
+      // Fall back to API only if the product has no embedded portion data
+      // (e.g. navigating from a detail page that doesn't include portion_details)
+      if (!portions.length && Number(product?.portion_count) > 0) {
+        try {
+          const portRes = await api.get(`/portion/getProductPortions/${productId}`);
+          const raw = portRes.data?.data ?? portRes.data ?? [];
+          portions = Array.isArray(raw) ? raw : [];
+        } catch {
+          portions = [];
+        }
+      }
+
+      // ── 2. If multiple portions → show picker ──
+      if (portions.length > 1) {
+        setPickerProduct({ ...product, _portions: portions });
+        return; // finally will clear addingProductId
+      }
+
+      // ── 3. Determine single portionId (or null for products with no portions) ──
+      targetPortionId = portions.length === 1 ? portions[0].product_portion_id : null;
+
+      // ── 4. Check for modifiers/combinations ──
+      const hasModifiers = Number(product?.modifier_count) > 0;
+
+      if (hasModifiers) {
+        // Product has modifiers — show picker so user can select them
+        setPickerProduct({ ...product, _portions: portions });
+        return; // finally will clear addingProductId
+      }
+
+      // ── 5. No picker needed — add directly ──
+      await doAddToCart(product, targetPortionId, null);
+    } catch (error) {
+      console.error("Error in handleAddToCart:", error);
+      await doAddToCart(product, targetPortionId, null);
+    } finally {
+      setAddingProductId(null);
+    }
+  };
+
+  const handlePickerConfirm = async (portionId, modifierIds, combinationId) => {
+    await doAddToCart(pickerProduct, portionId, combinationId, modifierIds);
+    setPickerProduct(null);
   };
 
   return (
     <div className="category-page">
+      {pickerProduct && (
+        <PortionPickerModal
+          product={pickerProduct}
+          onHide={() => setPickerProduct(null)}
+          onConfirm={handlePickerConfirm}
+        />
+      )}
       <div className="container mx-auto px-4 py-8">
         <div className="category-page-layout flex flex-col lg:flex-row gap-8">
-        <CategoryFilterSidebar
-          isLoading={isTreeLoading}
-          categoryTree={categoryTree}
-          selectedKeys={selectedKeys}
-          onSelectionChange={setSelectedKeys}
-          priceRange={priceRange}
-          minPrice={priceBounds.min}
-          maxPrice={priceBounds.max}
-          onPriceRangeChange={(nextRange) => {
-            hasUserPriceSelectionRef.current = true;
-            setPriceRange(nextRange);
-          }}
-        />
+          <CategoryFilterSidebar
+            isLoading={isTreeLoading}
+            categoryTree={categoryTree}
+            selectedKeys={selectedKeys}
+            onSelectionChange={setSelectedKeys}
+            priceRange={priceRange}
+            minPrice={priceBounds.min}
+            maxPrice={priceBounds.max}
+            onPriceRangeChange={(nextRange) => {
+              hasUserPriceSelectionRef.current = true;
+              setPriceRange(nextRange);
+            }}
+          />
 
-
-        <div className="category-results flex-1 space-y-6">
-          <div className="category-controls flex flex-col gap-3 md:flex-row md:items-center">
-            <div className="category-control-item flex-1">
-              <CategorySearchBar
-                isLoading={isTreeLoading}
-                searchText={searchText}
-                onSearchChange={setSearchText}
-              />
-            </div>
-            <div className="category-control-item w-full md:w-64">
-              {isTreeLoading ? (
+          <div className="category-results flex-1 space-y-6">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="flex-1">
+                <CategorySearchBar
+                  isLoading={isTreeLoading}
+                  searchText={searchText}
+                  onSearchChange={setSearchText}
+                />
+              </div>
+              <div
+                className={`w-full lg:w-64 rounded-xl border px-3 py-2.5 ${
+                  darkMode
+                    ? "border-[#1f2933] bg-[#151e22]"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
                 <div
-                  className={`category-sort-dropdown w-full rounded-xl border px-3 py-3 ${
-                    darkMode
-                      ? "border-[#1f2933] bg-[#151e22]"
-                      : "border-gray-200 bg-white"
+                  className={`mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                    darkMode ? "text-slate-400" : "text-gray-500"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 pr-3">
-                      <Skeleton
-                        width="96px"
-                        height="16px"
-                        className={`!rounded-md ${
-                          darkMode ? "bg-[#1f2933]" : "bg-gray-200"
-                        }`}
-                      />
-                    </div>
-                    <Skeleton
-                      width="16px"
-                      height="16px"
-                      className={`!rounded-full ${
-                        darkMode ? "bg-[#1f2933]" : "bg-gray-200"
-                      }`}
-                    />
-                  </div>
+                  Sort
                 </div>
-              ) : (
                 <Dropdown
-                  value={sortOption || null}
+                  value={sortKey}
                   options={sortOptions}
-                  onChange={(e) => setSortOption(e.value || null)}
-                  placeholder="Sort by"
-                  showClear
-                  clearIcon="pi pi-times"
-                  className={`category-sort-dropdown w-full ${
-                    darkMode ? "category-sort-dropdown-dark" : ""
-                  }`}
-                  panelClassName="category-sort-panel"
-                  appendTo="self"
+                  onChange={(e) => setSortKey(e.value)}
+                  className="w-full"
+                  pt={{
+                    root: {
+                      className:
+                        `w-full !rounded-lg !border !shadow-none ${
+                          darkMode
+                            ? "!border-[#223038] !bg-[#0f161a] !text-slate-100"
+                            : "!border-gray-300 !bg-white !text-gray-800"
+                        }`,
+                    },
+                    label: {
+                      className:
+                        `text-sm ${darkMode ? "text-slate-100" : "text-gray-800"}`,
+                    },
+                    trigger: {
+                      className: darkMode ? "text-slate-300" : "text-gray-500",
+                    },
+                    panel: {
+                      className:
+                        darkMode
+                          ? "border border-[#223038] bg-[#0f161a] text-slate-100"
+                          : "border border-gray-200 bg-white text-gray-800",
+                    },
+                    item: {
+                      className:
+                        `text-sm ${
+                          darkMode ? "hover:bg-[#151e22]" : "hover:bg-amber-50"
+                        }`,
+                    },
+                  }}
                 />
-              )}
+              </div>
             </div>
+            <SelectedFilters
+              isLoading={isProductsLoading}
+              categoryTags={categoryTags}
+              searchText={debouncedSearchText}
+              priceTag={priceTag}
+              onRemoveCategory={handleRemoveCategoryTag}
+              onClearSearch={() => setSearchText("")}
+              onClearPrice={handleClearPrice}
+            />
+            <ProductGrid
+              isLoading={isProductsLoading}
+              products={products}
+              onAddToCart={handleAddToCart}
+              recentlyAddedProductId={recentlyAddedId}
+              addingProductId={addingProductId}
+              addErrorProductId={addErrorProductId}
+              paginator={{
+                enabled: true,
+                first: pager.first,
+                rows: pager.rows,
+                totalRecords: totalRecords,
+                rowsPerPageOptions: [8, 16, 24, 32],
+              }}
+              onPageChange={(event) =>
+                setPager({ first: event.first, rows: event.rows })
+              }
+            />
           </div>
-          <SelectedFilters
-            isLoading={isProductsLoading}
-            categoryTags={categoryTags}
-            searchText={debouncedSearchText}
-            priceTag={priceTag}
-            onRemoveCategory={handleRemoveCategoryTag}
-            onClearSearch={() => setSearchText("")}
-            onClearPrice={handleClearPrice}
-          />
-          <ProductGrid
-            isLoading={isProductsLoading}
-            products={pagedProducts}
-            onAddToCart={handleAddToCart}
-            paginator={{
-              enabled: true,
-              first: pager.first,
-              rows: pager.rows,
-              totalRecords: paginatorTotalRecords,
-              rowsPerPageOptions: [8, 16, 24, 32],
-            }}
-            onPageChange={(event) =>
-              setPager({ first: event.first, rows: event.rows })
-            }
-          />
-        </div>
         </div>
       </div>
     </div>

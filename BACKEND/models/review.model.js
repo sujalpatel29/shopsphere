@@ -117,7 +117,11 @@ export const reviewModel = {
 };
 
 // Fetch paginated reviews for product with optional filters/sort.
-export const getReviewsByProduct = async (product_id, filters, user_id = null) => {
+export const getReviewsByProduct = async (
+  product_id,
+  filters,
+  user_id = null,
+) => {
   const page = Math.max(1, Number(filters.page || 1));
   const limit = Math.max(1, Math.min(100, Number(filters.limit || 10)));
   const offset = (page - 1) * limit;
@@ -225,7 +229,11 @@ export const getReviewsByProduct = async (product_id, filters, user_id = null) =
         ORDER BY ${sortBy}
         LIMIT ? OFFSET ?
       `;
-      const [fallbackRows] = await pool.query(fallbackQuery, [...whereValues, limit, offset]);
+      const [fallbackRows] = await pool.query(fallbackQuery, [
+        ...whereValues,
+        limit,
+        offset,
+      ]);
       rows = fallbackRows;
     } else {
       throw error;
@@ -275,11 +283,11 @@ export const getProductRatingSummary = async (product_id) => {
   const totalRatings = Number(summary.total_ratings || 0);
 
   const rating_breakdown = {
-    "5": { count: 0, percentage: 0 },
-    "4": { count: 0, percentage: 0 },
-    "3": { count: 0, percentage: 0 },
-    "2": { count: 0, percentage: 0 },
-    "1": { count: 0, percentage: 0 },
+    5: { count: 0, percentage: 0 },
+    4: { count: 0, percentage: 0 },
+    3: { count: 0, percentage: 0 },
+    2: { count: 0, percentage: 0 },
+    1: { count: 0, percentage: 0 },
   };
 
   // Build 1-5 star breakdown with percentage.
@@ -288,7 +296,8 @@ export const getProductRatingSummary = async (product_id) => {
     const count = Number(row.count || 0);
     rating_breakdown[key] = {
       count,
-      percentage: totalRatings > 0 ? Math.round((count / totalRatings) * 100) : 0,
+      percentage:
+        totalRatings > 0 ? Math.round((count / totalRatings) * 100) : 0,
     };
   });
 
@@ -358,11 +367,11 @@ export const getProductRatingSummariesBulk = async (product_ids) => {
 
   const summaries = {};
   const emptyBreakdown = () => ({
-    "5": { count: 0, percentage: 0 },
-    "4": { count: 0, percentage: 0 },
-    "3": { count: 0, percentage: 0 },
-    "2": { count: 0, percentage: 0 },
-    "1": { count: 0, percentage: 0 },
+    5: { count: 0, percentage: 0 },
+    4: { count: 0, percentage: 0 },
+    3: { count: 0, percentage: 0 },
+    2: { count: 0, percentage: 0 },
+    1: { count: 0, percentage: 0 },
   });
 
   validIds.forEach((productId) => {
@@ -590,4 +599,68 @@ export const toggleHelpful = async (review_id, user_id) => {
   } finally {
     connection.release();
   }
+};
+
+export const getAllReviewsAdmin = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  rating = null,
+  sortField = "created_at",
+  sortOrder = "desc",
+} = {}) => {
+  const offset = (Number(page) - 1) * Number(limit);
+  const allowedSort = {
+    created_at: "pr.created_at",
+    rating: "pr.rating",
+    helpful_count: "pr.helpful_count",
+  };
+  const orderCol = allowedSort[sortField] ?? "pr.created_at";
+  const orderDir = sortOrder === "asc" ? "ASC" : "DESC";
+
+  const params = [];
+  const whereClauses = ["pr.is_deleted = 0"];
+
+  if (search) {
+    whereClauses.push("(pm.display_name LIKE ? OR um.name LIKE ?)");
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (rating) {
+    whereClauses.push("pr.rating = ?");
+    params.push(Number(rating));
+  }
+
+  const where = `WHERE ${whereClauses.join(" AND ")}`;
+
+  const countSql = `
+    SELECT COUNT(*) AS total
+    FROM product_reviews pr
+    INNER JOIN product_master pm ON pm.product_id = pr.product_id
+    INNER JOIN user_master um ON um.user_id = pr.user_id
+    ${where}
+  `;
+
+  const dataSql = `
+    SELECT pr.review_id, pr.rating, pr.title, pr.review_text,
+           pr.is_verified_purchase, pr.helpful_count, pr.created_at,
+           pm.display_name AS product_name, pm.product_id,
+           um.name AS reviewer_name, um.user_id
+    FROM product_reviews pr
+    INNER JOIN product_master pm ON pm.product_id = pr.product_id
+    INNER JOIN user_master um ON um.user_id = pr.user_id
+    ${where}
+    ORDER BY ${orderCol} ${orderDir}
+    LIMIT ? OFFSET ?
+  `;
+
+  const [countRows] = await pool.query(countSql, [...params]);
+  const [rows] = await pool.query(dataSql, [...params, Number(limit), offset]);
+
+  return {
+    items: rows,
+    total: Number(countRows[0]?.total || 0),
+    page: Number(page),
+    limit: Number(limit),
+  };
 };

@@ -15,6 +15,61 @@
 }
 
 /* ================================================= */
+/*               GLOBAL CUSTOM SCROLLBAR             */
+/* ================================================= */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47, 122, 111, 0.5) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(47, 122, 111, 0.5);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(47, 122, 111, 0.8);
+}
+
+.dark *::-webkit-scrollbar-thumb,
+html.dark::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+}
+
+.dark *::-webkit-scrollbar-thumb:hover,
+html.dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+.app-toast-offset.p-toast {
+  top: 6.25rem !important;
+}
+
+@media (max-width: 768px) {
+  .app-toast-offset.p-toast {
+    top: 5.5rem !important;
+    right: 1rem !important;
+    left: 1rem !important;
+    width: auto !important;
+  }
+}
+
+.dark *,
+html.dark {
+  scrollbar-color: rgba(100, 116, 139, 0.5) transparent;
+}
+
+/* ================================================= */
 /*                     BASE LAYER                    */
 /* ================================================= */
 
@@ -29,7 +84,6 @@
     @apply text-gray-900;
     font-family: "Jost", sans-serif;
     background-color: #f3ecdf;
-    overflow: hidden;
   }
 
   .dark body {
@@ -188,7 +242,9 @@
   background: rgba(47, 122, 111, 0.18) !important;
 }
 
-.dark .p-dropdown-panel .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+.dark
+  .p-dropdown-panel
+  .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
   color: #e2e8f0 !important;
   background: rgba(47, 122, 111, 0.14) !important;
 }
@@ -409,7 +465,6 @@ html:not(.dark)
   border: 1px solid var(--primary-color) !important;
 }
 
-
 /* card outline animation */
 .trace-card {
   position: relative;
@@ -466,7 +521,7 @@ html:not(.dark)
   stroke-width: 1.8;
   vector-effect: non-scaling-stroke;
   stroke-linecap: round;
- stroke-dasharray: 128 28 128 28;
+  stroke-dasharray: 128 28 128 28;
   stroke-dashoffset: 100;
   opacity: 0;
 }
@@ -482,14 +537,7 @@ html:not(.dark)
 }
 
 .category-page::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(900px 420px at 10% -10%, rgba(47, 122, 111, 0.14), transparent 60%),
-    radial-gradient(760px 420px at 95% 0%, rgba(240, 180, 90, 0.18), transparent 55%);
-  pointer-events: none;
-  z-index: 0;
+  content: none;
 }
 
 .category-page > .container {
@@ -859,7 +907,9 @@ html:not(.dark)
 }
 
 .category-product-card {
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .trace-card:hover .trace-card-inner.p-card {
@@ -871,7 +921,7 @@ html:not(.dark)
 }
 
 .category-product-media {
-  background: linear-gradient(135deg, rgba(47, 122, 111, 0.12), rgba(240, 180, 90, 0.16)) !important;
+  background: transparent !important;
   border-top-left-radius: var(--inner-top-radius);
   border-top-right-radius: var(--inner-top-radius);
   overflow: hidden;
@@ -881,12 +931,178 @@ html:not(.dark)
   letter-spacing: 0.01em;
 }
 
+/* Shopsphere micro-animations */
+.shopsphere-added-pop {
+  animation: shopspherePop 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shopsphere-added-btn {
+  border-color: rgba(34, 197, 94, 0.7) !important;
+  color: rgb(22, 163, 74) !important;
+}
+
+.shopsphere-cart-pulse {
+  animation: shopspherePulse 650ms ease-out;
+}
+
+.shopsphere-add-error {
+  animation: shopsphereShake 500ms ease-in-out;
+}
+
+@keyframes shopspherePop {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: none;
+  }
+  40% {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 18px 35px rgba(47, 122, 111, 0.18);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: none;
+  }
+}
+
+@keyframes shopspherePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+    border-color: rgba(34, 197, 94, 0.0);
+  }
+  35% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+    border-color: rgba(34, 197, 94, 0.0);
+  }
+}
+
+@keyframes shopsphereShake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+/* ─── Fly-to-Cart ─────────────────────────────────── */
+
+/* Outer wrapper: handles the linear X+Y translation */
+.shopsphere-fly-to-cart {
+  position: fixed;
+  z-index: 9999;
+  width: 56px;
+  height: 56px;
+  margin-left: -28px;
+  margin-top: -28px;
+  pointer-events: none;
+  /* transition replaced by keyframe animation set via JS */
+}
+
+/* Inner wrapper: the visible bubble */
+.shopsphere-fly-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(47, 122, 111, 0.96);
+  box-shadow:
+    0 8px 32px rgba(47, 122, 111, 0.45),
+    0 2px 8px rgba(0,0,0,0.18);
+  overflow: hidden;
+  transform: scale(1);
+  transition: transform 0.15s ease;
+  border: 2.5px solid rgba(255,255,255,0.35);
+}
+
+.shopsphere-fly-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.shopsphere-fly-dot {
+  background: radial-gradient(circle at 35% 35%, #a8f5c2, #2f7a6f 70%);
+}
+
+/* Keyframe: the bubble arcs through the air */
+@keyframes flyArcX {
+  from { transform: translateX(0); }
+  to   { transform: translateX(var(--fly-dx)); }
+}
+@keyframes flyArcY {
+  0%   { transform: translateY(0)    scale(1); }
+  30%  { transform: translateY(var(--fly-peak)) scale(0.9); }
+  100% { transform: translateY(var(--fly-dy))   scale(0.28); }
+}
+@keyframes flyFadeOut {
+  0%   { opacity: 1; }
+  65%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Particle burst */
+.shopsphere-particle {
+  position: fixed;
+  z-index: 9998;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: var(--p-color, #2f7a6f);
+  animation: particleBurst var(--p-dur, 600ms) var(--p-ease, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+}
+
+@keyframes particleBurst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--p-tx), var(--p-ty)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Cart-icon wiggle on landing */
+.shopsphere-cart-wiggle {
+  animation: cartWiggle 480ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes cartWiggle {
+  0%   { transform: scale(1)    rotate(0deg); }
+  15%  { transform: scale(1.25) rotate(-10deg); }
+  30%  { transform: scale(1.2)  rotate(8deg); }
+  45%  { transform: scale(1.12) rotate(-6deg); }
+  60%  { transform: scale(1.06) rotate(4deg); }
+  75%  { transform: scale(1.02) rotate(-2deg); }
+  100% { transform: scale(1)    rotate(0deg); }
+}
+
+/* Success ripple on the card */
+.shopsphere-card-success-ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid rgba(34, 197, 94, 0.7);
+  animation: cardSuccessRipple 700ms ease-out forwards;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes cardSuccessRipple {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+
 @keyframes traceMove {
   to {
     stroke-dashoffset: 0;
   }
 }
-
 
 .product-card .p-card-body {
   padding: 0 !important;

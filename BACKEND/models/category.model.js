@@ -21,7 +21,6 @@ export const getAllForTree = () => {
   `);
 };
 
-
 export const getById = (categoryId) => {
   const query = `
 WITH RECURSIVE subcategories AS (
@@ -61,9 +60,9 @@ export const countRoot = () => {
     `SELECT COUNT(*) as total
      FROM category_master
      WHERE parent_id IS NULL
-     AND is_deleted = 0`
+     AND is_deleted = 0`,
   );
-}
+};
 
 export const getRootPaginated = (limit, offset) => {
   return pool.query(
@@ -72,10 +71,9 @@ export const getRootPaginated = (limit, offset) => {
      WHERE parent_id IS NULL
      AND is_deleted = 0
      LIMIT ? OFFSET ?`,
-    [limit, offset]
+    [limit, offset],
   );
-}
-
+};
 
 export const getByCategory = (categoryId) => {
   const query = `
@@ -92,7 +90,12 @@ WITH RECURSIVE subcategories AS (
     WHERE cm.is_deleted = 0
 )
 SELECT DISTINCT pm.*,
-       pi.image_url
+       (SELECT pi.image_url FROM product_images pi
+        WHERE pi.product_id = pm.product_id
+          AND pi.image_level = 'PRODUCT'
+          AND pi.is_deleted = 0
+        ORDER BY pi.is_primary DESC, pi.image_id DESC
+        LIMIT 1) AS image_url
 FROM product_master pm
 LEFT JOIN (
     SELECT pi1.product_id, pi1.image_url
@@ -146,7 +149,11 @@ WHERE pc.category_id IN (SELECT category_id FROM subcategories)
   return pool.query(query, categoryIds);
 };
 
-export const getProductsByCategoryIdsPaginated = (categoryIds, limit, offset) => {
+export const getProductsByCategoryIdsPaginated = (
+  categoryIds,
+  limit,
+  offset,
+) => {
   const placeholders = categoryIds.map(() => "?").join(", ");
   const query = `
 WITH RECURSIVE subcategories AS (
@@ -162,7 +169,12 @@ WITH RECURSIVE subcategories AS (
     WHERE cm.is_deleted = 0
 )
 SELECT DISTINCT pm.*,
-       pi.image_url
+       (SELECT pi.image_url FROM product_images pi
+        WHERE pi.product_id = pm.product_id
+          AND pi.image_level = 'PRODUCT'
+          AND pi.is_deleted = 0
+        ORDER BY pi.is_primary DESC, pi.image_id DESC
+        LIMIT 1) AS image_url
 FROM product_master pm
 LEFT JOIN (
     SELECT pi1.product_id, pi1.image_url
@@ -207,7 +219,12 @@ WITH RECURSIVE subcategories AS (
     WHERE cm.is_deleted = 0
 )
 SELECT DISTINCT pm.*,
-       pi.image_url
+       (SELECT pi.image_url FROM product_images pi
+        WHERE pi.product_id = pm.product_id
+          AND pi.image_level = 'PRODUCT'
+          AND pi.is_deleted = 0
+        ORDER BY pi.is_primary DESC, pi.image_id DESC
+        LIMIT 1) AS image_url
 FROM product_master pm
 LEFT JOIN (
     SELECT pi1.product_id, pi1.image_url
@@ -235,12 +252,14 @@ ORDER BY pm.product_id DESC;
 };
 
 const buildProductSearchClause = (search) => {
-  if (!search) return { clause: "", params: [] };
+  if (!search)
+    return { clause: "", params: [], requiresCategoryNameJoin: false };
   const normalizedSearch = String(search)
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, "");
-  if (!normalizedSearch) return { clause: "", params: [] };
+  if (!normalizedSearch)
+    return { clause: "", params: [], requiresCategoryNameJoin: false };
   const like = `%${normalizedSearch}%`;
   return {
     clause: `(
@@ -248,8 +267,24 @@ const buildProductSearchClause = (search) => {
       OR LOWER(REPLACE(COALESCE(pm.display_name, ''), ' ', '')) LIKE ?
       OR LOWER(REPLACE(COALESCE(pm.description, ''), ' ', '')) LIKE ?
       OR LOWER(REPLACE(COALESCE(pm.short_description, ''), ' ', '')) LIKE ?
+      OR LOWER(REPLACE(COALESCE(cm.category_name, ''), ' ', '')) LIKE ?
+      OR pm.category_id IN (
+        SELECT child.category_id FROM category_master child
+        WHERE child.parent_id IN (
+          SELECT anc.category_id FROM category_master anc
+          WHERE LOWER(REPLACE(COALESCE(anc.category_name, ''), ' ', '')) LIKE ?
+        )
+        UNION
+        SELECT gc.category_id FROM category_master gc
+        INNER JOIN category_master mid ON gc.parent_id = mid.category_id
+        WHERE mid.parent_id IN (
+          SELECT anc2.category_id FROM category_master anc2
+          WHERE LOWER(REPLACE(COALESCE(anc2.category_name, ''), ' ', '')) LIKE ?
+        )
+      )
     )`,
-    params: [like, like, like, like],
+    params: [like, like, like, like, like, like, like],
+    requiresCategoryNameJoin: true,
   };
 };
 
@@ -258,9 +293,24 @@ const buildCategoryFilterClause = (parentIds = [], childIds = []) => {
   const clauses = [];
 
   if (parentIds.length) {
-    const placeholders = parentIds.map(() => "?").join(", ");
-    clauses.push(`pc.category_id IN (${placeholders})`);
-    values.push(...parentIds);
+    const ph = parentIds.map(() => "?").join(", ");
+    const descendantSubquery = `(
+      SELECT category_id FROM category_master WHERE category_id IN (${ph}) AND is_deleted = 0
+      UNION
+      SELECT category_id FROM category_master WHERE parent_id IN (${ph}) AND is_deleted = 0
+      UNION
+      SELECT c3.category_id FROM category_master c3
+        INNER JOIN category_master c2 ON c3.parent_id = c2.category_id
+        WHERE c2.parent_id IN (${ph}) AND c3.is_deleted = 0 AND c2.is_deleted = 0
+    )`;
+    clauses.push(
+      `(pc.category_id IN ${descendantSubquery} OR pm.category_id IN ${descendantSubquery})`
+    );
+    // 3 levels × 2 (pc + pm) = 6 copies
+    values.push(
+      ...parentIds, ...parentIds, ...parentIds,
+      ...parentIds, ...parentIds, ...parentIds
+    );
   }
 
   if (childIds.length) {
@@ -338,9 +388,10 @@ export const countProductsByCategoryFilter = (
     values.push(...priceFilter.params);
   }
 
-  const joinClause = categoryFilter.requiresCategoryJoin
-    ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
-    : "";
+  const joinClause = [
+    categoryFilter.requiresCategoryJoin ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id" : "",
+    searchFilter.requiresCategoryNameJoin ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id" : "",
+  ].filter(Boolean).join("\n    ");
 
   const query = `
     SELECT COUNT(DISTINCT pm.product_id) AS total
@@ -383,33 +434,19 @@ export const getProductsByCategoryFilterPaginated = (
     values.push(...priceFilter.params);
   }
 
-  const joinClause = categoryFilter.requiresCategoryJoin
-    ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
-    : "";
-
-  const ratingJoinClause =
-    sort === "rating_high_low"
-      ? `
-      LEFT JOIN (
-        SELECT product_id, ROUND(AVG(rating), 2) AS avg_rating
-        FROM product_reviews
-        WHERE is_deleted = 0
-        GROUP BY product_id
-      ) pr ON pr.product_id = pm.product_id
-    `
-      : "";
-
-  const ratingSelectClause =
-    sort === "rating_high_low"
-      ? ", COALESCE(pr.avg_rating, 0) AS avg_rating"
-      : "";
-
-  const sortBy = resolveProductSortClause(sort);
+  const joinClause = [
+    categoryFilter.requiresCategoryJoin ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id" : "",
+    searchFilter.requiresCategoryNameJoin ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id" : "",
+  ].filter(Boolean).join("\n    ");
 
   const query = `
     SELECT DISTINCT pm.*,
-           pi.image_url
-           ${ratingSelectClause}
+           (SELECT pi.image_url FROM product_images pi
+            WHERE pi.product_id = pm.product_id
+              AND pi.image_level = 'PRODUCT'
+              AND pi.is_deleted = 0
+            ORDER BY pi.is_primary DESC, pi.image_id DESC
+            LIMIT 1) AS image_url
     FROM product_master pm
     ${joinClause}
     ${ratingJoinClause}
@@ -466,33 +503,19 @@ export const getProductsByCategoryFilter = (
     values.push(...priceFilter.params);
   }
 
-  const joinClause = categoryFilter.requiresCategoryJoin
-    ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
-    : "";
-
-  const ratingJoinClause =
-    sort === "rating_high_low"
-      ? `
-      LEFT JOIN (
-        SELECT product_id, ROUND(AVG(rating), 2) AS avg_rating
-        FROM product_reviews
-        WHERE is_deleted = 0
-        GROUP BY product_id
-      ) pr ON pr.product_id = pm.product_id
-    `
-      : "";
-
-  const ratingSelectClause =
-    sort === "rating_high_low"
-      ? ", COALESCE(pr.avg_rating, 0) AS avg_rating"
-      : "";
-
-  const sortBy = resolveProductSortClause(sort);
+  const joinClause = [
+    categoryFilter.requiresCategoryJoin ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id" : "",
+    searchFilter.requiresCategoryNameJoin ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id" : "",
+  ].filter(Boolean).join("\n    ");
 
   const query = `
     SELECT DISTINCT pm.*,
-           pi.image_url
-           ${ratingSelectClause}
+           (SELECT pi.image_url FROM product_images pi
+            WHERE pi.product_id = pm.product_id
+              AND pi.image_level = 'PRODUCT'
+              AND pi.is_deleted = 0
+            ORDER BY pi.is_primary DESC, pi.image_id DESC
+            LIMIT 1) AS image_url
     FROM product_master pm
     ${joinClause}
     ${ratingJoinClause}
@@ -538,9 +561,10 @@ export const getProductsPriceRangeByCategoryFilter = (
     values.push(...searchFilter.params);
   }
 
-  const joinClause = categoryFilter.requiresCategoryJoin
-    ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
-    : "";
+  const joinClause = [
+    categoryFilter.requiresCategoryJoin ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id" : "",
+    searchFilter.requiresCategoryNameJoin ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id" : "",
+  ].filter(Boolean).join("\n    ");
 
   const query = `
     SELECT
@@ -735,4 +759,51 @@ AND is_deleted = 1;
   `;
 
   return pool.query(query, [categoryId, userId]);
+};
+
+/**
+ * Toggle active status for a category and its entire subtree.
+ * When deactivating (isActive=0), all child categories are also deactivated.
+ * When activating (isActive=1), only the specified category is activated (children remain unchanged).
+ */
+export const toggleStatusSubtree = (categoryId, isActive, userId) => {
+  // When activating, only update the specific category, not its children
+  if (isActive === 1) {
+    const query = `
+      UPDATE category_master
+      SET
+        is_active = ?,
+        updated_by = ?,
+        updated_at = NOW()
+      WHERE category_id = ?
+        AND is_deleted = 0
+    `;
+    return pool.query(query, [isActive, userId, categoryId]);
+  }
+
+  // When deactivating, cascade to all descendants
+  const query = `
+    WITH RECURSIVE subtree AS (
+      SELECT category_id
+      FROM category_master
+      WHERE category_id = ?
+        AND is_deleted = 0
+
+      UNION ALL
+
+      SELECT cm.category_id
+      FROM category_master cm
+      JOIN subtree s ON cm.parent_id = s.category_id
+      WHERE cm.is_deleted = 0
+    )
+    UPDATE category_master
+    SET
+      is_active = ?,
+      updated_by = ?,
+      updated_at = NOW()
+    WHERE category_id IN (SELECT category_id FROM subtree)
+      AND is_deleted = 0
+  `;
+
+  return pool.query(query, [categoryId, isActive, userId]);
 };

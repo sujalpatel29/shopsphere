@@ -16,6 +16,7 @@ const upload = multer({
 });
 
 export const uploadSingleImage = (fieldName = "image") => {
+  console.log("multer called");
   return (req, res, next) => {
     upload.single(fieldName)(req, res, (error) => {
       if (!error) {
