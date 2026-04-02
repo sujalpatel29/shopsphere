@@ -188,6 +188,8 @@ function CategoryPage() {
     return [field, order];
   }, [sortKey]);
 
+
+  
   const backendSortParam = useMemo(() => {
     if (!sortField) return null;
     if (sortField === "price" && sortOrder === "asc") return "price_low_high";
