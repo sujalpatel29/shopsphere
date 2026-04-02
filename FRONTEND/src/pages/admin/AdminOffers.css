@@ -1,0 +1,66 @@
+.admin-offers-dropdown-panel {
+  background: #faf8f4 !important;
+  border: 1px solid rgba(201, 184, 138, 0.2) !important;
+  overflow: hidden;
+}
+
+.admin-offers-dropdown-panel .p-dropdown-items-wrapper,
+.admin-offers-dropdown-panel .p-dropdown-items,
+.admin-offers-dropdown-panel .p-dropdown-header,
+.admin-offers-dropdown-panel .p-dropdown-empty-message {
+  background: #faf8f4 !important;
+}
+
+.admin-offers-dropdown-panel .p-dropdown-item {
+  background: transparent !important;
+  color: #374151 !important;
+}
+
+.admin-offers-dropdown-panel .p-dropdown-item:hover,
+.admin-offers-dropdown-panel .p-dropdown-item.p-focus {
+  background: rgba(42, 104, 87, 0.08) !important;
+  color: #2a6857 !important;
+}
+
+.admin-offers-dropdown-panel .p-dropdown-item.p-highlight {
+  background: rgba(42, 104, 87, 0.14) !important;
+  color: #2a6857 !important;
+}
+
+.admin-offers-dropdown-panel .p-dropdown-item.p-disabled {
+  background: transparent !important;
+  color: #9ca3af !important;
+}
+
+.dark .admin-offers-dropdown-panel {
+  background: #1a2327 !important;
+  border-color: rgba(201, 184, 138, 0.15) !important;
+}
+
+.dark .admin-offers-dropdown-panel .p-dropdown-items-wrapper,
+.dark .admin-offers-dropdown-panel .p-dropdown-items,
+.dark .admin-offers-dropdown-panel .p-dropdown-header,
+.dark .admin-offers-dropdown-panel .p-dropdown-empty-message {
+  background: #1a2327 !important;
+}
+
+.dark .admin-offers-dropdown-panel .p-dropdown-item {
+  background: transparent !important;
+  color: #e5e7eb !important;
+}
+
+.dark .admin-offers-dropdown-panel .p-dropdown-item:hover,
+.dark .admin-offers-dropdown-panel .p-dropdown-item.p-focus {
+  background: rgba(201, 184, 138, 0.1) !important;
+  color: #c9b88a !important;
+}
+
+.dark .admin-offers-dropdown-panel .p-dropdown-item.p-highlight {
+  background: rgba(201, 184, 138, 0.16) !important;
+  color: #c9b88a !important;
+}
+
+.dark .admin-offers-dropdown-panel .p-dropdown-item.p-disabled {
+  background: transparent !important;
+  color: #6b7280 !important;
+}
