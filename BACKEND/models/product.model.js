@@ -224,7 +224,19 @@ const Product = {
           LEFT JOIN product_portion pp2 ON pp2.product_portion_id = mp.product_portion_id AND pp2.is_deleted = 0
           JOIN modifier_master mm ON mm.modifier_id = mp.modifier_id AND mm.is_deleted = 0
           WHERE mp.is_deleted = 0
-          ${modifierCombinationUnion}
+          
+          UNION ALL
+          
+          -- Combinations
+          SELECT mc_inner.product_id,
+                 COALESCE(mc_inner.product_portion_id, 0) AS ppId,
+                 mc_inner.combination_id AS id,
+                 mc_inner.name AS label,
+                 COALESCE(mc_inner.additional_price, 0) AS price,
+                 mc_inner.stock,
+                 '' AS img
+          FROM modifier_combination mc_inner
+          WHERE mc_inner.is_deleted = 0
         ) combined_mods
         GROUP BY product_id
       ) mc ON p.product_id = mc.product_id
@@ -339,8 +351,12 @@ const Product = {
              COALESCE(mc.modifier_count, 0) AS modifier_count,
              mc.modifier_values,
              mc.modifier_details,
-             pi.image_url
-             ${ratingSelectClause}
+             (SELECT pi.image_url FROM product_images pi
+              WHERE pi.product_id = p.product_id
+                AND pi.image_level = 'PRODUCT'
+                AND pi.is_deleted = 0
+              ORDER BY pi.is_primary DESC, pi.image_id DESC
+              LIMIT 1) AS image_url
       ${baseSql}
       ${whereClause}
       ${orderClause}

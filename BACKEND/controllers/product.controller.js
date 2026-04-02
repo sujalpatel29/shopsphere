@@ -114,7 +114,7 @@ export const getAllProducts = async (req, res) => {
 
     const { total, data, totalAll, totalActive } = await Product.findAll(
       filters,
-      { limit, offset, sortField, sortOrder, sort }
+      { limit, offset, sortField, sortOrder },
     );
 
     return res.status(200).json({

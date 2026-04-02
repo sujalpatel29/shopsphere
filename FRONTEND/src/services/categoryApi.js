@@ -8,8 +8,7 @@ const API = axios.create({
 export const getAllProducts = (params = undefined) =>
   params ? API.get("/api/products", { params }) : API.get("/api/products");
 
-export const getAllCategories = () =>
-  API.get("/api/category/tree"); 
+export const getAllCategories = () => API.get("/api/category/tree");
 
 export const getCategoryWithChildren = (categoryId) =>
   API.get(`/api/category/${categoryId}`);

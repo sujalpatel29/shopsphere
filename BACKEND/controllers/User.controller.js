@@ -80,18 +80,9 @@ const getMailTransportConfig = () => {
   };
 };
 
-const isProduction = () => process.env.NODE_ENV === "production";
-
 const sendOtpEmail = async ({ to, otp, purpose }) => {
   const transportConfig = getMailTransportConfig();
   if (!transportConfig) {
-    if (!isProduction()) {
-      console.warn(
-        `[OTP][DEV] SMTP is not configured. OTP for ${to} (${purpose}): ${otp}`,
-      );
-      return;
-    }
-
     throw new Error("SMTP is not configured");
   }
 
@@ -122,13 +113,6 @@ const sendOtpEmail = async ({ to, otp, purpose }) => {
 const sendAdminCreatedEmail = async ({ to, name, tempPassword }) => {
   const transportConfig = getMailTransportConfig();
   if (!transportConfig) {
-    if (!isProduction()) {
-      console.warn(
-        `[MAIL][DEV] SMTP is not configured. Admin-created credentials for ${to}: ${tempPassword}`,
-      );
-      return;
-    }
-
     throw new Error("SMTP is not configured");
   }
 
