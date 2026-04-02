@@ -60,7 +60,7 @@ function AdminOffersToolbar({
   return (
     <div className="admin-products-toolbar admin-offers-toolbar mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <IconField iconPosition="left" className="w-full sm:w-72">
+        <IconField iconPosition="left" className="w-full sm:w-60">
           <InputIcon className="pi pi-search text-gray-400" />
           <InputText
             type="search"
@@ -77,7 +77,7 @@ function AdminOffersToolbar({
           optionLabel="label"
           optionValue="value"
           placeholder="Filter by Status"
-          className="admin-filter-dropdown w-full sm:w-44"
+          className="admin-filter-dropdown w-full sm:w-40"
           pt={{
             root: {
               className:
@@ -99,7 +99,7 @@ function AdminOffersToolbar({
           optionLabel="label"
           optionValue="value"
           placeholder="Filter by Offer Type"
-          className="admin-filter-dropdown w-full sm:w-52"
+          className="admin-filter-dropdown w-full sm:w-44"
           pt={{
             root: {
               className:
@@ -146,7 +146,7 @@ function AdminOffersToolbar({
 
         <Button
           type="button"
-          className="admin-btn-primary flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium shadow-md transition-all hover:shadow-lg"
+          className="admin-btn-primary flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium shadow-md transition-all hover:shadow-lg"
           onClick={onAddOffer}
         >
           <Plus className="h-4 w-4" />
