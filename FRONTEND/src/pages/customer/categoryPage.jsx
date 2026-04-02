@@ -156,6 +156,7 @@ function CategoryPage() {
   const productsRequestIdRef = useRef(0);
   const priceRangeRequestIdRef = useRef(0);
   const hasUserPriceSelectionRef = useRef(false);
+  const treeLoadedRef = useRef(false);
   const debouncedPriceRange = useDebouncedValue(priceRange, 300);
   const urlSearch = searchParams.get("search") || "";
   const urlCategory = searchParams.get("category");
@@ -216,17 +217,49 @@ function CategoryPage() {
   );
 
   useEffect(() => {
+    const match = sortOptions.some((opt) => opt.value === urlSortKey);
+    setSortKey(match ? urlSortKey : ":");
+  }, [urlSortKey, sortOptions]);
+
+  const [sortField, sortOrder] = useMemo(() => {
+    const [field = "", order = ""] = (sortKey || ":").split(":");
+    return [field, order];
+  }, [sortKey]);
+
+  const backendSortParam = useMemo(() => {
+    if (!sortField) return null;
+    if (sortField === "price" && sortOrder === "asc") return "price_low_high";
+    if (sortField === "price" && sortOrder === "desc") return "price_high_low";
+    if (sortField === "rating") return "rating_high_low";
+    return null;
+  }, [sortField, sortOrder]);
+
+  useEffect(() => {
+    // Prevent double execution in Strict Mode by setting flag FIRST, before any async
+    if (treeLoadedRef.current) return;
+    treeLoadedRef.current = true;
+
     const loadInitialData = async () => {
+      // Double-check that we're still the first execution
+      if (treeLoadedRef.current !== true) return;
+
       try {
         setIsTreeLoading(true);
         const categoryRes = await getAllCategories();
-        setCategoryTree(extractCategoryTree(categoryRes));
+        // Only update state if we're still the active call
+        if (treeLoadedRef.current === true) {
+          setCategoryTree(extractCategoryTree(categoryRes));
+        }
       } catch (error) {
-        console.error("Failed to load categories:", error);
-        setCategoryTree([]);
+        if (treeLoadedRef.current === true) {
+          console.error("Failed to load categories:", error);
+          setCategoryTree([]);
+        }
       } finally {
-        setIsTreeLoading(false);
-        setTreeLoaded(true);
+        if (treeLoadedRef.current === true) {
+          setIsTreeLoading(false);
+          setTreeLoaded(true);
+        }
       }
     };
 

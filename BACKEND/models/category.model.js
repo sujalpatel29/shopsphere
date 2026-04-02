@@ -97,6 +97,21 @@ SELECT DISTINCT pm.*,
         ORDER BY pi.is_primary DESC, pi.image_id DESC
         LIMIT 1) AS image_url
 FROM product_master pm
+LEFT JOIN (
+    SELECT pi1.product_id, pi1.image_url
+    FROM product_images pi1
+    INNER JOIN (
+        SELECT
+            product_id,
+            MAX(CASE WHEN is_primary = 1 THEN image_id END) AS primary_id,
+            MAX(image_id) AS latest_id
+        FROM product_images
+        WHERE is_deleted = 0
+        GROUP BY product_id
+    ) pick
+      ON pick.product_id = pi1.product_id
+     AND pi1.image_id = COALESCE(pick.primary_id, pick.latest_id)
+) pi ON pi.product_id = pm.product_id
 JOIN product_categories pc
     ON pm.product_id = pc.product_id
 WHERE pc.category_id IN (
@@ -161,6 +176,21 @@ SELECT DISTINCT pm.*,
         ORDER BY pi.is_primary DESC, pi.image_id DESC
         LIMIT 1) AS image_url
 FROM product_master pm
+LEFT JOIN (
+    SELECT pi1.product_id, pi1.image_url
+    FROM product_images pi1
+    INNER JOIN (
+        SELECT
+            product_id,
+            MAX(CASE WHEN is_primary = 1 THEN image_id END) AS primary_id,
+            MAX(image_id) AS latest_id
+        FROM product_images
+        WHERE is_deleted = 0
+        GROUP BY product_id
+    ) pick
+      ON pick.product_id = pi1.product_id
+     AND pi1.image_id = COALESCE(pick.primary_id, pick.latest_id)
+) pi ON pi.product_id = pm.product_id
 JOIN product_categories pc
   ON pm.product_id = pc.product_id
 WHERE pc.category_id IN (SELECT category_id FROM subcategories)
@@ -196,6 +226,21 @@ SELECT DISTINCT pm.*,
         ORDER BY pi.is_primary DESC, pi.image_id DESC
         LIMIT 1) AS image_url
 FROM product_master pm
+LEFT JOIN (
+    SELECT pi1.product_id, pi1.image_url
+    FROM product_images pi1
+    INNER JOIN (
+        SELECT
+            product_id,
+            MAX(CASE WHEN is_primary = 1 THEN image_id END) AS primary_id,
+            MAX(image_id) AS latest_id
+        FROM product_images
+        WHERE is_deleted = 0
+        GROUP BY product_id
+    ) pick
+      ON pick.product_id = pi1.product_id
+     AND pi1.image_id = COALESCE(pick.primary_id, pick.latest_id)
+) pi ON pi.product_id = pm.product_id
 JOIN product_categories pc
   ON pm.product_id = pc.product_id
 WHERE pc.category_id IN (SELECT category_id FROM subcategories)
@@ -301,6 +346,21 @@ const buildPriceFilterClause = (minPrice, maxPrice) => {
   };
 };
 
+const resolveProductSortClause = (sort) => {
+  const priceExpr =
+    "CAST(COALESCE(pm.discounted_price, pm.price) AS DECIMAL(12,2))";
+  switch (sort) {
+    case "price_low_high":
+      return `${priceExpr} ASC, pm.product_id DESC`;
+    case "price_high_low":
+      return `${priceExpr} DESC, pm.product_id DESC`;
+    case "rating_high_low":
+      return "COALESCE(pr.avg_rating, 0) DESC, pm.product_id DESC";
+    default:
+      return "pm.product_id DESC";
+  }
+};
+
 export const countProductsByCategoryFilter = (
   parentIds = [],
   childIds = [],
@@ -350,6 +410,7 @@ export const getProductsByCategoryFilterPaginated = (
   search = "",
   minPrice,
   maxPrice,
+  sort,
   limit,
   offset,
 ) => {
@@ -389,8 +450,24 @@ export const getProductsByCategoryFilterPaginated = (
             LIMIT 1) AS image_url
     FROM product_master pm
     ${joinClause}
+    ${ratingJoinClause}
+    LEFT JOIN (
+      SELECT pi1.product_id, pi1.image_url
+      FROM product_images pi1
+      INNER JOIN (
+        SELECT
+          product_id,
+          MAX(CASE WHEN is_primary = 1 THEN image_id END) AS primary_id,
+          MAX(image_id) AS latest_id
+        FROM product_images
+        WHERE is_deleted = 0
+        GROUP BY product_id
+      ) pick
+        ON pick.product_id = pi1.product_id
+       AND pi1.image_id = COALESCE(pick.primary_id, pick.latest_id)
+    ) pi ON pi.product_id = pm.product_id
     WHERE ${conditions.join(" AND ")}
-    ORDER BY pm.product_id DESC
+    ORDER BY ${sortBy}
     LIMIT ?
     OFFSET ?
   `;
@@ -404,6 +481,7 @@ export const getProductsByCategoryFilter = (
   search = "",
   minPrice,
   maxPrice,
+  sort,
 ) => {
   const conditions = ["pm.is_deleted = 0"];
   const values = [];
@@ -441,8 +519,24 @@ export const getProductsByCategoryFilter = (
             LIMIT 1) AS image_url
     FROM product_master pm
     ${joinClause}
+    ${ratingJoinClause}
+    LEFT JOIN (
+      SELECT pi1.product_id, pi1.image_url
+      FROM product_images pi1
+      INNER JOIN (
+        SELECT
+          product_id,
+          MAX(CASE WHEN is_primary = 1 THEN image_id END) AS primary_id,
+          MAX(image_id) AS latest_id
+        FROM product_images
+        WHERE is_deleted = 0
+        GROUP BY product_id
+      ) pick
+        ON pick.product_id = pi1.product_id
+       AND pi1.image_id = COALESCE(pick.primary_id, pick.latest_id)
+    ) pi ON pi.product_id = pm.product_id
     WHERE ${conditions.join(" AND ")}
-    ORDER BY pm.product_id DESC
+    ORDER BY ${sortBy}
   `;
 
   return pool.query(query, values);

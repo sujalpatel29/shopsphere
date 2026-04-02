@@ -1,5 +1,28 @@
 import db from "../configs/db.js";
 
+const tableExistsCache = new Map();
+
+const hasTable = async (tableName, conn = db) => {
+  const cacheKey = `${conn === db ? "pool" : "conn"}:${tableName}`;
+  if (tableExistsCache.has(cacheKey)) {
+    return tableExistsCache.get(cacheKey);
+  }
+
+  const [rows] = await conn.execute(
+    `
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = DATABASE() AND table_name = ?
+      LIMIT 1
+    `,
+    [tableName],
+  );
+
+  const exists = rows.length > 0;
+  tableExistsCache.set(cacheKey, exists);
+  return exists;
+};
+
 const Product = {
   //  Create Product
   create: (data, conn = db) => {
@@ -87,6 +110,10 @@ const Product = {
 
   // find all product with filtering
   findAll: async (filters = {}, pagination = {}, conn = db) => {
+    const modifierCombinationExists = await hasTable(
+      "modifier_combination",
+      conn,
+    );
     // Unfiltered stats — always reflect entire catalog
     const [statsRows] = await conn.execute(`
       SELECT
@@ -99,6 +126,58 @@ const Product = {
 
     const conditions = ["p.is_deleted = 0", "(p.category_id IS NULL OR c.category_id IS NOT NULL)"];
     const values = [];
+
+    const ratingJoinClause =
+      pagination.sort === "rating_high_low"
+        ? `
+      LEFT JOIN (
+        SELECT product_id, ROUND(AVG(rating), 2) AS avg_rating
+        FROM product_reviews
+        WHERE is_deleted = 0
+        GROUP BY product_id
+      ) pr ON pr.product_id = p.product_id
+    `
+        : "";
+
+    const ratingSelectClause =
+      pagination.sort === "rating_high_low"
+        ? ", COALESCE(pr.avg_rating, 0) AS avg_rating"
+        : "";
+
+    const imageJoinClause = `
+      LEFT JOIN (
+        SELECT pi1.product_id, pi1.image_url
+        FROM product_images pi1
+        INNER JOIN (
+          SELECT
+            product_id,
+            MAX(CASE WHEN is_primary = 1 THEN image_id END) AS primary_id,
+            MAX(image_id) AS latest_id
+          FROM product_images
+          WHERE is_deleted = 0
+          GROUP BY product_id
+        ) pick
+          ON pick.product_id = pi1.product_id
+         AND pi1.image_id = COALESCE(pick.primary_id, pick.latest_id)
+      ) pi ON pi.product_id = p.product_id
+    `;
+
+    const modifierCombinationUnion = modifierCombinationExists
+      ? `
+          UNION ALL
+
+          -- Combinations
+          SELECT mc_inner.product_id,
+                 COALESCE(mc_inner.product_portion_id, 0) AS ppId,
+                 mc_inner.combination_id AS id,
+                 mc_inner.name AS label,
+                 COALESCE(mc_inner.additional_price, 0) AS price,
+                 mc_inner.stock,
+                 '' AS img
+          FROM modifier_combination mc_inner
+          WHERE mc_inner.is_deleted = 0
+        `
+      : "";
 
     let baseSql = `
       FROM product_master p
@@ -161,6 +240,8 @@ const Product = {
         ) combined_mods
         GROUP BY product_id
       ) mc ON p.product_id = mc.product_id
+      ${ratingJoinClause}
+      ${imageJoinClause}
     `;
 
     // category filtering
@@ -248,7 +329,16 @@ const Product = {
     };
 
     let orderClause = "ORDER BY p.product_id ASC";
-    if (pagination.sortField && sortableColumns[pagination.sortField]) {
+    if (pagination.sort) {
+      const priceExpr = "CAST(COALESCE(p.discounted_price, p.price) AS DECIMAL(12,2))";
+      if (pagination.sort === "price_low_high") {
+        orderClause = `ORDER BY ${priceExpr} ASC, p.product_id DESC`;
+      } else if (pagination.sort === "price_high_low") {
+        orderClause = `ORDER BY ${priceExpr} DESC, p.product_id DESC`;
+      } else if (pagination.sort === "rating_high_low") {
+        orderClause = "ORDER BY COALESCE(pr.avg_rating, 0) DESC, p.product_id DESC";
+      }
+    } else if (pagination.sortField && sortableColumns[pagination.sortField]) {
       const dir = pagination.sortOrder === "desc" ? "DESC" : "ASC";
       orderClause = `ORDER BY ${sortableColumns[pagination.sortField]} ${dir}`;
     }

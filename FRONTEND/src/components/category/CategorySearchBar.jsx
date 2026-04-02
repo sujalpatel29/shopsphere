@@ -6,7 +6,22 @@ function CategorySearchBar({ isLoading, searchText = "", onSearchChange }) {
   const { darkMode } = useTheme();
 
   if (isLoading) {
-    return <Skeleton height="45px" />;
+    return (
+      <div
+        className={`category-search-bar w-full rounded-xl border p-3 ${
+          darkMode
+            ? "border-[#1f2933] bg-[#151e22]"
+            : "border-gray-200 bg-white"
+        }`}
+      >
+        <Skeleton
+          height="42px"
+          className={`!rounded-lg ${
+            darkMode ? "bg-[#1f2933]" : "bg-gray-200"
+          }`}
+        />
+      </div>
+    );
   }
 
   return (

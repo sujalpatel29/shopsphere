@@ -161,6 +161,7 @@
 import { Tree } from "primereact/tree";
 import { Divider } from "primereact/divider";
 import { Slider } from "primereact/slider";
+import { Dropdown } from "primereact/dropdown";
 import { useMemo } from "react";
 import { useTheme } from "../../context/ThemeContext";
 import { Skeleton } from "primereact/skeleton";
@@ -175,12 +176,15 @@ function CategoryFilterSidebar({
   minPrice = 0,
   maxPrice = 0,
   onPriceRangeChange,
+  sortKey = ":",
+  sortOptions = [],
+  onSortChange,
 }) {
   const { darkMode } = useTheme();
 
   const rangeMax = Math.max(minPrice, maxPrice);
 
-  const mapTreeForPrime = (nodes = [],depth = 0) =>
+  const mapTreeForPrime = (nodes = [], depth = 0) =>
     nodes.map((n) => ({
       key: String(n.category_id),
       label: n.category_name,
@@ -336,6 +340,52 @@ function CategoryFilterSidebar({
                 placeholder="Max"
               />
             </div>
+          </div>
+
+          <Divider />
+
+          {/* SORT DROPDOWN */}
+          <div>
+            <h4
+              className={`text-xs font-semibold uppercase tracking-[0.18em] mb-2 ${
+                darkMode ? "text-slate-400" : "text-gray-500"
+              }`}
+            >
+              Sort
+            </h4>
+            <Dropdown
+              value={sortKey}
+              options={sortOptions}
+              onChange={(e) => onSortChange?.(e.value)}
+              className="w-full"
+              pt={{
+                root: {
+                  className: `w-full !rounded-lg !border !shadow-none ${
+                    darkMode
+                      ? "!border-[#223038] !bg-[#0f161a] !text-slate-100"
+                      : "!border-gray-300 !bg-white !text-gray-800"
+                  }`,
+                },
+                label: {
+                  className: `text-sm ${
+                    darkMode ? "text-slate-100" : "text-gray-800"
+                  }`,
+                },
+                trigger: {
+                  className: darkMode ? "text-slate-300" : "text-gray-500",
+                },
+                panel: {
+                  className: darkMode
+                    ? "border border-[#223038] bg-[#0f161a] text-slate-100"
+                    : "border border-gray-200 bg-white text-gray-800",
+                },
+                item: {
+                  className: `text-sm ${
+                    darkMode ? "hover:bg-[#151e22]" : "hover:bg-amber-50"
+                  }`,
+                },
+              }}
+            />
           </div>
           {darkMode ? (
             <style>{`
