@@ -55,9 +55,9 @@ function AdminOffersToolbar({
   );
 
   return (
-    <div className="admin-products-toolbar flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <IconField iconPosition="left" className="w-full sm:w-72">
+    <div className="admin-products-toolbar flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-2 mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2 flex-1 min-w-0">
+        <IconField iconPosition="left" className="w-full sm:w-48">
           <InputIcon className="pi pi-search text-gray-400" />
           <InputText
             type="search"
@@ -74,7 +74,7 @@ function AdminOffersToolbar({
           optionLabel="label"
           optionValue="value"
           placeholder="Filter by Status"
-          className="admin-filter-dropdown w-full sm:w-44"
+          className="admin-filter-dropdown w-full sm:w-36 flex-shrink-0"
           pt={{
             root: {
               className:
@@ -95,7 +95,7 @@ function AdminOffersToolbar({
           optionLabel="label"
           optionValue="value"
           placeholder="Filter by Offer Type"
-          className="admin-filter-dropdown w-full sm:w-52"
+          className="admin-filter-dropdown w-full sm:w-40 flex-shrink-0"
           pt={{
             root: {
               className:
@@ -109,9 +109,9 @@ function AdminOffersToolbar({
           }}
         />
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2 sm:flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap sm:flex-shrink-0">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 whitespace-nowrap">
             <span className="text-xs text-gray-500 dark:text-gray-400">
               Total
             </span>
@@ -119,7 +119,7 @@ function AdminOffersToolbar({
               {totalAll}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 whitespace-nowrap">
             <span className="text-xs text-green-600 dark:text-green-400">
               Active
             </span>
@@ -127,7 +127,7 @@ function AdminOffersToolbar({
               {totalActive}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 whitespace-nowrap">
             <span className="text-xs text-red-500 dark:text-red-400">
               Inactive
             </span>
@@ -139,7 +139,7 @@ function AdminOffersToolbar({
 
         <Button
           type="button"
-          className="admin-btn-primary flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium shadow-md hover:shadow-lg transition-all"
+          className="admin-btn-primary flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium shadow-md hover:shadow-lg transition-all flex-shrink-0 w-full sm:w-auto"
           onClick={onAddOffer}
         >
           <Plus className="h-4 w-4" />

@@ -1,7 +1,8 @@
 import mysql from "mysql2/promise";
 import "./env.js";
 
-const dbPort = Number.parseInt(process.env.DB_PORT, 10) || 3303;
+const dbPort =
+  Number.parseInt(process.env.DB_PORT || process.env.SERVER_PORT, 10) || 3303;
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,

@@ -304,12 +304,16 @@ const buildCategoryFilterClause = (parentIds = [], childIds = []) => {
         WHERE c2.parent_id IN (${ph}) AND c3.is_deleted = 0 AND c2.is_deleted = 0
     )`;
     clauses.push(
-      `(pc.category_id IN ${descendantSubquery} OR pm.category_id IN ${descendantSubquery})`
+      `(pc.category_id IN ${descendantSubquery} OR pm.category_id IN ${descendantSubquery})`,
     );
     // 3 levels × 2 (pc + pm) = 6 copies
     values.push(
-      ...parentIds, ...parentIds, ...parentIds,
-      ...parentIds, ...parentIds, ...parentIds
+      ...parentIds,
+      ...parentIds,
+      ...parentIds,
+      ...parentIds,
+      ...parentIds,
+      ...parentIds,
     );
   }
 
@@ -347,7 +351,8 @@ const buildPriceFilterClause = (minPrice, maxPrice) => {
 };
 
 const resolveProductSortClause = (sort) => {
-  const priceExpr = "CAST(COALESCE(pm.discounted_price, pm.price) AS DECIMAL(12,2))";
+  const priceExpr =
+    "CAST(COALESCE(pm.discounted_price, pm.price) AS DECIMAL(12,2))";
   switch (sort) {
     case "price_low_high":
       return `${priceExpr} ASC, pm.product_id DESC`;
@@ -389,9 +394,15 @@ export const countProductsByCategoryFilter = (
   }
 
   const joinClause = [
-    categoryFilter.requiresCategoryJoin ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id" : "",
-    searchFilter.requiresCategoryNameJoin ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id" : "",
-  ].filter(Boolean).join("\n    ");
+    categoryFilter.requiresCategoryJoin
+      ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
+      : "",
+    searchFilter.requiresCategoryNameJoin
+      ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id"
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n    ");
 
   const query = `
     SELECT COUNT(DISTINCT pm.product_id) AS total
@@ -435,9 +446,38 @@ export const getProductsByCategoryFilterPaginated = (
   }
 
   const joinClause = [
-    categoryFilter.requiresCategoryJoin ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id" : "",
-    searchFilter.requiresCategoryNameJoin ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id" : "",
-  ].filter(Boolean).join("\n    ");
+    categoryFilter.requiresCategoryJoin
+      ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
+      : "",
+    searchFilter.requiresCategoryNameJoin
+      ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id"
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n    ");
+
+  const ratingJoinClause =
+    sort === "rating_high_low"
+      ? `
+      LEFT JOIN (
+        SELECT product_id, ROUND(AVG(rating), 2) AS avg_rating
+        FROM product_reviews
+        WHERE is_deleted = 0
+        GROUP BY product_id
+      ) pr ON pr.product_id = pm.product_id
+    `
+      : "";
+
+  let sortBy = "pm.product_id ASC";
+  if (sort === "price_low_high") {
+    sortBy =
+      "CAST(COALESCE(pm.discounted_price, pm.price) AS DECIMAL(12,2)) ASC, pm.product_id DESC";
+  } else if (sort === "price_high_low") {
+    sortBy =
+      "CAST(COALESCE(pm.discounted_price, pm.price) AS DECIMAL(12,2)) DESC, pm.product_id DESC";
+  } else if (sort === "rating_high_low") {
+    sortBy = "COALESCE(pr.avg_rating, 0) DESC, pm.product_id DESC";
+  }
 
   const query = `
     SELECT DISTINCT pm.*,
@@ -504,9 +544,38 @@ export const getProductsByCategoryFilter = (
   }
 
   const joinClause = [
-    categoryFilter.requiresCategoryJoin ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id" : "",
-    searchFilter.requiresCategoryNameJoin ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id" : "",
-  ].filter(Boolean).join("\n    ");
+    categoryFilter.requiresCategoryJoin
+      ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
+      : "",
+    searchFilter.requiresCategoryNameJoin
+      ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id"
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n    ");
+
+  const ratingJoinClause =
+    sort === "rating_high_low"
+      ? `
+      LEFT JOIN (
+        SELECT product_id, ROUND(AVG(rating), 2) AS avg_rating
+        FROM product_reviews
+        WHERE is_deleted = 0
+        GROUP BY product_id
+      ) pr ON pr.product_id = pm.product_id
+    `
+      : "";
+
+  let sortBy = "pm.product_id ASC";
+  if (sort === "price_low_high") {
+    sortBy =
+      "CAST(COALESCE(pm.discounted_price, pm.price) AS DECIMAL(12,2)) ASC, pm.product_id DESC";
+  } else if (sort === "price_high_low") {
+    sortBy =
+      "CAST(COALESCE(pm.discounted_price, pm.price) AS DECIMAL(12,2)) DESC, pm.product_id DESC";
+  } else if (sort === "rating_high_low") {
+    sortBy = "COALESCE(pr.avg_rating, 0) DESC, pm.product_id DESC";
+  }
 
   const query = `
     SELECT DISTINCT pm.*,
@@ -562,9 +631,15 @@ export const getProductsPriceRangeByCategoryFilter = (
   }
 
   const joinClause = [
-    categoryFilter.requiresCategoryJoin ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id" : "",
-    searchFilter.requiresCategoryNameJoin ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id" : "",
-  ].filter(Boolean).join("\n    ");
+    categoryFilter.requiresCategoryJoin
+      ? "LEFT JOIN product_categories pc ON pm.product_id = pc.product_id"
+      : "",
+    searchFilter.requiresCategoryNameJoin
+      ? "LEFT JOIN category_master cm ON pm.category_id = cm.category_id"
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n    ");
 
   const query = `
     SELECT

@@ -1,7 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Dropdown } from "primereact/dropdown";
 import { useTheme as useAppTheme } from "../../context/ThemeContext";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
@@ -136,7 +135,8 @@ function CategoryPage() {
       }
     };
     window.addEventListener("shopsphere:addToCartClick", handler);
-    return () => window.removeEventListener("shopsphere:addToCartClick", handler);
+    return () =>
+      window.removeEventListener("shopsphere:addToCartClick", handler);
   }, []);
 
   const [isTreeLoading, setIsTreeLoading] = useState(true);
@@ -148,7 +148,6 @@ function CategoryPage() {
   const [priceRange, setPriceRange] = useState([0, 0]);
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
-  const [sortOption, setSortOption] = useState(null);
   const [pager, setPager] = useState({ first: 0, rows: 8 });
   const [totalRecords, setTotalRecords] = useState(0);
   const [priceBounds, setPriceBounds] = useState({ min: 0, max: 0 });
@@ -157,6 +156,7 @@ function CategoryPage() {
   const productsRequestIdRef = useRef(0);
   const priceRangeRequestIdRef = useRef(0);
   const hasUserPriceSelectionRef = useRef(false);
+  const treeLoadedRef = useRef(false);
   const debouncedPriceRange = useDebouncedValue(priceRange, 300);
   const urlSearch = searchParams.get("search") || "";
   const urlCategory = searchParams.get("category");
@@ -188,46 +188,40 @@ function CategoryPage() {
     return [field, order];
   }, [sortKey]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    const nextField = sortField || "";
-    const nextOrder = sortOrder || "";
-
-    const currentField = (params.get("sortField") || "").trim();
-    const currentOrder = (params.get("sortOrder") || "").trim();
-
-    if (!nextField) {
-      params.delete("sortField");
-      params.delete("sortOrder");
-    } else {
-      params.set("sortField", nextField);
-      params.set("sortOrder", nextOrder || "asc");
-    }
-
-    const afterField = (params.get("sortField") || "").trim();
-    const afterOrder = (params.get("sortOrder") || "").trim();
-    const changed = currentField !== afterField || currentOrder !== afterOrder;
-    if (changed) setSearchParams(params, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const backendSortParam = useMemo(() => {
+    if (!sortField) return null;
+    if (sortField === "price" && sortOrder === "asc") return "price_low_high";
+    if (sortField === "price" && sortOrder === "desc") return "price_high_low";
+    if (sortField === "rating") return "rating_high_low";
+    return null;
   }, [sortField, sortOrder]);
 
-  const sortSignature = useMemo(
-    () => (sortField ? `${sortField}:${sortOrder || "asc"}` : ""),
-    [sortField, sortOrder],
-  );
-
   useEffect(() => {
+    // Prevent double execution in Strict Mode by setting flag FIRST, before any async
+    if (treeLoadedRef.current) return;
+    treeLoadedRef.current = true;
+
     const loadInitialData = async () => {
+      // Double-check that we're still the first execution
+      if (treeLoadedRef.current !== true) return;
+
       try {
         setIsTreeLoading(true);
         const categoryRes = await getAllCategories();
-        setCategoryTree(extractCategoryTree(categoryRes));
+        // Only update state if we're still the active call
+        if (treeLoadedRef.current === true) {
+          setCategoryTree(extractCategoryTree(categoryRes));
+        }
       } catch (error) {
-        console.error("Failed to load categories:", error);
-        setCategoryTree([]);
+        if (treeLoadedRef.current === true) {
+          console.error("Failed to load categories:", error);
+          setCategoryTree([]);
+        }
       } finally {
-        setIsTreeLoading(false);
-        setTreeLoaded(true);
+        if (treeLoadedRef.current === true) {
+          setIsTreeLoading(false);
+          setTreeLoaded(true);
+        }
       }
     };
 
@@ -330,13 +324,13 @@ function CategoryPage() {
     const priceKey = hasUserPriceSelectionRef.current
       ? `${debouncedPriceRange[0]}-${debouncedPriceRange[1]}`
       : "";
-    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}|${sortSignature}`;
+    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}|${backendSortParam || ""}`;
   }, [
     debouncedSearchText,
     parentSelectionIds,
     childSelectionIds,
     debouncedPriceRange,
-    sortSignature,
+    backendSortParam,
   ]);
 
   const boundsSignature = useMemo(() => {
@@ -392,9 +386,8 @@ function CategoryPage() {
             page: backendPage,
             limit: pager.rows,
             ...(hasSearch ? { search: debouncedSearchText } : {}),
-            ...(sortOption ? { sort: sortOption } : {}),
             ...priceFilterParams,
-            ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
+            ...(backendSortParam ? { sort: backendSortParam } : {}),
           });
           items = extractProducts(productRes);
           if (requestId === productsRequestIdRef.current) {
@@ -410,10 +403,9 @@ function CategoryPage() {
               : {}),
             ...(hasSearch ? { search: debouncedSearchText } : {}),
             ...priceFilterParams,
-            ...(sortOption ? { sort: sortOption } : {}),
             page: backendPage,
             limit: pager.rows,
-            ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
+            ...(backendSortParam ? { sort: backendSortParam } : {}),
           });
           items = extractProducts(productRes);
           if (requestId === productsRequestIdRef.current) {
@@ -423,42 +415,6 @@ function CategoryPage() {
 
         if (items.length > pager.rows) {
           items = items.slice(0, pager.rows);
-        }
-
-        // Client-side sort fallback (in case backend ignores sortField/sortOrder)
-        if (sortField && items.length > 1) {
-          const orderFactor = (sortOrder || "asc").toLowerCase() === "desc" ? -1 : 1;
-          const safeText = (value) => String(value ?? "").toLowerCase();
-          const safeNumber = (value) => {
-            const n = Number(value);
-            return Number.isFinite(n) ? n : 0;
-          };
-          const safeDate = (value) => {
-            const t = Date.parse(value);
-            return Number.isFinite(t) ? t : 0;
-          };
-
-          const getEffectivePrice = (p) =>
-            safeNumber(p.discounted_price ?? p.price ?? 0);
-
-          const compare = (a, b) => {
-            if (sortField === "price") {
-              return (getEffectivePrice(a) - getEffectivePrice(b)) * orderFactor;
-            }
-            if (sortField === "created_at") {
-              return (safeDate(a.created_at) - safeDate(b.created_at)) * orderFactor;
-            }
-            if (sortField === "name") {
-              const left = safeText(a.display_name ?? a.name);
-              const right = safeText(b.display_name ?? b.name);
-              if (left < right) return -1 * orderFactor;
-              if (left > right) return 1 * orderFactor;
-              return 0;
-            }
-            return 0;
-          };
-
-          items = [...items].sort(compare);
         }
 
         if (requestId === productsRequestIdRef.current) {
@@ -611,12 +567,12 @@ function CategoryPage() {
 
         if (fromEl && cartEl) {
           const fromRect = fromEl.getBoundingClientRect();
-          const toRect   = cartEl.getBoundingClientRect();
+          const toRect = cartEl.getBoundingClientRect();
 
-          const fromX = fromRect.left + fromRect.width  / 2;
-          const fromY = fromRect.top  + fromRect.height / 2;
-          const toX   = toRect.left   + toRect.width    / 2;
-          const toY   = toRect.top    + toRect.height   / 2;
+          const fromX = fromRect.left + fromRect.width / 2;
+          const fromY = fromRect.top + fromRect.height / 2;
+          const toX = toRect.left + toRect.width / 2;
+          const toY = toRect.top + toRect.height / 2;
 
           const dx = toX - fromX;
           const dy = toY - fromY;
@@ -627,12 +583,16 @@ function CategoryPage() {
 
           // ── 1. Particle burst ────────────────────────────────────────
           const PARTICLE_COLORS = [
-            "#2f7a6f", "#34d399", "#6ee7b7",
-            "#fbbf24", "#f59e0b", "#fff",
+            "#2f7a6f",
+            "#34d399",
+            "#6ee7b7",
+            "#fbbf24",
+            "#f59e0b",
+            "#fff",
           ];
           for (let i = 0; i < 10; i++) {
             const angle = (i / 10) * 2 * Math.PI;
-            const dist  = 28 + Math.random() * 36;
+            const dist = 28 + Math.random() * 36;
             const p = document.createElement("div");
             p.className = "shopsphere-particle";
             p.style.cssText = `
@@ -654,7 +614,7 @@ function CategoryPage() {
 
           // ── 2. Flying bubble ────────────────────────────────────────
           const fly = document.createElement("div");
-          fly.className   = "shopsphere-fly-to-cart";
+          fly.className = "shopsphere-fly-to-cart";
           fly.style.cssText = `left: ${fromX}px; top: ${fromY}px;`;
 
           const inner = document.createElement("div");
@@ -674,13 +634,13 @@ function CategoryPage() {
           document.body.appendChild(fly);
 
           // Set CSS custom properties for the arc keyframes
-          fly.style.setProperty("--fly-dx",   `${dx}px`);
-          fly.style.setProperty("--fly-dy",   `0px`);  // Y handled on inner
-          inner.style.setProperty("--fly-dy",   `${dy}px`);
+          fly.style.setProperty("--fly-dx", `${dx}px`);
+          fly.style.setProperty("--fly-dy", `0px`); // Y handled on inner
+          inner.style.setProperty("--fly-dy", `${dy}px`);
           inner.style.setProperty("--fly-peak", `${peakY}px`);
 
           // Apply keyframe animations — X on outer (linear), Y+scale on inner (arc)
-          fly.style.animation   = `flyArcX ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards,
+          fly.style.animation = `flyArcX ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards,
                                     flyFadeOut ${DURATION}ms ease forwards`;
           inner.style.animation = `flyArcY ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards`;
 
@@ -724,10 +684,17 @@ function CategoryPage() {
       .map((seg) => {
         const [idPart, rest] = seg.split("@@");
         if (!idPart || !rest) return null;
-        const [portion_value, price, discounted_price, stock] = rest.split("||");
+        const [portion_value, price, discounted_price, stock] =
+          rest.split("||");
         const product_portion_id = Number(idPart);
         if (!product_portion_id) return null;
-        return { product_portion_id, portion_value, price: Number(price), discounted_price: discounted_price ? Number(discounted_price) : null, stock: Number(stock) };
+        return {
+          product_portion_id,
+          portion_value,
+          price: Number(price),
+          discounted_price: discounted_price ? Number(discounted_price) : null,
+          stock: Number(stock),
+        };
       })
       .filter(Boolean);
   };
@@ -759,7 +726,9 @@ function CategoryPage() {
       // (e.g. navigating from a detail page that doesn't include portion_details)
       if (!portions.length && Number(product?.portion_count) > 0) {
         try {
-          const portRes = await api.get(`/portion/getProductPortions/${productId}`);
+          const portRes = await api.get(
+            `/portion/getProductPortions/${productId}`,
+          );
           const raw = portRes.data?.data ?? portRes.data ?? [];
           portions = Array.isArray(raw) ? raw : [];
         } catch {
@@ -774,7 +743,8 @@ function CategoryPage() {
       }
 
       // ── 3. Determine single portionId (or null for products with no portions) ──
-      targetPortionId = portions.length === 1 ? portions[0].product_portion_id : null;
+      targetPortionId =
+        portions.length === 1 ? portions[0].product_portion_id : null;
 
       // ── 4. Check for modifiers/combinations ──
       const hasModifiers = Number(product?.modifier_count) > 0;
@@ -823,68 +793,17 @@ function CategoryPage() {
               hasUserPriceSelectionRef.current = true;
               setPriceRange(nextRange);
             }}
+            sortKey={sortKey}
+            sortOptions={sortOptions}
+            onSortChange={setSortKey}
           />
 
           <div className="category-results flex-1 space-y-6">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <div className="flex-1">
-                <CategorySearchBar
-                  isLoading={isTreeLoading}
-                  searchText={searchText}
-                  onSearchChange={setSearchText}
-                />
-              </div>
-              <div
-                className={`w-full lg:w-64 rounded-xl border px-3 py-2.5 ${
-                  darkMode
-                    ? "border-[#1f2933] bg-[#151e22]"
-                    : "border-gray-200 bg-white"
-                }`}
-              >
-                <div
-                  className={`mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                    darkMode ? "text-slate-400" : "text-gray-500"
-                  }`}
-                >
-                  Sort
-                </div>
-                <Dropdown
-                  value={sortKey}
-                  options={sortOptions}
-                  onChange={(e) => setSortKey(e.value)}
-                  className="w-full"
-                  pt={{
-                    root: {
-                      className:
-                        `w-full !rounded-lg !border !shadow-none ${
-                          darkMode
-                            ? "!border-[#223038] !bg-[#0f161a] !text-slate-100"
-                            : "!border-gray-300 !bg-white !text-gray-800"
-                        }`,
-                    },
-                    label: {
-                      className:
-                        `text-sm ${darkMode ? "text-slate-100" : "text-gray-800"}`,
-                    },
-                    trigger: {
-                      className: darkMode ? "text-slate-300" : "text-gray-500",
-                    },
-                    panel: {
-                      className:
-                        darkMode
-                          ? "border border-[#223038] bg-[#0f161a] text-slate-100"
-                          : "border border-gray-200 bg-white text-gray-800",
-                    },
-                    item: {
-                      className:
-                        `text-sm ${
-                          darkMode ? "hover:bg-[#151e22]" : "hover:bg-amber-50"
-                        }`,
-                    },
-                  }}
-                />
-              </div>
-            </div>
+            <CategorySearchBar
+              isLoading={isTreeLoading}
+              searchText={searchText}
+              onSearchChange={setSearchText}
+            />
             <SelectedFilters
               isLoading={isProductsLoading}
               categoryTags={categoryTags}
