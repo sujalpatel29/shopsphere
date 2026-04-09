@@ -35,6 +35,7 @@ export const fetchAdminProducts = async ({
   sortField = "",
   sortOrder = 1,
   isActive = null,
+  sellerId = null,
 } = {}) => {
   const params = new URLSearchParams();
   params.append("page", page);
@@ -51,6 +52,10 @@ export const fetchAdminProducts = async ({
 
   if (isActive !== null && isActive !== undefined) {
     params.append("is_active", isActive ? 1 : 0);
+  }
+
+  if (sellerId !== null && sellerId !== undefined) {
+    params.append("seller_id", sellerId);
   }
 
   const response = await api.get(`/products?${params.toString()}`);

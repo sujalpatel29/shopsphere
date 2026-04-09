@@ -39,6 +39,9 @@ import {
   serverError,
 } from "../utils/apiResponse.js";
 
+const getAuthenticatedUserId = (req) =>
+  req?.user?.user_id ?? req?.user?.id ?? null;
+
 /**
 
  * Parse and validate positive integer values
@@ -341,7 +344,7 @@ async function getCart(req, res) {
   try {
     // Cart is attached by validateCart middleware
     const cartId = req.cart.cart_id;
-    const userId = req.user.id;
+    const userId = getAuthenticatedUserId(req);
 
     // Get cart with offer details
     const cartData = await getCartWithOffer(cartId);
@@ -391,7 +394,7 @@ async function getCart(req, res) {
 
 async function addItemToCart(req, res) {
   try {
-    const userId = req.user.id;
+    const userId = getAuthenticatedUserId(req);
     const { productId, quantity, portionId, combinationId, modifierIds } = req.body;
 
     const parsedProductId = parsePositiveInt(productId);
@@ -507,7 +510,7 @@ async function addItemToCart(req, res) {
 async function updateCartItem(req, res) {
   try {
     // User ID comes from JWT token (authMiddleware)
-    const userId = req.user.id;
+    const userId = getAuthenticatedUserId(req);
 
     // Cart and cartItem are attached by middleware
     const cartItem = req.cartItem;
@@ -558,7 +561,7 @@ async function updateCartItem(req, res) {
 async function removeCartItem(req, res) {
   try {
     // User ID comes from JWT token (authMiddleware)
-    const userId = req.user.id;
+    const userId = getAuthenticatedUserId(req);
 
     // Cart item ownership is validated by middleware
     const cartItemId = req.cartItem.cart_item_id;
@@ -591,7 +594,7 @@ async function removeCartItem(req, res) {
 
 async function applyCartOffer(req, res) {
   try {
-    const userId = req.user.id;
+    const userId = getAuthenticatedUserId(req);
 
     const cartId = req.cart.cart_id;
 
@@ -932,7 +935,7 @@ async function getApplicableOffers(req, res) {
 
 async function clearCart(req, res) {
   try {
-    const userId = req.user.id;
+    const userId = getAuthenticatedUserId(req);
     const cartId = req.cart.cart_id;
 
     await clearCartItems(cartId, userId);

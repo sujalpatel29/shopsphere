@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dropdown } from "primereact/dropdown";
-import { useTheme } from "../../context/ThemeContext";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
 import SelectedFilters from "../../components/category/SelectedFilters";
@@ -15,6 +14,7 @@ import {
   getCategoryProductsPriceRange,
 } from "../../services/categoryApi";
 import api from "../../../api/api";
+import { useTheme } from "../../context/ThemeContext";
 
 const extractProducts = (res) => {
   const data = res?.data;
@@ -120,25 +120,10 @@ const useDebouncedValue = (value, delayMs = 300) => {
 
 function CategoryPage() {
   const navigate = useNavigate();
-  const { darkMode } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser } = useSelector((state) => state.auth);
-  const [recentlyAddedId, setRecentlyAddedId] = useState(null);
-  const lastAddBtnRef = useRef(null);
-  const [addingProductId, setAddingProductId] = useState(null);
-  const [addErrorProductId, setAddErrorProductId] = useState(null);
-
-  useEffect(() => {
-    const handler = (e) => {
-      const el = e?.detail?.target;
-      if (el && typeof el.getBoundingClientRect === "function") {
-        lastAddBtnRef.current = el;
-      }
-    };
-    window.addEventListener("shopsphere:addToCartClick", handler);
-    return () => window.removeEventListener("shopsphere:addToCartClick", handler);
-  }, []);
-
+  const { darkMode } = useTheme();
+  
   const [isTreeLoading, setIsTreeLoading] = useState(true);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [products, setProducts] = useState([]);
@@ -161,11 +146,13 @@ function CategoryPage() {
   const urlCategory = searchParams.get("category");
   const urlSortField = (searchParams.get("sortField") || "").trim();
   const urlSortOrder = (searchParams.get("sortOrder") || "").trim();
-  const urlSortKey = `${urlSortField}:${urlSortOrder}`;
+  const sortKey = urlSortField
+    ? `${urlSortField}:${urlSortOrder || "asc"}`
+    : "featured";
 
   const sortOptions = useMemo(
     () => [
-      { label: "Featured", value: ":" },
+      { label: "Featured", value: "featured" },
       { label: "Newest", value: "created_at:desc" },
       { label: "Price: Low to High", value: "price:asc" },
       { label: "Price: High to Low", value: "price:desc" },
@@ -175,45 +162,38 @@ function CategoryPage() {
     [],
   );
 
-  const [sortKey, setSortKey] = useState(":");
-
-  useEffect(() => {
-    const match = sortOptions.some((opt) => opt.value === urlSortKey);
-    setSortKey(match ? urlSortKey : ":");
-  }, [urlSortKey, sortOptions]);
-
   const [sortField, sortOrder] = useMemo(() => {
-    const [field = "", order = ""] = (sortKey || ":").split(":");
+    if (!sortKey || sortKey === "featured") {
+      return ["", ""];
+    }
+
+    const [field = "", order = ""] = sortKey.split(":");
     return [field, order];
   }, [sortKey]);
 
-  useEffect(() => {
+  const handleSortChange = (nextSortKey) => {
+    const normalizedSortKey = nextSortKey || "featured";
     const params = new URLSearchParams(searchParams);
-    const nextField = sortField || "";
-    const nextOrder = sortOrder || "";
 
-    const currentField = (params.get("sortField") || "").trim();
-    const currentOrder = (params.get("sortOrder") || "").trim();
-
-    if (!nextField) {
+    if (normalizedSortKey === "featured") {
       params.delete("sortField");
       params.delete("sortOrder");
     } else {
+      const [nextField = "", nextOrder = "asc"] = normalizedSortKey.split(":");
       params.set("sortField", nextField);
       params.set("sortOrder", nextOrder || "asc");
     }
 
-    const afterField = (params.get("sortField") || "").trim();
-    const afterOrder = (params.get("sortOrder") || "").trim();
-    const changed = currentField !== afterField || currentOrder !== afterOrder;
-    if (changed) setSearchParams(params, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, sortOrder]);
+    setSearchParams(params, { replace: true });
+  };
 
-  const sortSignature = useMemo(
-    () => (sortField ? `${sortField}:${sortOrder || "asc"}` : ""),
-    [sortField, sortOrder],
-  );
+  useEffect(() => {
+    const match = sortOptions.some((opt) => opt.value === sortKey);
+    if (!match && sortKey !== "featured") {
+      handleSortChange("featured");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortKey, sortOptions]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -329,13 +309,13 @@ function CategoryPage() {
     const priceKey = hasUserPriceSelectionRef.current
       ? `${debouncedPriceRange[0]}-${debouncedPriceRange[1]}`
       : "";
-    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}|${sortSignature}`;
+    return `${debouncedSearchText}|${parentKey}|${childKey}|${priceKey}|${sortKey || ""}`;
   }, [
     debouncedSearchText,
     parentSelectionIds,
     childSelectionIds,
     debouncedPriceRange,
-    sortSignature,
+    sortKey,
   ]);
 
   const boundsSignature = useMemo(() => {
@@ -731,70 +711,23 @@ function CategoryPage() {
 
   const handleAddToCart = async (product) => {
     if (!currentUser) {
-      navigate("/login", { state: { from: "/shop" } });
+      navigate("/login", { state: { from: "/categories" } });
       return;
     }
 
     const productId = toPositiveInt(getAnyProductId(product));
     if (!productId) {
-      setAddErrorProductId("invalid");
-      window.setTimeout(() => setAddErrorProductId(null), 800);
       return;
     }
 
-    // Declared outside try-catch so it's preserved in the catch/finally path
-    let targetPortionId = null;
-
     try {
-      setAddingProductId(productId);
-      setAddErrorProductId(null);
-
-      // ── 1. Get portions — use pre-loaded data from product list API first ──
-      let portions = parseProdPortionDetails(product);
-
-      // Fall back to API only if the product has no embedded portion data
-      // (e.g. navigating from a detail page that doesn't include portion_details)
-      if (!portions.length && Number(product?.portion_count) > 0) {
-        try {
-          const portRes = await api.get(`/portion/getProductPortions/${productId}`);
-          const raw = portRes.data?.data ?? portRes.data ?? [];
-          portions = Array.isArray(raw) ? raw : [];
-        } catch {
-          portions = [];
-        }
-      }
-
-      // ── 2. If multiple portions → show picker ──
-      if (portions.length > 1) {
-        setPickerProduct({ ...product, _portions: portions });
-        return; // finally will clear addingProductId
-      }
-
-      // ── 3. Determine single portionId (or null for products with no portions) ──
-      targetPortionId = portions.length === 1 ? portions[0].product_portion_id : null;
-
-      // ── 4. Check for modifiers/combinations ──
-      const hasModifiers = Number(product?.modifier_count) > 0;
-
-      if (hasModifiers) {
-        // Product has modifiers — show picker so user can select them
-        setPickerProduct({ ...product, _portions: portions });
-        return; // finally will clear addingProductId
-      }
-
-      // ── 5. No picker needed — add directly ──
-      await doAddToCart(product, targetPortionId, null);
+      await api.post("/cart/items", {
+        productId,
+        quantity: 1,
+      });
     } catch (error) {
-      console.error("Error in handleAddToCart:", error);
-      await doAddToCart(product, targetPortionId, null);
-    } finally {
-      setAddingProductId(null);
+      console.error("Failed to add to cart:", error);
     }
-  };
-
-  const handlePickerConfirm = async (portionId, modifierIds, combinationId) => {
-    await doAddToCart(pickerProduct, portionId, combinationId, modifierIds);
-    setPickerProduct(null);
   };
 
   return (
@@ -808,108 +741,68 @@ function CategoryPage() {
       )}
       <div className="container mx-auto px-4 py-8">
         <div className="category-page-layout flex flex-col lg:flex-row gap-8">
-          <CategoryFilterSidebar
-            isLoading={isTreeLoading}
-            categoryTree={categoryTree}
-            selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
-            priceRange={priceRange}
-            minPrice={priceBounds.min}
-            maxPrice={priceBounds.max}
-            onPriceRangeChange={(nextRange) => {
-              hasUserPriceSelectionRef.current = true;
-              setPriceRange(nextRange);
-            }}
-          />
+        <CategoryFilterSidebar
+          isLoading={isTreeLoading}
+          categoryTree={categoryTree}
+          selectedKeys={selectedKeys}
+          onSelectionChange={setSelectedKeys}
+          priceRange={priceRange}
+          minPrice={priceBounds.min}
+          maxPrice={priceBounds.max}
+          onPriceRangeChange={(nextRange) => {
+            hasUserPriceSelectionRef.current = true;
+            setPriceRange(nextRange);
+          }}
+        />
 
-          <div className="category-results flex-1 space-y-6">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <div className="flex-1">
-                <CategorySearchBar
-                  isLoading={isTreeLoading}
-                  searchText={searchText}
-                  onSearchChange={setSearchText}
-                />
-              </div>
-              <div
-                className={`w-full lg:w-64 rounded-xl border px-3 py-2.5 ${
-                  darkMode
-                    ? "border-[#1f2933] bg-[#151e22]"
-                    : "border-gray-200 bg-white"
-                }`}
-              >
-                <div
-                  className={`mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                    darkMode ? "text-slate-400" : "text-gray-500"
-                  }`}
-                >
-                  Sort
-                </div>
-                <Dropdown
-                  value={sortKey}
-                  options={sortOptions}
-                  onChange={(e) => setSortKey(e.value)}
-                  className="w-full"
-                  pt={{
-                    root: {
-                      className:
-                        `w-full !rounded-lg !border !shadow-none ${
-                          darkMode
-                            ? "!border-[#223038] !bg-[#0f161a] !text-slate-100"
-                            : "!border-gray-300 !bg-white !text-gray-800"
-                        }`,
-                    },
-                    label: {
-                      className:
-                        `text-sm ${darkMode ? "text-slate-100" : "text-gray-800"}`,
-                    },
-                    trigger: {
-                      className: darkMode ? "text-slate-300" : "text-gray-500",
-                    },
-                    panel: {
-                      className:
-                        darkMode
-                          ? "border border-[#223038] bg-[#0f161a] text-slate-100"
-                          : "border border-gray-200 bg-white text-gray-800",
-                    },
-                    item: {
-                      className:
-                        `text-sm ${
-                          darkMode ? "hover:bg-[#151e22]" : "hover:bg-amber-50"
-                        }`,
-                    },
-                  }}
-                />
-              </div>
+
+        <div className="category-results flex-1 space-y-6">
+          <div className="category-controls flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="category-control-item flex-1">
+              <CategorySearchBar
+                isLoading={isTreeLoading}
+                searchText={searchText}
+                onSearchChange={setSearchText}
+              />
             </div>
-            <SelectedFilters
-              isLoading={isProductsLoading}
-              categoryTags={categoryTags}
-              searchText={debouncedSearchText}
-              priceTag={priceTag}
-              onRemoveCategory={handleRemoveCategoryTag}
-              onClearSearch={() => setSearchText("")}
-              onClearPrice={handleClearPrice}
-            />
-            <ProductGrid
-              isLoading={isProductsLoading}
-              products={products}
-              onAddToCart={handleAddToCart}
-              recentlyAddedProductId={recentlyAddedId}
-              addingProductId={addingProductId}
-              addErrorProductId={addErrorProductId}
-              paginator={{
-                enabled: true,
-                first: pager.first,
-                rows: pager.rows,
-                totalRecords: totalRecords,
-                rowsPerPageOptions: [8, 16, 24, 32],
-              }}
-              onPageChange={(event) =>
-                setPager({ first: event.first, rows: event.rows })
-              }
-            />
+            <div className="category-control-item w-full md:w-64">
+              <Dropdown
+                value={sortKey || null}
+                options={sortOptions}
+                onChange={(e) => handleSortChange(e.value)}
+                placeholder="Sort by"
+                className={`category-sort-dropdown w-full ${
+                  darkMode ? "category-sort-dropdown-dark" : ""
+                }`}
+                panelClassName="category-sort-panel"
+              />
+            </div>
           </div>
+          <SelectedFilters
+            isLoading={isProductsLoading}
+            categoryTags={categoryTags}
+            searchText={debouncedSearchText}
+            priceTag={priceTag}
+            onRemoveCategory={handleRemoveCategoryTag}
+            onClearSearch={() => setSearchText("")}
+            onClearPrice={handleClearPrice}
+          />
+          <ProductGrid
+            isLoading={isProductsLoading}
+            products={products}
+            onAddToCart={handleAddToCart}
+            paginator={{
+              enabled: true,
+              first: pager.first,
+              rows: pager.rows,
+              totalRecords: totalRecords,
+              rowsPerPageOptions: [8, 16, 24, 32],
+            }}
+            onPageChange={(event) =>
+              setPager({ first: event.first, rows: event.rows })
+            }
+          />
+        </div>
         </div>
       </div>
     </div>

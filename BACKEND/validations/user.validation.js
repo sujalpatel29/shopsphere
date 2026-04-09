@@ -80,7 +80,7 @@ export const resetPasswordWithTokenSchema = z
 export const adminCreateUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().min(1, "Email is required").email("Invalid email format"),
-  role: z.enum(["admin", "customer"]).optional(),
+  role: z.enum(["admin", "seller", "customer"]).optional(),
 });
 
 /* ================= UPDATE PROFILE ================= */

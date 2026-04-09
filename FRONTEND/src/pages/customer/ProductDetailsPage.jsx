@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  Store,
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
@@ -249,6 +250,13 @@ function ProductDetailsPage() {
           "Uncategorized",
       },
       {
+        label: "Seller",
+        value:
+          product?.seller_business_name ||
+          product?.seller_name ||
+          "ShopSphere",
+      },
+      {
         label: "Availability",
         value: stockMeta.label,
       },
@@ -265,7 +273,16 @@ function ProductDetailsPage() {
         value: `${offers.length || 0}`,
       },
     ],
-    [breadcrumbTrail, combinations.length, offers.length, portions.length, product?.product_id, stockMeta.label]
+    [
+      breadcrumbTrail,
+      combinations.length,
+      offers.length,
+      portions.length,
+      product?.product_id,
+      product?.seller_business_name,
+      product?.seller_name,
+      stockMeta.label,
+    ]
   );
 
   const activeImage = images[activeImageIndex] || images[0] || null;
@@ -1456,6 +1473,12 @@ function ProductDetailsPage() {
                   <h3 className="mt-4 font-serif text-2xl text-gray-900 dark:text-slate-100">
                     {product.display_name || product.name}
                   </h3>
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-gray-600 dark:border-[#243440] dark:bg-[#151e22]/85 dark:text-slate-300">
+                    <Store className="h-3.5 w-3.5" />
+                    {product.seller_business_name || product.seller_name
+                      ? `Sold by ${product.seller_business_name || product.seller_name}`
+                      : "Sold by ShopSphere"}
+                  </div>
                   <p className="mt-2 max-w-3xl text-sm leading-7 text-gray-600 dark:text-slate-300">
                     {product.short_description || "A closer look at this product, its setup options, and purchase-ready information."}
                   </p>
