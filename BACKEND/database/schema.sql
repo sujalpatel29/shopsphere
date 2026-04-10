@@ -740,3 +740,120 @@ INSERT INTO `app_settings` (`setting_key`, `setting_value`, `setting_type`, `cat
 ('default_currency', 'INR', 'currency', 'store', 'Default currency', 1, 1),
 ('tax_rate', '18', 'number', 'store', 'Tax rate percentage', 1, 1)
 ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP;
+
+-- Marketplace compatibility updates
+ALTER TABLE `user_master`
+  MODIFY COLUMN `role` enum('customer','admin','seller') NOT NULL DEFAULT 'customer';
+
+ALTER TABLE `user_master`
+  ADD COLUMN `is_seller` tinyint(1) DEFAULT '0' AFTER `is_blocked`,
+  ADD COLUMN `seller_status` enum('pending','approved','rejected') DEFAULT NULL AFTER `is_seller`;
+
+ALTER TABLE `portion_master`
+  ADD UNIQUE KEY `uk_portion_value` (`portion_value`);
+
+ALTER TABLE `modifier_master`
+  ADD COLUMN `modifier_type` varchar(80) DEFAULT NULL AFTER `modifier_value`,
+  ADD UNIQUE KEY `uk_modifier_name_value` (`modifier_name`, `modifier_value`);
+
+ALTER TABLE `product_master`
+  ADD COLUMN `seller_id` int DEFAULT NULL AFTER `category_id`,
+  ADD KEY `idx_products_seller` (`seller_id`),
+  ADD CONSTRAINT `fk_products_seller`
+    FOREIGN KEY (`seller_id`) REFERENCES `user_master` (`user_id`) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS `seller_profiles` (
+  `seller_profile_id` int NOT NULL AUTO_INCREMENT,
+  `seller_id` int NOT NULL,
+  `business_name` varchar(150) NOT NULL,
+  `business_description` text DEFAULT NULL,
+  `business_address` text DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `gst_number` varchar(30) DEFAULT NULL,
+  `bank_account_number` varchar(50) DEFAULT NULL,
+  `bank_ifsc_code` varchar(20) DEFAULT NULL,
+  `bank_account_holder` varchar(120) DEFAULT NULL,
+  `verification_status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `verified_by` int DEFAULT NULL,
+  `verified_at` timestamp NULL DEFAULT NULL,
+  `is_deleted` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`seller_profile_id`),
+  UNIQUE KEY `uk_seller_profiles_seller` (`seller_id`),
+  KEY `idx_seller_profiles_status` (`verification_status`),
+  KEY `idx_seller_profiles_verified_by` (`verified_by`),
+  CONSTRAINT `fk_seller_profiles_seller` FOREIGN KEY (`seller_id`) REFERENCES `user_master` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_seller_profiles_verified_by` FOREIGN KEY (`verified_by`) REFERENCES `user_master` (`user_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS `modifier_combination` (
+  `combination_id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `product_portion_id` int DEFAULT NULL,
+  `name` varchar(150) NOT NULL,
+  `additional_price` decimal(10,2) DEFAULT '0.00',
+  `stock` int DEFAULT '0',
+  `is_active` tinyint(1) DEFAULT '1',
+  `is_deleted` tinyint(1) DEFAULT '0',
+  `created_by` int DEFAULT NULL,
+  `updated_by` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`combination_id`),
+  KEY `idx_modifier_combination_product` (`product_id`),
+  KEY `idx_modifier_combination_portion` (`product_portion_id`),
+  KEY `idx_modifier_combination_active` (`is_active`, `is_deleted`),
+  CONSTRAINT `fk_modifier_combination_product` FOREIGN KEY (`product_id`) REFERENCES `product_master` (`product_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_modifier_combination_portion` FOREIGN KEY (`product_portion_id`) REFERENCES `product_portion` (`product_portion_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_modifier_combination_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_master` (`user_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_modifier_combination_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `user_master` (`user_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS `modifier_combination_items` (
+  `combination_item_id` int NOT NULL AUTO_INCREMENT,
+  `combination_id` int NOT NULL,
+  `modifier_id` int NOT NULL,
+  PRIMARY KEY (`combination_item_id`),
+  UNIQUE KEY `uk_modifier_combination_item` (`combination_id`, `modifier_id`),
+  KEY `idx_modifier_combination_items_modifier` (`modifier_id`),
+  CONSTRAINT `fk_modifier_combination_items_combination` FOREIGN KEY (`combination_id`) REFERENCES `modifier_combination` (`combination_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_modifier_combination_items_modifier` FOREIGN KEY (`modifier_id`) REFERENCES `modifier_master` (`modifier_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS `order_item_modifiers` (
+  `order_item_modifier_id` int NOT NULL AUTO_INCREMENT,
+  `order_item_id` int NOT NULL,
+  `modifier_id` int DEFAULT NULL,
+  `modifier_name` varchar(100) NOT NULL,
+  `modifier_value` varchar(120) DEFAULT NULL,
+  `modifier_type` varchar(80) DEFAULT NULL,
+  `additional_price` decimal(10,2) DEFAULT '0.00',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`order_item_modifier_id`),
+  UNIQUE KEY `uk_order_item_modifier` (`order_item_id`, `modifier_id`, `modifier_name`, `modifier_value`),
+  KEY `idx_order_item_modifiers_modifier` (`modifier_id`),
+  CONSTRAINT `fk_order_item_modifiers_order_item` FOREIGN KEY (`order_item_id`) REFERENCES `order_items` (`order_item_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_order_item_modifiers_modifier` FOREIGN KEY (`modifier_id`) REFERENCES `modifier_master` (`modifier_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+ALTER TABLE `cart_items`
+  ADD COLUMN `combination_id` int DEFAULT NULL AFTER `modifier_id`,
+  ADD COLUMN `modifier_key` varchar(255) DEFAULT NULL AFTER `combination_id`,
+  ADD KEY `fk_cart_items_combination` (`combination_id`),
+  ADD CONSTRAINT `fk_cart_items_combination`
+    FOREIGN KEY (`combination_id`) REFERENCES `modifier_combination` (`combination_id`) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS `cart_item_modifiers` (
+  `cart_item_modifier_id` int NOT NULL AUTO_INCREMENT,
+  `cart_item_id` int NOT NULL,
+  `modifier_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`cart_item_modifier_id`),
+  UNIQUE KEY `uk_cart_item_modifier` (`cart_item_id`, `modifier_id`),
+  KEY `idx_cart_item_modifiers_modifier` (`modifier_id`),
+  CONSTRAINT `fk_cart_item_modifiers_cart_item`
+    FOREIGN KEY (`cart_item_id`) REFERENCES `cart_items` (`cart_item_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_cart_item_modifiers_modifier`
+    FOREIGN KEY (`modifier_id`) REFERENCES `modifier_master` (`modifier_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

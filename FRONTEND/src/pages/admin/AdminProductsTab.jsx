@@ -459,6 +459,7 @@ function AdminProductsTab() {
           onAddProduct={handleAddProduct}
           totalAll={totalAll}
           totalActive={totalActive}
+          helperText="Admin can create and fully manage platform-owned products. Seller-owned products are visible here for moderation, but only the seller can edit or delete their catalog details."
         />
 
         <AdminProductsTable
@@ -470,6 +471,7 @@ function AdminProductsTab() {
           onEdit={handleEditProduct}
           onDelete={handleDeleteClick}
           onToggleStatus={handleToggleStatus}
+          isAdminView
         />
       </div>
 

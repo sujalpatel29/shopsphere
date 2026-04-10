@@ -14,20 +14,21 @@ import {
   updateProductSchema,
 } from "../validations/product.validation.js";
 import { auth, adminOnly } from "../middlewares/auth.middleware.js";
+import { adminOrVerifiedSeller } from "../middlewares/seller.middleware.js";
 
 const router = express.Router();
 
 // Admin protected routes
-router.post("/", auth, adminOnly, validate(createProductSchema), createProduct);
-router.delete("/:id", auth, adminOnly, deleteProduct);
+router.post("/", auth, adminOrVerifiedSeller, validate(createProductSchema), createProduct);
+router.delete("/:id", auth, adminOrVerifiedSeller, deleteProduct);
 router.put(
   "/:id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validate(updateProductSchema),
   updateProduct,
 );
-router.patch("/:id/status", auth, adminOnly, updateProductStatus);
+router.patch("/:id/status", auth, adminOrVerifiedSeller, updateProductStatus);
 
 // Public routes
 router.get("/bestsellers", getBestSellers);

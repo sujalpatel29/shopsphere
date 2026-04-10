@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import AppLayout from "../components/layout/AppLayout";
 import AdminLayout from "../components/layout/AdminLayout";
+import SellerLayout from "../components/layout/SellerLayout";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
@@ -10,6 +11,10 @@ import DashboardPage from "../pages/customer/DashboardPage";
 import CartPage from "../pages/customer/CartPage";
 import ProductDetailsPage from "../pages/customer/ProductDetailsPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
+import SellerDashboardPage from "../pages/seller/SellerDashboardPage";
+import SellerProductsTab from "../pages/seller/SellerProductsTab";
+import SellerOrdersTab from "../pages/seller/SellerOrdersTab";
+import SellerProfileTab from "../pages/seller/SellerProfileTab";
 import CategoryPage from "../pages/customer/categoryPage";
 import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPage";
 import ItemsPage from "../pages/customer/ItemsPage";
@@ -38,6 +43,9 @@ function RedirectIfAdmin({ children }) {
   if (currentUser?.role === "admin") {
     return <Navigate to="/admin/dashboard" replace />;
   }
+  if (currentUser?.role === "seller") {
+    return <Navigate to="/seller/dashboard" replace />;
+  }
   return children ?? <Outlet />;
 }
 
@@ -49,6 +57,14 @@ function ProtectedRoute() {
 function AdminRoute() {
   const { currentUser } = useSelector((state) => state.auth);
   if (currentUser?.role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Outlet />;
+}
+
+function SellerRoute() {
+  const { currentUser } = useSelector((state) => state.auth);
+  if (currentUser?.role !== "seller") {
     return <Navigate to="/dashboard" replace />;
   }
   return <Outlet />;
@@ -89,7 +105,7 @@ function AppRoutes() {
           <Route path="/" element={<HomePage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/shop" element={<CategoryPage />} />
-          <Route path="/categories" element={<RedirectCategoriesToShop />} />
+          <Route path="/category" element={<RedirectCategoriesToShop />} />
           <Route path="/products" element={<HomePage />} />
 
           <Route path="/items/:id" element={<ItemsPage />} />
@@ -129,6 +145,16 @@ function AppRoutes() {
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          </Route>
+        </Route>
+
+        {/* Seller - full-screen, no Navbar/Footer */}
+        <Route element={<SellerRoute />}>
+          <Route element={<SellerLayout />}>
+            <Route path="/seller/dashboard" element={<SellerDashboardPage />} />
+            <Route path="/seller/products" element={<SellerProductsTab />} />
+            <Route path="/seller/orders" element={<SellerOrdersTab />} />
+            <Route path="/seller/profile" element={<SellerProfileTab />} />
           </Route>
         </Route>
       </Route>

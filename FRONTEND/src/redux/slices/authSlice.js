@@ -24,6 +24,7 @@ export const loginUser = createAsyncThunk(
 
       const mappedUser = {
         user_id: rawUser.user_id ?? rawUser.id ?? null,
+        name: rawUser.name ?? rawUser.full_name ?? rawUser.username ?? "",
         email: rawUser.email ?? email,
         role:
           rawUser.role ?? rawUser.role_name ?? rawUser.roleName ?? "customer",

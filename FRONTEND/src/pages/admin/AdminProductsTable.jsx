@@ -23,7 +23,7 @@ import { Button } from "primereact/button";
 import { InputSwitch } from "primereact/inputswitch";
 import { Dropdown } from "primereact/dropdown";
 import { Skeleton } from "primereact/skeleton";
-import { Pencil, Trash2, ImageOff } from "lucide-react";
+import { Lock, Pencil, ShieldCheck, Store, Trash2, ImageOff } from "lucide-react";
 import SmartImage from "../../components/common/SmartImage";
 import { getOptimizedImageProps } from "../../utils/image";
 
@@ -92,6 +92,7 @@ function AdminProductsTable({
   onEdit,
   onDelete,
   onToggleStatus,
+  isAdminView = false,
 }) {
   // Track selected portion per product (keyed by product_id → ppId)
   const [selectedPortions, setSelectedPortions] = useState({});
@@ -156,6 +157,30 @@ function AdminProductsTable({
       )}
     </div>
   );
+
+  const ownerBodyTemplate = (rowData) => {
+    const isSellerOwned = Boolean(rowData.seller_id);
+
+    return (
+      <div className="flex flex-col">
+        <div className="inline-flex items-center gap-2">
+          {isSellerOwned ? (
+            <Store className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+          ) : (
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+          )}
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {isSellerOwned
+              ? rowData.seller_business_name || rowData.seller_name || "Seller Store"
+              : "Platform Catalog"}
+          </span>
+        </div>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {isSellerOwned ? "Seller managed" : "Admin managed"}
+        </span>
+      </div>
+    );
+  };
 
   // Helper: find selected modifier object for a row
   const getSelectedModifier = (rowData, portions) => {
@@ -380,38 +405,57 @@ function AdminProductsTable({
       >
         {rowData.is_active ? "Active" : "Inactive"}
       </span>
+      {isAdminView && rowData.seller_id ? (
+        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+          Moderated
+        </span>
+      ) : null}
     </div>
   );
 
   // Action buttons
-  const actionBodyTemplate = (rowData) => (
-    <div className="flex gap-2">
-      <Button
-        type="button"
-        rounded
-        text
-        severity="info"
-        className="admin-action-btn h-9 w-9 p-0 flex items-center justify-center"
-        onClick={() => onEdit(rowData)}
-        tooltip="Edit product"
-        tooltipOptions={{ position: "top" }}
-      >
-        <Pencil className="h-4 w-4" />
-      </Button>
-      <Button
-        type="button"
-        rounded
-        text
-        severity="danger"
-        className="admin-action-btn h-9 w-9 p-0 flex items-center justify-center"
-        onClick={() => onDelete(rowData)}
-        tooltip="Delete product"
-        tooltipOptions={{ position: "top" }}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
-    </div>
-  );
+  const actionBodyTemplate = (rowData) => {
+    const sellerLocked = isAdminView && Boolean(rowData.seller_id);
+
+    return (
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          rounded
+          text
+          severity="info"
+          disabled={sellerLocked}
+          className="admin-action-btn h-9 w-9 p-0 flex items-center justify-center"
+          onClick={() => onEdit(rowData)}
+          tooltip={
+            sellerLocked
+              ? "Seller-owned product details are locked for admin"
+              : "Edit product"
+          }
+          tooltipOptions={{ position: "top" }}
+        >
+          {sellerLocked ? <Lock className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        </Button>
+        <Button
+          type="button"
+          rounded
+          text
+          severity="danger"
+          disabled={sellerLocked}
+          className="admin-action-btn h-9 w-9 p-0 flex items-center justify-center"
+          onClick={() => onDelete(rowData)}
+          tooltip={
+            sellerLocked
+              ? "Seller-owned products cannot be deleted by admin"
+              : "Delete product"
+          }
+          tooltipOptions={{ position: "top" }}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
 
   // Skeleton templates
   const skeletonImageTemplate = () => (
@@ -460,7 +504,8 @@ function AdminProductsTable({
   };
 
   return (
-    <div className="admin-products-table-wrapper flex-1 flex flex-col min-h-0">
+    <div className="admin-products-table-shell flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-stone-200/80 bg-white/80 p-2 shadow-[0_18px_45px_rgba(148,130,90,0.08)] backdrop-blur-sm dark:border-stone-800 dark:bg-[linear-gradient(180deg,rgba(25,31,34,0.94),rgba(17,22,25,0.96))] dark:shadow-[0_20px_55px_rgba(0,0,0,0.35)]">
+      <div className="admin-products-table-wrapper flex min-h-0 flex-1 flex-col">
       <DataTable
         value={loading ? skeletonData : tableData}
         lazy
@@ -500,6 +545,14 @@ function AdminProductsTable({
           body={loading ? skeletonTemplate : nameBodyTemplate}
           style={{ minWidth: "14rem" }}
         />
+        {isAdminView ? (
+          <Column
+            field="seller_business_name"
+            header="Owner"
+            body={loading ? skeletonTemplate : ownerBodyTemplate}
+            style={{ minWidth: "12rem" }}
+          />
+        ) : null}
         <Column
           field="category_name"
           header="Category"
@@ -546,6 +599,7 @@ function AdminProductsTable({
           style={{ minWidth: "7rem" }}
         />
       </DataTable>
+      </div>
     </div>
   );
 }

@@ -32,7 +32,15 @@ const statusOptions = [
  * @param {*} props.statusFilter - Current status filter value
  * @param {Function} props.onAddProduct - Callback when "New Product" button is clicked
  */
-function AdminProductsToolbar({ onSearch, onStatusFilter, statusFilter, onAddProduct, totalAll, totalActive }) {
+function AdminProductsToolbar({
+  onSearch,
+  onStatusFilter,
+  statusFilter,
+  onAddProduct,
+  totalAll,
+  totalActive,
+  helperText = "",
+}) {
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -61,65 +69,87 @@ function AdminProductsToolbar({ onSearch, onStatusFilter, statusFilter, onAddPro
   );
 
   return (
-    <div className="admin-products-toolbar flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-      {/* Left side: New Product button */}
-      <Button
-        type="button"
-        className="admin-btn-primary flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium shadow-md hover:shadow-lg transition-all"
-        onClick={onAddProduct}
-      >
-        <Plus className="h-4 w-4" />
-        <span>New Product</span>
-      </Button>
-
-      {/* Right side: Stats + Filters + Search */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {/* Stats badges */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Total</span>
-            <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{totalAll}</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40">
-            <span className="text-xs text-green-600 dark:text-green-400">Active</span>
-            <span className="text-xs font-bold text-green-700 dark:text-green-300">{totalActive}</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40">
-            <span className="text-xs text-red-500 dark:text-red-400">Inactive</span>
-            <span className="text-xs font-bold text-red-600 dark:text-red-300">{totalAll - totalActive}</span>
-          </div>
+    <div className="admin-products-toolbar mb-6 flex flex-col gap-4">
+      {helperText ? (
+        <div className="rounded-3xl border border-amber-200/80 bg-gradient-to-r from-amber-50 via-stone-50 to-emerald-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-amber-500/20 dark:bg-[linear-gradient(135deg,rgba(35,47,50,0.96),rgba(24,31,34,0.94))] dark:text-stone-200">
+          {helperText}
         </div>
+      ) : null}
 
-        {/* Status Filter */}
-        <Dropdown
-          value={statusFilter}
-          onChange={(e) => onStatusFilter(e.value)}
-          options={statusOptions}
-          placeholder="Filter by Status"
-          className="admin-filter-dropdown w-full sm:w-40"
-          pt={{
-            root: {
-              className: "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
-            },
-            input: {
-              className: "px-3 text-sm",
-            },
-            trigger: { className: "w-8" },
-            panel: {
-              className: "admin-dropdown-panel rounded-lg shadow-xl mt-1",
-            },
-          }}
-        />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Left side: New Product button */}
+        <Button
+          type="button"
+          className="admin-btn-primary flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-medium shadow-md transition-all hover:shadow-lg"
+          onClick={onAddProduct}
+        >
+          <Plus className="h-4 w-4" />
+          <span>New Product</span>
+        </Button>
 
-        {/* Search input */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <InputText
-            type="search"
-            onChange={handleSearchChange}
-            placeholder="Search products..."
-            className="admin-search-input w-full pl-10 border border-gray-200 dark:border-gray-700 rounded-xl h-10 text-sm transition-all outline-none"
+        {/* Right side: Stats + Filters + Search */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {/* Stats badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-2xl border border-stone-200/80 bg-white/90 px-3 py-2 shadow-sm dark:border-stone-700 dark:bg-stone-900/70">
+              <span className="block text-[11px] uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
+                Total
+              </span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-stone-100">
+                {totalAll}
+              </span>
+            </div>
+            <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/90 px-3 py-2 shadow-sm dark:border-emerald-800/40 dark:bg-emerald-950/40">
+              <span className="block text-[11px] uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">
+                Active
+              </span>
+              <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-200">
+                {totalActive}
+              </span>
+            </div>
+            <div className="rounded-2xl border border-rose-200/80 bg-rose-50/90 px-3 py-2 shadow-sm dark:border-rose-900/40 dark:bg-rose-950/40">
+              <span className="block text-[11px] uppercase tracking-[0.18em] text-rose-700 dark:text-rose-300">
+                Inactive
+              </span>
+              <span className="text-sm font-semibold text-rose-700 dark:text-rose-200">
+                {totalAll - totalActive}
+              </span>
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <Dropdown
+            value={statusFilter}
+            onChange={(e) => onStatusFilter(e.value)}
+            options={statusOptions}
+            placeholder="Filter by Status"
+            className="admin-filter-dropdown w-full sm:w-44"
+            pt={{
+              root: {
+                className:
+                  "admin-dropdown-root rounded-2xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
+              },
+              input: {
+                className: "px-3 text-sm",
+              },
+              trigger: { className: "w-8" },
+              panel: {
+                className:
+                  "admin-dropdown-panel rounded-2xl shadow-xl mt-1 border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900",
+              },
+            }}
           />
+
+          {/* Search input */}
+          <div className="relative w-full sm:w-72">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" />
+            <InputText
+              type="search"
+              onChange={handleSearchChange}
+              placeholder="Search products..."
+              className="admin-search-input h-10 w-full rounded-2xl border border-gray-200 pl-10 text-sm outline-none transition-all dark:border-gray-700"
+            />
+          </div>
         </div>
       </div>
     </div>
