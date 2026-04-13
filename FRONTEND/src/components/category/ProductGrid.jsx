@@ -48,80 +48,15 @@ function ProductGrid({
     return { original: o, discounted: d, percent };
   };
 
-  const getBasePriceForProduct = (product) => {
+  const resolveEffectivePricing = (product) => {
+    // Use pricing data already provided by the API (no additional API calls)
     const original = Number(product.price ?? 0);
     const discounted = Number(product.discounted_price ?? original);
-    return { original, discounted };
-  };
-
-  const resolveEffectivePricing = async (product) => {
-    const productId = product.product_id || product.id;
-    if (!productId) return null;
-
-    // 1) Portion: if exactly 1, its price becomes base
-    let portion = null;
-    try {
-      const portRes = await api.get(`/portion/getProductPortions/${productId}`);
-      const portions = extractList(portRes).filter((p) => p && !p.is_deleted);
-      if (portions.length === 1) {
-        portion = portions[0];
-      }
-    } catch {
-      portion = null;
-    }
-
-    const baseOriginal = portion
-      ? Number(portion.price ?? 0)
-      : getBasePriceForProduct(product).original;
-    const baseDiscounted = portion
-      ? Number(portion.discounted_price ?? baseOriginal)
-      : getBasePriceForProduct(product).discounted;
-
-    // 2) Modifier: if exactly 1, add additional_price to base
-    let modifierAdd = 0;
-    try {
-      if (portion?.product_portion_id) {
-        const comboRes = await api.get(
-          `/modifiers/combinations/by-portion/${portion.product_portion_id}`,
-        );
-        const combos = extractList(comboRes).filter((c) => c && !c.is_deleted);
-        if (combos.length === 1) {
-          modifierAdd = Number(combos[0].additional_price ?? 0);
-        } else {
-          const modRes = await api.get(
-            `/modifiers/by-portion/${portion.product_portion_id}`,
-          );
-          const mods = extractList(modRes).filter((m) => m && !m.is_deleted);
-          if (mods.length === 1) {
-            modifierAdd = Number(mods[0].additional_price ?? 0);
-          }
-        }
-      } else {
-        const comboRes = await api.get(
-          `/modifiers/combinations/by-product/${productId}`,
-        );
-        const combos = extractList(comboRes).filter((c) => c && !c.is_deleted);
-        if (combos.length === 1) {
-          modifierAdd = Number(combos[0].additional_price ?? 0);
-        } else {
-          const modRes = await api.get(`/modifiers/by-product/${productId}`);
-          const mods = extractList(modRes).filter((m) => m && !m.is_deleted);
-          if (mods.length === 1) {
-            modifierAdd = Number(mods[0].additional_price ?? 0);
-          }
-        }
-      }
-    } catch {
-      modifierAdd = 0;
-    }
-
-    const effectiveOriginal = baseOriginal + modifierAdd;
-    const effectiveDiscounted = baseDiscounted + modifierAdd;
 
     return {
-      original: effectiveOriginal,
-      discounted: effectiveDiscounted,
-      discount: computeDiscount(effectiveOriginal, effectiveDiscounted),
+      original,
+      discounted,
+      discount: computeDiscount(original, discounted),
     };
   };
 
@@ -191,49 +126,33 @@ function ProductGrid({
     if (isLoading) return;
     if (!products.length) return;
 
-    let active = true;
+    const pending = products.filter((p) => {
+      const id = p.product_id || p.id;
+      return id && !fetchedPricingRef.current.has(id);
+    });
 
-    const fetchPricing = async () => {
-      const pending = products.filter((p) => {
-        const id = p.product_id || p.id;
-        return id && !fetchedPricingRef.current.has(id);
-      });
-      if (!pending.length) return;
+    if (!pending.length) return;
 
+    pending.forEach((p) => {
+      const id = p.product_id || p.id;
+      if (id) fetchedPricingRef.current.add(id);
+    });
+
+    setEffectivePriceMap((prev) => {
+      const next = { ...prev };
       pending.forEach((p) => {
         const id = p.product_id || p.id;
-        if (id) fetchedPricingRef.current.add(id);
-      });
-
-      const results = await Promise.allSettled(
-        pending.map(async (p) => {
-          const id = p.product_id || p.id;
-          const pricing = await resolveEffectivePricing(p);
-          return { id, pricing };
-        }),
-      );
-
-      if (!active) return;
-
-      setEffectivePriceMap((prev) => {
-        const next = { ...prev };
-        results.forEach((r) => {
-          if (r.status !== "fulfilled") return;
-          const { id, pricing } = r.value || {};
-          if (!id || !pricing) return;
+        if (id) {
+          const pricing = resolveEffectivePricing(p);
           next[id] = pricing;
-        });
-        return next;
+        }
       });
-    };
-
-    fetchPricing();
-
-    return () => {
-      active = false;
-    };
+      return next;
+    });
   }, [products, isLoading]);
 
+
+  
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
@@ -321,13 +240,16 @@ function ProductGrid({
     <div className="category-product-grid space-y-6">
       <div className="category-product-grid-list grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
         {products.map((product) => {
-          const rawId = product?.product_id ?? product?.id ?? product?.productId;
+          const rawId =
+            product?.product_id ?? product?.id ?? product?.productId;
           const id = Number.parseInt(rawId, 10);
           const isRecentlyAdded = Boolean(
             recentlyAddedProductId && id === Number(recentlyAddedProductId),
           );
           const isAdding = Boolean(addingProductId && id === addingProductId);
-          const isError = Boolean(addErrorProductId && id === addErrorProductId);
+          const isError = Boolean(
+            addErrorProductId && id === addErrorProductId,
+          );
           const effective = id ? effectivePriceMap[id] : null;
           const discount = effective?.discount ?? getDiscountDetails(product);
 
@@ -383,82 +305,119 @@ function ProductGrid({
                     </h4>
 
                     {(() => {
-                      const effectiveOriginal = Number(
-                        effective?.original ?? product.price ?? 0,
-                      );
-                      const effectiveDiscounted = Number(
-                        effective?.discounted ??
-                          product.discounted_price ??
-                          effectiveOriginal,
-                      );
-
-                      if (!discount) {
-                        return (
-                          <p className="font-bold text-amber-600">
-                            {"\u20B9"}
-                            {effectiveDiscounted.toLocaleString("en-IN")}
-                          </p>
-                        );
-                      }
+                      const rating = getRatingDetails(product);
+                      const averageRating = Number(rating?.average_rating ?? 0);
+                      const totalRatings = Number(rating?.total_ratings ?? 0);
+                      const filledCount = Math.round(averageRating);
 
                       return (
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-amber-600">
-                            {"\u20B9"}
-                            {effectiveDiscounted.toLocaleString("en-IN")}
-                          </p>
-
-                          <p
-                            className={`text-xs line-through ${
-                              darkMode ? "text-[#94a6b1]" : "text-gray-400"
+                        <div className="mt-1 flex items-center gap-1 text-xs">
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <i
+                              key={index}
+                              className={`pi ${
+                                index < filledCount ? "pi-star-fill" : "pi-star"
+                              } text-yellow-400`}
+                            />
+                          ))}
+                          <span
+                            className={`ml-1 ${
+                              darkMode ? "text-[#9fb2bf]" : "text-gray-500"
                             }`}
                           >
-                            {"\u20B9"}
-                            {effectiveOriginal.toLocaleString("en-IN")}
-                          </p>
-
-                          <span className="text-xs font-semibold text-green-600">
-                            {discount.percent}% OFF
+                            ({totalRatings})
                           </span>
                         </div>
                       );
                     })()}
 
-                  <div className="mt-auto pt-2">
-                    <Button
-                      label={
-                        isAdding ? "Adding..." : isRecentlyAdded ? "Added" : "Add to Cart"
-                      }
-                      icon="pi pi-shopping-cart"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const id = Number.parseInt(
-                          product?.product_id ?? product?.id ?? product?.productId,
-                          10,
+                    {/* UPDATED PRICE SECTION (old logic preserved) */}
+                    <div className="mt-1 min-h-[32px]">
+                      {(() => {
+                        const effectiveOriginal = Number(
+                          effective?.original ?? product.price ?? 0,
                         );
-                        if (!id) return;
-                        if (onAddToCart) {
-                          try {
-                            window.dispatchEvent(
-                              new CustomEvent("shopsphere:addToCartClick", {
-                                detail: {
-                                  target: e.currentTarget,
-                                },
-                              }),
-                            );
-                          } catch {
-                            // ignore
-                          }
-                          onAddToCart(product);
-                        } else {
-                          navigate(`/items/${id}`);
+                        const effectiveDiscounted = Number(
+                          effective?.discounted ??
+                            product.discounted_price ??
+                            effectiveOriginal,
+                        );
+
+                        if (!discount) {
+                          return (
+                            <p className="font-bold text-amber-600">
+                              {"\u20B9"}
+                              {effectiveDiscounted.toLocaleString("en-IN")}
+                            </p>
+                          );
                         }
-                      }}
-                      disabled={isAdding}
-                      className={`outline-none !w-full !px-4 !py-2.5 !bg-transparent !border !border-[var(--primary-color)] !text-[var(--primary-color)] ${
-                        isRecentlyAdded ? "shopsphere-added-btn" : ""
-                      }`}
-                    />
+
+                        return (
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-amber-600">
+                              {"\u20B9"}
+                              {effectiveDiscounted.toLocaleString("en-IN")}
+                            </p>
+
+                            <p
+                              className={`text-xs line-through ${
+                                darkMode ? "text-[#94a6b1]" : "text-gray-400"
+                              }`}
+                            >
+                              {"\u20B9"}
+                              {effectiveOriginal.toLocaleString("en-IN")}
+                            </p>
+
+                            <span className="text-xs font-semibold text-green-600">
+                              {discount.percent}% OFF
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="mt-auto pt-2">
+                      <Button
+                        label={
+                          isAdding
+                            ? "Adding..."
+                            : isRecentlyAdded
+                              ? "Added"
+                              : "Add to Cart"
+                        }
+                        icon="pi pi-shopping-cart"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const id = Number.parseInt(
+                            product?.product_id ??
+                              product?.id ??
+                              product?.productId,
+                            10,
+                          );
+                          if (!id) return;
+                          if (onAddToCart) {
+                            try {
+                              window.dispatchEvent(
+                                new CustomEvent("shopsphere:addToCartClick", {
+                                  detail: {
+                                    target: e.currentTarget,
+                                  },
+                                }),
+                              );
+                            } catch {
+                              // ignore
+                            }
+                            onAddToCart(product);
+                          } else {
+                            navigate(`/items/${id}`);
+                          }
+                        }}
+                        disabled={isAdding}
+                        className={`outline-none !w-full !px-4 !py-2.5 !bg-transparent !border !border-[var(--primary-color)] !text-[var(--primary-color)] ${
+                          isRecentlyAdded ? "shopsphere-added-btn" : ""
+                        }`}
+                      />
+                    </div>
                   </div>
                 </div>
               </Card>
