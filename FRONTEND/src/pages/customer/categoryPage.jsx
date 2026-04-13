@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import { useTheme as useAppTheme } from "../../context/ThemeContext";
 import CategoryFilterSidebar from "../../components/category/CategoryFilterSidebar";
 import CategorySearchBar from "../../components/category/CategorySearchBar";
@@ -8,7 +8,6 @@ import SelectedFilters from "../../components/category/SelectedFilters";
 import ProductGrid from "../../components/category/ProductGrid";
 import PortionPickerModal from "../../components/category/PortionPickerModal";
 import {
-  getAllCategories,
   getAllProducts,
   getProductsByCategoryFilters,
   getCategoryProductsPriceRange,
@@ -34,15 +33,6 @@ const getAnyProductId = (product) =>
 const toPositiveInt = (value) => {
   const n = Number.parseInt(value, 10);
   return Number.isFinite(n) && n > 0 ? n : null;
-};
-
-const extractCategoryTree = (res) => {
-  const data = res?.data;
-  if (Array.isArray(data?.data?.items)) return data.data.items;
-  if (Array.isArray(data?.data)) return data.data;
-  if (data?.data?.item && typeof data.data.item === "object")
-    return [data.data.item];
-  return [];
 };
 
 const getSelectedCategoryIds = (selectedKeys = {}) =>
@@ -120,6 +110,11 @@ const useDebouncedValue = (value, delayMs = 300) => {
 function CategoryPage() {
   const navigate = useNavigate();
   const { darkMode } = useAppTheme();
+  const outletContext = useOutletContext() || {};
+  const sharedCategoryTree = outletContext.categoryTree || [];
+  const isSharedCategoryTreeLoading = Boolean(
+    outletContext.isCategoryTreeLoading,
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser } = useSelector((state) => state.auth);
   const [recentlyAddedId, setRecentlyAddedId] = useState(null);
@@ -142,8 +137,6 @@ function CategoryPage() {
   const [isTreeLoading, setIsTreeLoading] = useState(true);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [products, setProducts] = useState([]);
-  const [categoryTree, setCategoryTree] = useState([]);
-  const [treeLoaded, setTreeLoaded] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState({});
   const [priceRange, setPriceRange] = useState([0, 0]);
   const [searchText, setSearchText] = useState("");
@@ -156,8 +149,9 @@ function CategoryPage() {
   const productsRequestIdRef = useRef(0);
   const priceRangeRequestIdRef = useRef(0);
   const hasUserPriceSelectionRef = useRef(false);
-  const treeLoadedRef = useRef(false);
   const debouncedPriceRange = useDebouncedValue(priceRange, 300);
+  const categoryTree = sharedCategoryTree;
+  const treeLoaded = !isSharedCategoryTreeLoading;
   const urlSearch = searchParams.get("search") || "";
   const urlCategory = searchParams.get("category");
   const urlSortField = (searchParams.get("sortField") || "").trim();
@@ -170,8 +164,6 @@ function CategoryPage() {
       { label: "Newest", value: "created_at:desc" },
       { label: "Price: Low to High", value: "price:asc" },
       { label: "Price: High to Low", value: "price:desc" },
-      { label: "Name: A to Z", value: "name:asc" },
-      { label: "Name: Z to A", value: "name:desc" },
     ],
     [],
   );
@@ -199,36 +191,8 @@ function CategoryPage() {
   }, [sortField, sortOrder]);
 
   useEffect(() => {
-    // Prevent double execution in Strict Mode by setting flag FIRST, before any async
-    if (treeLoadedRef.current) return;
-    treeLoadedRef.current = true;
-
-    const loadInitialData = async () => {
-      // Double-check that we're still the first execution
-      if (treeLoadedRef.current !== true) return;
-
-      try {
-        setIsTreeLoading(true);
-        const categoryRes = await getAllCategories();
-        // Only update state if we're still the active call
-        if (treeLoadedRef.current === true) {
-          setCategoryTree(extractCategoryTree(categoryRes));
-        }
-      } catch (error) {
-        if (treeLoadedRef.current === true) {
-          console.error("Failed to load categories:", error);
-          setCategoryTree([]);
-        }
-      } finally {
-        if (treeLoadedRef.current === true) {
-          setIsTreeLoading(false);
-          setTreeLoaded(true);
-        }
-      }
-    };
-
-    loadInitialData();
-  }, []);
+    setIsTreeLoading(isSharedCategoryTreeLoading);
+  }, [isSharedCategoryTreeLoading]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

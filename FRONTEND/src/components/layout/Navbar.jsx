@@ -19,16 +19,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { useTheme } from "../../context/ThemeContext";
 import api from "../../../api/api";
-import { getAllCategories } from "../../services/categoryApi";
 
-const extractCategoryTree = (response) => {
-  const data = response?.data;
-  if (Array.isArray(data?.data?.items)) return data.data.items;
-  if (Array.isArray(data?.data)) return data.data;
-  return [];
-};
+const normalizeCategoryName = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
 
-function Navbar() {
+function Navbar({ categoryTree = [] }) {
   const { darkMode, toggleDarkMode } = useTheme();
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.auth);
@@ -39,7 +36,6 @@ function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [categoryTree, setCategoryTree] = useState([]);
 
   const fetchCartCount = useCallback(async () => {
     if (!currentUser) {
@@ -65,32 +61,21 @@ function Navbar() {
     return () => window.removeEventListener("cart:updated", fetchCartCount);
   }, [fetchCartCount]);
 
-  useEffect(() => {
-    let active = true;
-
-    const loadCategories = async () => {
-      try {
-        const response = await getAllCategories();
-        if (!active) return;
-        setCategoryTree(extractCategoryTree(response));
-      } catch {
-        if (!active) return;
-        setCategoryTree([]);
-      }
-    };
-
-    loadCategories();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
   const parentCategories = useMemo(() => categoryTree, [categoryTree]);
   const childMap = useMemo(() => {
     const map = new Map();
     categoryTree.forEach((category) => {
       map.set(category.category_id, category.children || []);
+    });
+    return map;
+  }, [categoryTree]);
+
+  const topCategoryLinkMap = useMemo(() => {
+    const map = new Map();
+    categoryTree.forEach((category) => {
+      const normalizedName = normalizeCategoryName(category?.category_name);
+      if (!normalizedName || !category?.category_id) return;
+      map.set(normalizedName, `/shop?category=${category.category_id}`);
     });
     return map;
   }, [categoryTree]);
@@ -103,14 +88,20 @@ function Navbar() {
         href: "/shop?sortField=price&sortOrder=asc",
       },
       { label: "New Releases", href: "/#new-releases" },
-      { label: "Electronics", href: "/shop?search=electronics" },
-      { label: "Fashion", href: "/shop?search=fashion" },
+      {
+        label: "Electronics",
+        href: topCategoryLinkMap.get("electronics") || "/shop?search=electronics",
+      },
+      {
+        label: "Fashion",
+        href: topCategoryLinkMap.get("fashion") || "/shop?search=fashion",
+      },
       {
         label: "Customer Service",
         href: currentUser ? `${dashboardPath}?tab=support` : "/login",
       },
     ],
-    [currentUser, dashboardPath],
+    [currentUser, dashboardPath, topCategoryLinkMap],
   );
 
   const menuSections = useMemo(
