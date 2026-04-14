@@ -41,6 +41,7 @@ import {
   ChevronDown,
   PanelLeftClose,
   PanelLeft,
+  Store,
 } from "lucide-react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
@@ -50,6 +51,7 @@ import "./AdminDashboard.css";
 
 const adminNav = [
   { key: "users", label: "Users", icon: Users },
+  { key: "sellers", label: "Sellers", icon: Store },
   {
     key: "products",
     label: "Products",
@@ -73,6 +75,7 @@ const AdminCategoriesTab = lazy(() => import("./AdminCategoriesTab"));
 const AdminPortionsTab = lazy(() => import("./AdminPortionsTab"));
 const AdminModifiersTab = lazy(() => import("./AdminModifiersTab"));
 const AdminUsersTab = lazy(() => import("./AdminUsersTab"));
+const AdminSellersTab = lazy(() => import("./AdminSellersTab"));
 const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
 const AdminReportsTab = lazy(() => import("./AdminReportsTab"));
 const AdminReviewsTab = lazy(() => import("./AdminReviewsTab"));
@@ -384,6 +387,8 @@ function AdminDashboardPage() {
                 <AdminModifiersTab />
               ) : activeTab === "users" ? (
                 <AdminUsersTab />
+              ) : activeTab === "sellers" ? (
+                <AdminSellersTab />
               ) : activeTab === "orders" ? (
                 <AdminOrdersTab />
               ) : activeTab === "reviews" ? (

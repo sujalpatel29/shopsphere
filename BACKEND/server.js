@@ -16,6 +16,7 @@ import productRoutes from "./routes/product.route.js";
 import productImageRoutes from "./routes/productImage.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import settingsRoutes from "./routes/settings.route.js";
+import sellerRoutes from "./routes/seller.route.js";
 
 import salesPredictionRoutes from "./routes/admin/salesPrediction.routes.js";
 import { auth, adminOnly } from "./middlewares/auth.middleware.js";
@@ -98,6 +99,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/productImages", productImageRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/sellers", sellerRoutes);
 
 //sales prediction route for admin
 app.use("/api/admin/sales", auth, adminOnly, salesPredictionRoutes);

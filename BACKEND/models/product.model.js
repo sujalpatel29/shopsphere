@@ -6,8 +6,8 @@ const Product = {
     const sql = `
       INSERT INTO product_master
       (name, display_name, description, short_description,
-       price, discounted_price, stock, category_id, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       price, discounted_price, stock, category_id, seller_id, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     return conn.execute(sql, [
@@ -19,6 +19,7 @@ const Product = {
       data.discounted_price,
       data.stock ?? 0,
       data.category_id ?? null,
+      data.seller_id ?? null,
       data.created_by,
     ]);
   },
@@ -88,21 +89,49 @@ const Product = {
   // find all product with filtering
   findAll: async (filters = {}, pagination = {}, conn = db) => {
     // Unfiltered stats — always reflect entire catalog
-    const [statsRows] = await conn.execute(`
-      SELECT
-        COUNT(*) AS totalAll,
-        SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS totalActive
-      FROM product_master
-      WHERE is_deleted = 0
-    `);
-    const { totalAll, totalActive } = statsRows[0];
-
     const conditions = ["p.is_deleted = 0", "(p.category_id IS NULL OR c.category_id IS NOT NULL)"];
     const values = [];
+
+    const ratingJoinClause =
+      pagination.sort === "rating_high_low"
+        ? `
+      LEFT JOIN (
+        SELECT product_id, ROUND(AVG(rating), 2) AS avg_rating
+        FROM product_reviews
+        WHERE is_deleted = 0
+        GROUP BY product_id
+      ) pr ON pr.product_id = p.product_id
+    `
+        : "";
+
+    const ratingSelectClause =
+      pagination.sort === "rating_high_low"
+        ? ", COALESCE(pr.avg_rating, 0) AS avg_rating"
+        : "";
+
+    const imageJoinClause = `
+      LEFT JOIN (
+        SELECT pi1.product_id, pi1.image_url
+        FROM product_images pi1
+        INNER JOIN (
+          SELECT
+            product_id,
+            MAX(CASE WHEN is_primary = 1 THEN image_id END) AS primary_id,
+            MAX(image_id) AS latest_id
+          FROM product_images
+          WHERE is_deleted = 0
+          GROUP BY product_id
+        ) pick
+          ON pick.product_id = pi1.product_id
+         AND pi1.image_id = COALESCE(pick.primary_id, pick.latest_id)
+      ) pi ON pi.product_id = p.product_id
+    `;
 
     let baseSql = `
       FROM product_master p
       LEFT JOIN category_master c ON p.category_id = c.category_id AND c.is_deleted = 0
+      LEFT JOIN seller_profiles sp ON sp.seller_id = p.seller_id
+      LEFT JOIN user_master su ON su.user_id = p.seller_id
       LEFT JOIN (
         SELECT pp.product_id,
                COUNT(*) AS portion_count,
@@ -161,6 +190,8 @@ const Product = {
         ) combined_mods
         GROUP BY product_id
       ) mc ON p.product_id = mc.product_id
+      ${ratingJoinClause}
+      ${imageJoinClause}
     `;
 
     // category filtering
@@ -221,7 +252,23 @@ const Product = {
       values.push(filters.is_active);
     }
 
+    if (filters.seller_id) {
+      conditions.push("p.seller_id = ?");
+      values.push(filters.seller_id);
+    }
+
     const whereClause = `WHERE ${conditions.join(" AND ")}`; //ORDER BY p.created_at DESC
+
+    const statsSql = `
+      SELECT
+        COUNT(DISTINCT p.product_id) AS totalAll,
+        COALESCE(SUM(CASE WHEN p.is_active = 1 THEN 1 ELSE 0 END), 0) AS totalActive
+      ${baseSql}
+      ${whereClause}
+    `;
+
+    const [statsRows] = await conn.execute(statsSql, values);
+    const { totalAll = 0, totalActive = 0 } = statsRows[0] || {};
 
     const countSql = `
       SELECT COUNT(DISTINCT p.product_id) as total
@@ -248,13 +295,24 @@ const Product = {
     };
 
     let orderClause = "ORDER BY p.product_id ASC";
-    if (pagination.sortField && sortableColumns[pagination.sortField]) {
+    if (pagination.sort) {
+      const priceExpr = "CAST(COALESCE(p.discounted_price, p.price) AS DECIMAL(12,2))";
+      if (pagination.sort === "price_low_high") {
+        orderClause = `ORDER BY ${priceExpr} ASC, p.product_id DESC`;
+      } else if (pagination.sort === "price_high_low") {
+        orderClause = `ORDER BY ${priceExpr} DESC, p.product_id DESC`;
+      } else if (pagination.sort === "rating_high_low") {
+        orderClause = "ORDER BY COALESCE(pr.avg_rating, 0) DESC, p.product_id DESC";
+      }
+    } else if (pagination.sortField && sortableColumns[pagination.sortField]) {
       const dir = pagination.sortOrder === "desc" ? "DESC" : "ASC";
       orderClause = `ORDER BY ${sortableColumns[pagination.sortField]} ${dir}`;
     }
 
     const dataSql = `
       SELECT DISTINCT p.*, c.category_name,
+             sp.business_name AS seller_business_name,
+             su.name AS seller_name,
              COALESCE(ptc.portion_count, 0) AS portion_count,
              ptc.portion_values,
              ptc.portion_details,
@@ -282,6 +340,8 @@ const Product = {
     return db.execute(
       `
       SELECT p.*,
+             sp.business_name AS seller_business_name,
+             su.name AS seller_name,
              (SELECT pi.image_url FROM product_images pi
               WHERE pi.product_id = p.product_id
                 AND pi.image_level = 'PRODUCT'
@@ -289,6 +349,8 @@ const Product = {
               ORDER BY pi.is_primary DESC, pi.image_id DESC
               LIMIT 1) AS image_url
       FROM product_master p
+      LEFT JOIN seller_profiles sp ON sp.seller_id = p.seller_id
+      LEFT JOIN user_master su ON su.user_id = p.seller_id
       WHERE p.product_id = ? AND p.is_deleted = 0
     `,
       [id],
@@ -328,6 +390,20 @@ const Product = {
     `;
 
     return conn.execute(sql, [is_active, updatedBy, id]);
+  },
+
+  findSellerProductById: async (productId, sellerId, conn = db) => {
+    const [rows] = await conn.execute(
+      `
+        SELECT product_id
+        FROM product_master
+        WHERE product_id = ? AND seller_id = ? AND is_deleted = 0
+        LIMIT 1
+      `,
+      [productId, sellerId],
+    );
+
+    return rows[0] || null;
   },
 };
 export default Product;

@@ -5,11 +5,32 @@ import {
   created,
   badRequest,
   notFound,
+  forbidden,
   serverError,
 } from "../utils/apiResponse.js";
+import { getAuthenticatedUserId } from "../middlewares/seller.middleware.js";
+
+const isSellerRequest = (req) => req.user?.role === "seller";
+const isAdminRequest = (req) => req.user?.role === "admin";
+
+const ensureSellerOwnsProduct = async (req, productId) => {
+  if (!isSellerRequest(req)) {
+    return true;
+  }
+
+  const sellerId = getAuthenticatedUserId(req);
+  const product = await Product.findSellerProductById(productId, sellerId);
+  return Boolean(product);
+};
+
+const findProductOrNull = async (productId) => {
+  const [rows] = await Product.findById(productId);
+  return rows[0] || null;
+};
 
 export const createProduct = async (req, res) => {
   const conn = await db.getConnection();
+  const userId = getAuthenticatedUserId(req);
 
   try {
     await conn.beginTransaction();
@@ -32,7 +53,8 @@ export const createProduct = async (req, res) => {
     const [result] = await Product.create(
       {
         ...req.body,
-        created_by: req.user.id,
+        seller_id: isSellerRequest(req) ? userId : null,
+        created_by: userId,
       },
       conn,
     );
@@ -51,7 +73,7 @@ export const createProduct = async (req, res) => {
       await Product.insertProductCategories(
         productId,
         categoryIds,
-        req.user.id,
+        userId,
         conn,
       );
     }
@@ -73,8 +95,25 @@ export const createProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = getAuthenticatedUserId(req);
 
-    const [result] = await Product.softDelete(id, req.user.id);
+    const existingProduct = await findProductOrNull(id);
+    if (!existingProduct) {
+      return notFound(res, "Product not found");
+    }
+
+    if (isAdminRequest(req) && existingProduct.seller_id) {
+      return forbidden(
+        res,
+        "Admin cannot delete seller-owned products. Use moderation controls instead.",
+      );
+    }
+
+    if (!(await ensureSellerOwnsProduct(req, id))) {
+      return notFound(res, "Product not found");
+    }
+
+    const [result] = await Product.softDelete(id, userId);
 
     if (result.affectedRows === 0) {
       return notFound(res, "Product not found or already deleted");
@@ -100,7 +139,12 @@ export const getAllProducts = async (req, res) => {
         req.query.is_active !== undefined
           ? Number(req.query.is_active)
           : undefined,
+      seller_id: req.query.seller_id ? Number(req.query.seller_id) : undefined,
     };
+
+    if (isSellerRequest(req)) {
+      filters.seller_id = getAuthenticatedUserId(req);
+    }
 
     // Pagination parsing
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -110,10 +154,11 @@ export const getAllProducts = async (req, res) => {
     // Sorting
     const sortField = req.query.sortField || null;
     const sortOrder = req.query.sortOrder || "asc";
+    const sort = req.query.sort || null;
 
     const { total, data, totalAll, totalActive } = await Product.findAll(
       filters,
-      { limit, offset, sortField, sortOrder },
+      { limit, offset, sortField, sortOrder, sort }
     );
 
     return res.status(200).json({
@@ -156,6 +201,24 @@ export const getProductById = async (req, res) => {
 // Update Product
 export const updateProduct = async (req, res) => {
   try {
+    const userId = getAuthenticatedUserId(req);
+
+    const existingProduct = await findProductOrNull(req.params.id);
+    if (!existingProduct) {
+      return notFound(res, "Product not found");
+    }
+
+    if (isAdminRequest(req) && existingProduct.seller_id) {
+      return forbidden(
+        res,
+        "Admin cannot edit seller-owned product details. Seller controls catalog content.",
+      );
+    }
+
+    if (!(await ensureSellerOwnsProduct(req, req.params.id))) {
+      return notFound(res, "Product not found");
+    }
+
     // Fetch existing product to detect category change
     const [existingRows] = await Product.findById(req.params.id);
 
@@ -163,16 +226,16 @@ export const updateProduct = async (req, res) => {
       return notFound(res, "Product not found");
     }
 
-    const existingProduct = existingRows[0];
+    const existingRowProduct = existingRows[0];
 
     // If category_id not provided or unchanged, do a simple update
     if (
       !Object.prototype.hasOwnProperty.call(req.body, "category_id") ||
-      Number(req.body.category_id) === Number(existingProduct.category_id)
+      Number(req.body.category_id) === Number(existingRowProduct.category_id)
     ) {
       const [result] = await Product.update(req.params.id, {
         ...req.body,
-        updated_by: req.user.id,
+        updated_by: userId,
       });
 
       if (!result || result.affectedRows === 0) {
@@ -205,7 +268,7 @@ export const updateProduct = async (req, res) => {
         req.params.id,
         {
           ...req.body,
-          updated_by: req.user.id,
+          updated_by: userId,
         },
         conn,
       );
@@ -228,7 +291,7 @@ export const updateProduct = async (req, res) => {
       await Product.insertProductCategories(
         req.params.id,
         categoryIds,
-        req.user.id,
+        userId,
         conn,
       );
 
@@ -250,10 +313,16 @@ export const updateProduct = async (req, res) => {
 
 export const updateProductStatus = async (req, res) => {
   try {
+    const userId = getAuthenticatedUserId(req);
+
+    if (!(await ensureSellerOwnsProduct(req, req.params.id))) {
+      return notFound(res, "Product not found");
+    }
+
     const [result] = await Product.updateStatus(
       req.params.id,
       req.body.is_active,
-      req.user.id,
+      userId,
     );
     if (result.affectedRows === 0) {
       return notFound(res, "Product not found or already deleted");

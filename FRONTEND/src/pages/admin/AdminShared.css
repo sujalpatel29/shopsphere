@@ -49,6 +49,31 @@
   padding: 0;
 }
 
+.admin-products-table-shell {
+  position: relative;
+}
+
+.admin-products-table-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0)
+  );
+}
+
+.dark .admin-products-table-shell::before {
+  background: linear-gradient(
+    135deg,
+    rgba(201, 184, 138, 0.08),
+    rgba(201, 184, 138, 0)
+  );
+}
+
 /* ===== Layout: card matches sidebar, scrollable table, paginator pinned ===== */
 .admin-products-table.p-datatable {
   display: flex;
@@ -71,6 +96,7 @@
 
 .admin-products-table .p-datatable-wrapper {
   background: transparent !important;
+  border-radius: 1.25rem;
 }
 
 .admin-products-table .p-datatable-table {
@@ -162,7 +188,7 @@
 .admin-products-table .p-paginator {
   background: transparent !important;
   border: none !important;
-  padding: 0.5rem 0;
+  padding: 0.9rem 0 0.4rem;
   justify-content: center;
 }
 
@@ -323,6 +349,7 @@
 .dark .admin-filter-dropdown .admin-dropdown-root {
   background-color: rgba(201, 184, 138, 0.03) !important;
   border-color: rgba(201, 184, 138, 0.15) !important;
+  color: #e5e7eb !important;
 }
 
 /* ===== Action Button Styles ===== */
