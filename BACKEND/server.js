@@ -17,6 +17,10 @@ import productImageRoutes from "./routes/productImage.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import settingsRoutes from "./routes/settings.route.js";
 
+import salesPredictionRoutes from "./routes/admin/salesPrediction.routes.js";
+import { auth, adminOnly } from "./middlewares/auth.middleware.js";
+
+
 // Load environment variables
 dotenv.config();
 
@@ -94,6 +98,10 @@ app.use("/api/products", productRoutes);
 app.use("/api/productImages", productImageRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/settings", settingsRoutes);
+
+//sales prediction route for admin
+app.use("/api/admin/sales", auth, adminOnly, salesPredictionRoutes);
+
 
 // ============================================================================
 // ERROR HANDLING

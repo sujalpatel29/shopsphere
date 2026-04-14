@@ -6,3 +6,4 @@ BACKEND/seeders/db_schema_commented.sql
 .vscode
 dist/
 BACKEND/seeders/seed.js
+prediction_service/.env
