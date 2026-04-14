@@ -31,6 +31,7 @@ import {
   BarChart3,
   CreditCard,
   Gift,
+  LineChart,
   LogOut,
   Moon,
   Package,
@@ -66,6 +67,7 @@ const adminNav = [
   { key: "offers", label: "Offers", icon: Gift },
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "reports", label: "Reports", icon: BarChart3 },
+  { key: "sales-prediction", label: "Sales Prediction", icon: LineChart },
 ];
 
 const AdminProductsTab = lazy(() => import("./AdminProductsTab"));
@@ -78,6 +80,7 @@ const AdminOrdersTab = lazy(() => import("./AdminOrdersTab"));
 const AdminReportsTab = lazy(() => import("./AdminReportsTab"));
 const AdminReviewsTab = lazy(() => import("./AdminReviewsTab"));
 const AdminOffersTab = lazy(() => import("./AdminOffersTab"));
+const AdminSalesPredictionTab = lazy(() => import("./AdminSalesPredictionTab"));
 
 // Collect all valid tab keys for hash validation
 const validTabKeys = new Set(
@@ -394,6 +397,8 @@ function AdminDashboardPage() {
                 <AdminOffersTab />
               ) : activeTab === "reports" ? (
                 <AdminReportsTab />
+              ) : activeTab === "sales-prediction" ? (
+                <AdminSalesPredictionTab />
               ) : (
                 <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-500 dark:text-gray-400">
