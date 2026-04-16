@@ -81,7 +81,11 @@ export default function OrderConfirmationCODComponent() {
     }
 
     if (!selectedAddress) {
-      showToast("warn", "Address Required", "Please select a delivery address.");
+      showToast(
+        "warn",
+        "Address Required",
+        "Please select a delivery address.",
+      );
       navigate("/checkout/address");
       return;
     }
@@ -178,7 +182,7 @@ export default function OrderConfirmationCODComponent() {
               </p>
             </div>
             <div className="order-flow-card-muted flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
                 <Wallet className="h-5 w-5" />
               </span>
               <div>
@@ -245,11 +249,14 @@ export default function OrderConfirmationCODComponent() {
           <OrderSummaryComponent
             title="Final Amount"
             orderData={{
-              total_amount: cartSummary?.subtotal ?? orderSummery?.total_price ?? 0,
+              total_amount:
+                cartSummary?.subtotal ?? orderSummery?.total_price ?? 0,
               tax_amount: cartSummary?.tax ?? orderSummery?.tax ?? 0,
-              discount_amount: cartSummary?.discount ?? orderSummery?.discount ?? 0,
+              discount_amount:
+                cartSummary?.discount ?? orderSummery?.discount ?? 0,
               shipping_amount: 0,
-              final_amount: cartSummary?.total ?? orderSummery?.final_amount ?? 0,
+              final_amount:
+                cartSummary?.total ?? orderSummery?.final_amount ?? 0,
             }}
           />
         </div>
@@ -279,17 +286,17 @@ export default function OrderConfirmationCODComponent() {
             {cartItems.map((item) => (
               <div
                 key={item.cartItemId}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-amber-200/70 bg-amber-50/40 p-4 dark:border-[#1f2933] dark:bg-[#10171b]"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-[#DDD8CF]/70 bg-[#F6F3EE]/40 p-4 dark:border-[#1f2933] dark:bg-[#10171b]"
               >
                 <div className="flex min-w-0 items-center gap-4">
                   {item.image_url ? (
                     <img
                       src={item.image_url}
                       alt={item.productName || "Product"}
-                      className="h-16 w-16 rounded-2xl border border-amber-200/70 object-cover dark:border-[#1f2933]"
+                      className="h-16 w-16 rounded-2xl border border-[#DDD8CF]/70 object-cover dark:border-[#1f2933]"
                     />
                   ) : (
-                    <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                    <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
                       <ClipboardList className="h-6 w-6" />
                     </span>
                   )}

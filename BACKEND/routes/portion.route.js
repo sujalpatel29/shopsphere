@@ -7,7 +7,7 @@ import {
   updatePortionController,
   deletePortionController,
   toggleActivePortionController,
-//   this is for product_portion
+  //   this is for product_portion
   createProductPortionController,
   getProductPortionsController,
   getProductPortionByIdController,
@@ -28,7 +28,8 @@ import {
   validateBody,
   validateParams,
 } from "../validations/portion.validator.js";
-import {auth, adminOnly} from '../middlewares/auth.middleware.js'; // Uncomment when you have auth
+import { auth, adminOnly } from "../middlewares/auth.middleware.js";
+import { adminOrVerifiedSeller } from "../middlewares/seller.middleware.js";
 
 const portionRouter = express.Router();
 
@@ -38,69 +39,74 @@ const portionRouter = express.Router();
 portionRouter.post(
   "/createPortion",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateBody(portionCreateSchema),
   createPortionController.createPortion,
-); 
+);
 
 // Retrieve all portions
-portionRouter.get("/getAllPortion",  auth,
-  adminOnly, getAllPortionController); 
+portionRouter.get(
+  "/getAllPortion",
+  auth,
+  adminOrVerifiedSeller,
+  getAllPortionController,
+);
 
 // Get portion by ID
 portionRouter.get(
   "/getPortionById/:portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   getPortionByIdController,
-); 
+);
 
 // Update portion details
 portionRouter.put(
   "/updatePortion/:portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   validateBody(portionUpdateSchema),
   updatePortionController,
-); 
+);
 
 //  Toggle portion active status
 portionRouter.patch(
   "/toggleActivePortion/:portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   toggleActivePortionController,
-); 
+);
 
 // Soft delete portion
 portionRouter.delete(
   "/deletePortion/:portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   deletePortionController,
-); 
-
-
+);
 
 // Product-Portion Association Routes
-
 
 // Create product portion
 portionRouter.post(
   "/createProductPortion",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateBody(productPortionCreateSchema),
   createProductPortionController,
 );
 
 // Get all product portions (admin)
-portionRouter.get("/getAllProductPortions", auth,
-  adminOnly, getAllProductPortionsController);
+portionRouter.get(
+  "/getAllProductPortions",
+  auth,
+  adminOrVerifiedSeller,
+  getAllProductPortionsController,
+);
 
 // Get all portions of a specific product
 portionRouter.get(
@@ -120,7 +126,7 @@ portionRouter.get(
 portionRouter.put(
   "/updateProductPortion/:product_portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(productPortionIdParamSchema),
   validateBody(productPortionUpdateSchema),
   updateProductPortionController,
@@ -130,7 +136,7 @@ portionRouter.put(
 portionRouter.patch(
   "/toggleActiveProductPortion/:product_portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(productPortionIdParamSchema),
   toggleActiveProductPortionController,
 );
@@ -139,7 +145,7 @@ portionRouter.patch(
 portionRouter.delete(
   "/deleteProductPortion/:product_portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(productPortionIdParamSchema),
   deleteProductPortionController,
 );

@@ -50,14 +50,16 @@ function SellerSidebar({
               ShopSphere
             </span>
           </div>
-          <p className="font-serif text-xs font-medium tracking-[0.2em] text-[#c9b88a]">
+          <p className="font-serif text-xs font-medium tracking-[0.2em] text-[#1A9E8E]">
             SELLER STUDIO
           </p>
           <h1
             className="mt-2 w-full truncate text-lg font-medium tracking-tight text-white/85"
             title={currentUser?.email}
           >
-            {sellerProfile?.business_name || currentUser?.name || currentUser?.email}
+            {sellerProfile?.business_name ||
+              currentUser?.name ||
+              currentUser?.email}
           </h1>
           <p className="mt-1 text-xs text-white/60">{currentUser?.email}</p>
           <div className="mt-4 inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium capitalize text-[#f7edcf]">
@@ -80,8 +82,8 @@ function SellerSidebar({
               onClick={() => navigate(item.to)}
               className={`!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none ${
                 isActive
-                  ? "!bg-amber-600 !text-white !shadow-lg !shadow-amber-600/20"
-                  : "!bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"
+                  ? "!bg-[#1A9E8E] !text-white !shadow-lg !shadow-[#1A9E8E]/20"
+                  : "!bg-transparent !text-gray-700 hover:!bg-[#e6f7f5] hover:!text-[#117a6e] dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-[#26c9b4]"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -95,9 +97,13 @@ function SellerSidebar({
         <Button
           type="button"
           onClick={toggleDarkMode}
-          className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"
+          className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-gray-700 hover:!bg-[#e6f7f5] hover:!text-[#117a6e] dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-[#26c9b4]"
         >
-          {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {darkMode ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
           {darkMode ? "Light Mode" : "Dark Mode"}
         </Button>
         <Button
@@ -125,7 +131,9 @@ function SellerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const currentView = useMemo(() => {
-    return sellerNav.find((item) => item.to === location.pathname)?.label || "Seller";
+    return (
+      sellerNav.find((item) => item.to === location.pathname)?.label || "Seller"
+    );
   }, [location.pathname]);
 
   const loadSellerProfile = useCallback(async () => {
@@ -163,7 +171,7 @@ function SellerLayout() {
       ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
       : verificationStatus === "rejected"
         ? "border-red-200 bg-red-50 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300"
-        : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300";
+        : "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-500/20 dark:bg-yellow-500/10 dark:text-yellow-300";
 
   return (
     <div
@@ -171,10 +179,15 @@ function SellerLayout() {
         darkMode ? "bg-[#0b1114] text-slate-200" : "bg-gray-50 text-gray-900"
       }`}
     >
-      <ScrollPanel className="app-scrollpanel flex-1" style={{ width: "100%", height: "100%" }}>
+      <ScrollPanel
+        className="app-scrollpanel flex-1"
+        style={{ width: "100%", height: "100%" }}
+      >
         <main className="mx-auto w-full max-w-[1600px] px-4 py-8 md:px-8 lg:px-12">
           {sellerProfile && (
-            <div className={`mb-6 rounded-2xl border px-4 py-3 text-sm ${bannerTone}`}>
+            <div
+              className={`mb-6 rounded-2xl border px-4 py-3 text-sm ${bannerTone}`}
+            >
               {verificationStatus === "approved"
                 ? "Your seller account is approved and live. You can manage your catalog and review incoming orders."
                 : verificationStatus === "rejected"
@@ -210,7 +223,10 @@ function SellerLayout() {
                 className="h-full overflow-hidden rounded-2xl border border-gray-100 bg-white px-6 pb-1 pt-6 shadow-sm dark:border-[#1f2933] dark:bg-[#151e22]"
                 pt={{
                   body: { className: "p-0 h-full flex flex-col" },
-                  content: { className: "p-0 flex-1 flex flex-col min-h-0 overflow-y-auto" },
+                  content: {
+                    className:
+                      "p-0 flex-1 flex flex-col min-h-0 overflow-y-auto",
+                  },
                 }}
               >
                 <div className="mb-4 flex items-center gap-3">
@@ -241,7 +257,8 @@ function SellerLayout() {
                       {currentView}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
-                      Manage your store operations, orders, and business details.
+                      Manage your store operations, orders, and business
+                      details.
                     </p>
                   </div>
                 </div>
@@ -252,7 +269,12 @@ function SellerLayout() {
                     <Skeleton height="18rem" />
                   </div>
                 ) : (
-                  <Outlet context={{ sellerProfile, reloadSellerProfile: loadSellerProfile }} />
+                  <Outlet
+                    context={{
+                      sellerProfile,
+                      reloadSellerProfile: loadSellerProfile,
+                    }}
+                  />
                 )}
               </Card>
             </section>

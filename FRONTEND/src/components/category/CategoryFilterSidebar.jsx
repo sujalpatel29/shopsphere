@@ -129,7 +129,7 @@
 //   min={0}
 //   max={priceRange[1]}
 //   className="w-full"
-//   inputClassName="!w-full !rounded-lg !px-2 !py-1.5 !text-sm !border !border-gray-300 focus:!border-amber-500 focus:!ring-0"
+//   inputClassName="!w-full !rounded-lg !px-2 !py-1.5 !text-sm !border !border-gray-300 focus:!border-[#1A9E8E] focus:!ring-0"
 // />
 
 //               <span className="text-sm font-medium">-</span>
@@ -145,7 +145,7 @@
 //                 min={priceRange[0]}
 //                 max={10000}
 //                 className="w-full"
-//                 inputClassName="!w-full !rounded-lg !px-2 !py-1.5 !text-sm !border !border-gray-300 focus:!border-amber-500 focus:!ring-0"
+//                 inputClassName="!w-full !rounded-lg !px-2 !py-1.5 !text-sm !border !border-gray-300 focus:!border-[#1A9E8E] focus:!ring-0"
 //                 placeholder="Max"
 //               />
 //             </div>
@@ -180,7 +180,7 @@ function CategoryFilterSidebar({
 
   const rangeMax = Math.max(minPrice, maxPrice);
 
-  const mapTreeForPrime = (nodes = [],depth = 0) =>
+  const mapTreeForPrime = (nodes = [], depth = 0) =>
     nodes.map((n) => ({
       key: String(n.category_id),
       label: n.category_name,
@@ -305,7 +305,7 @@ function CategoryFilterSidebar({
                 inputClassName={`!w-full !rounded-lg !px-2 !py-1.5 !text-sm !border focus:!ring-0 ${
                   darkMode
                     ? "!bg-[#0f161a] !border-[#223038] !text-slate-100 placeholder:!text-slate-500 focus:!border-[#2f7a6f]"
-                    : "!bg-white !border-gray-300 !text-gray-800 placeholder:!text-gray-400 focus:!border-amber-500"
+                    : "!bg-white !border-gray-300 !text-gray-800 placeholder:!text-gray-400 focus:!border-[#1A9E8E]"
                 }`}
               />
 
@@ -331,7 +331,7 @@ function CategoryFilterSidebar({
                 inputClassName={`!w-full !rounded-lg !px-2 !py-1.5 !text-sm !border focus:!ring-0 ${
                   darkMode
                     ? "!bg-[#0f161a] !border-[#223038] !text-slate-100 placeholder:!text-slate-500 focus:!border-[#2f7a6f]"
-                    : "!bg-white !border-gray-300 !text-gray-800 placeholder:!text-gray-400 focus:!border-amber-500"
+                    : "!bg-white !border-gray-300 !text-gray-800 placeholder:!text-gray-400 focus:!border-[#1A9E8E]"
                 }`}
                 placeholder="Max"
               />

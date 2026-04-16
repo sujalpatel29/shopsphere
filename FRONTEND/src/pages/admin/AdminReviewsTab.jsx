@@ -18,7 +18,7 @@ function StarRating({ rating }) {
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          className={`h-3.5 w-3.5 ${i < rating ? "fill-amber-400 text-amber-400" : "text-gray-300 dark:text-gray-600"}`}
+          className={`h-3.5 w-3.5 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600"}`}
         />
       ))}
       <span className="ml-1 text-xs font-semibold text-gray-600 dark:text-slate-400">
@@ -55,7 +55,7 @@ function Pagination({ page, totalPages, onPage }) {
       <button
         onClick={() => onPage(page - 1)}
         disabled={page <= 1}
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 disabled:cursor-not-allowed disabled:opacity-40 hover:border-amber-400 hover:text-amber-600 dark:border-[#1f2933] dark:text-slate-400 dark:hover:border-amber-500 dark:hover:text-amber-400"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[#1A9E8E] hover:text-[#1A9E8E] dark:border-[#1f2933] dark:text-slate-400 dark:hover:border-[#26c9b4] dark:hover:text-[#26c9b4]"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -65,7 +65,7 @@ function Pagination({ page, totalPages, onPage }) {
       <button
         onClick={() => onPage(page + 1)}
         disabled={page >= totalPages}
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 disabled:cursor-not-allowed disabled:opacity-40 hover:border-amber-400 hover:text-amber-600 dark:border-[#1f2933] dark:text-slate-400 dark:hover:border-amber-500 dark:hover:text-amber-400"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[#1A9E8E] hover:text-[#1A9E8E] dark:border-[#1f2933] dark:text-slate-400 dark:hover:border-[#26c9b4] dark:hover:text-[#26c9b4]"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -190,7 +190,7 @@ function AdminReviewsTab() {
     if (sortField !== field)
       return <span className="ml-1 text-gray-300 dark:text-gray-600">↕</span>;
     return (
-      <span className="ml-1 text-amber-500">
+      <span className="ml-1 text-[#1A9E8E]">
         {sortOrder === "desc" ? "↓" : "↑"}
       </span>
     );
@@ -210,7 +210,7 @@ function AdminReviewsTab() {
             placeholder="Search product or reviewer…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-800 outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 dark:border-[#1f2933] dark:bg-[#151e22] dark:text-slate-200 dark:placeholder-slate-500 dark:focus:border-amber-500"
+            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-800 outline-none transition focus:border-[#1A9E8E] focus:ring-1 focus:ring-[#1A9E8E]/30 dark:border-[#1f2933] dark:bg-[#151e22] dark:text-slate-200 dark:placeholder-slate-500 dark:focus:border-[#26c9b4]"
           />
         </div>
 
@@ -218,7 +218,7 @@ function AdminReviewsTab() {
         <select
           value={ratingFilter}
           onChange={(e) => setRatingFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 dark:border-[#1f2933] dark:bg-[#151e22] dark:text-slate-200"
+          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#1A9E8E] focus:ring-1 focus:ring-[#1A9E8E]/30 dark:border-[#1f2933] dark:bg-[#151e22] dark:text-slate-200"
         >
           <option value="">All Ratings</option>
           {[5, 4, 3, 2, 1].map((r) => (
@@ -232,7 +232,7 @@ function AdminReviewsTab() {
         <select
           value={limit}
           onChange={(e) => setLimit(Number(e.target.value))}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 dark:border-[#1f2933] dark:bg-[#151e22] dark:text-slate-200"
+          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#1A9E8E] focus:ring-1 focus:ring-[#1A9E8E]/30 dark:border-[#1f2933] dark:bg-[#151e22] dark:text-slate-200"
         >
           {ROWS_OPTIONS.map((n) => (
             <option key={n} value={n}>
@@ -258,7 +258,7 @@ function AdminReviewsTab() {
                 Reviewer
               </th>
               <th
-                className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400"
+                className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-[#1A9E8E] dark:text-slate-400 dark:hover:text-[#26c9b4]"
                 onClick={() => toggleSort("rating")}
               >
                 Rating <SortIcon field="rating" />
@@ -267,13 +267,13 @@ function AdminReviewsTab() {
                 Review
               </th>
               <th
-                className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400"
+                className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-[#1A9E8E] dark:text-slate-400 dark:hover:text-[#26c9b4]"
                 onClick={() => toggleSort("helpful_count")}
               >
                 Helpful <SortIcon field="helpful_count" />
               </th>
               <th
-                className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400"
+                className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-[#1A9E8E] dark:text-slate-400 dark:hover:text-[#26c9b4]"
                 onClick={() => toggleSort("created_at")}
               >
                 Date <SortIcon field="created_at" />
@@ -302,7 +302,7 @@ function AdminReviewsTab() {
               {reviews.map((review) => (
                 <tr
                   key={review.review_id}
-                  className="border-b border-gray-50 transition hover:bg-amber-50/40 dark:border-[#1a2430] dark:hover:bg-amber-500/5 last:border-0"
+                  className="border-b border-gray-50 transition hover:bg-[#e6f7f5]/40 dark:border-[#1a2430] dark:hover:bg-[#1A9E8E]/5 last:border-0"
                 >
                   {/* Product */}
                   <td className="max-w-[180px] px-4 py-3">

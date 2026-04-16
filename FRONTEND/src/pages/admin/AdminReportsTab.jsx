@@ -59,7 +59,16 @@ const CHART_COLORS = {
   warning: "#f59e0b",
   danger: "#ef4444",
   info: "#3b82f6",
-  palette: ["#d97706", "#0d9488", "#8b5cf6", "#22c55e", "#f59e0b", "#ef4444", "#3b82f6", "#ec4899"],
+  palette: [
+    "#d97706",
+    "#0d9488",
+    "#8b5cf6",
+    "#22c55e",
+    "#f59e0b",
+    "#ef4444",
+    "#3b82f6",
+    "#ec4899",
+  ],
 };
 
 // Time period options
@@ -139,12 +148,12 @@ function AdminReportsTab() {
 
     // Create CSV content
     let csvContent = "data:text/csv;charset=utf-8,";
-    
+
     // Overview section
     csvContent += "ANALYTICS REPORT\n";
     csvContent += `Export Date:,${exportData.exportDate}\n`;
     csvContent += `Period:,${exportData.period}\n\n`;
-    
+
     csvContent += "OVERVIEW STATISTICS\n";
     csvContent += "Metric,Value\n";
     csvContent += `Total Revenue,${formatCurrency(exportData.overview.totalRevenue)}\n`;
@@ -159,7 +168,7 @@ function AdminReportsTab() {
     if (exportData.topProducts.length > 0) {
       csvContent += "TOP SELLING PRODUCTS\n";
       csvContent += "Product Name,Units Sold,Revenue\n";
-      exportData.topProducts.forEach(p => {
+      exportData.topProducts.forEach((p) => {
         csvContent += `"${p.display_name || p.name}",${p.total_sold},${p.total_revenue}\n`;
       });
       csvContent += "\n";
@@ -169,7 +178,7 @@ function AdminReportsTab() {
     if (exportData.categorySales.length > 0) {
       csvContent += "CATEGORY SALES\n";
       csvContent += "Category,Items Sold,Revenue\n";
-      exportData.categorySales.forEach(c => {
+      exportData.categorySales.forEach((c) => {
         csvContent += `"${c.category_name}",${c.items_sold},${c.revenue}\n`;
       });
       csvContent += "\n";
@@ -179,7 +188,7 @@ function AdminReportsTab() {
     if (exportData.orderStatus.length > 0) {
       csvContent += "ORDER STATUS DISTRIBUTION\n";
       csvContent += "Status,Count\n";
-      exportData.orderStatus.forEach(s => {
+      exportData.orderStatus.forEach((s) => {
         csvContent += `${s.order_status},${s.count}\n`;
       });
       csvContent += "\n";
@@ -189,7 +198,7 @@ function AdminReportsTab() {
     if (exportData.recentOrders.length > 0) {
       csvContent += "RECENT ORDERS\n";
       csvContent += "Order Number,Customer,Amount,Status,Date\n";
-      exportData.recentOrders.forEach(o => {
+      exportData.recentOrders.forEach((o) => {
         csvContent += `${o.order_number},"${o.customer_name}",${o.total_amount},${o.order_status},${new Date(o.created_at).toLocaleDateString()}\n`;
       });
     }
@@ -198,7 +207,10 @@ function AdminReportsTab() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `analytics_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      "download",
+      `analytics_report_${new Date().toISOString().split("T")[0]}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -278,13 +290,25 @@ function AdminReportsTab() {
   };
 
   // Stats card component
-  const StatCard = ({ title, value, icon: Icon, trend, trendValue, color = "primary" }) => {
+  const StatCard = ({
+    title,
+    value,
+    icon: Icon,
+    trend,
+    trendValue,
+    color = "primary",
+  }) => {
     const colorClasses = {
-      primary: "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400",
-      secondary: "bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400",
-      tertiary: "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
-      success: "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400",
-      warning: "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400",
+      primary:
+        "bg-[#e6f7f5] text-[#1A9E8E] dark:bg-[#1A9E8E]/20 dark:text-[#26c9b4]",
+      secondary:
+        "bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400",
+      tertiary:
+        "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
+      success:
+        "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400",
+      warning:
+        "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400",
       danger: "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400",
     };
 
@@ -292,22 +316,30 @@ function AdminReportsTab() {
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 truncate">{title}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 truncate">
+              {title}
+            </p>
             <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
-              {typeof value === "number" && title.toLowerCase().includes("revenue")
+              {typeof value === "number" &&
+              title.toLowerCase().includes("revenue")
                 ? formatCurrency(value)
                 : formatNumber(value)}
             </p>
             {trendValue !== undefined && (
               <div className="mt-2 flex items-center gap-1">
                 {getTrendIcon(trend)}
-                <span className={`text-xs font-semibold ${trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-gray-500"}`}>
-                  {trend > 0 ? "+" : ""}{formatPercent(trendValue)}
+                <span
+                  className={`text-xs font-semibold ${trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-gray-500"}`}
+                >
+                  {trend > 0 ? "+" : ""}
+                  {formatPercent(trendValue)}
                 </span>
               </div>
             )}
           </div>
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${colorClasses[color]}`}>
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${colorClasses[color]}`}
+          >
             <Icon className="h-5 w-5" />
           </div>
         </div>
@@ -316,15 +348,24 @@ function AdminReportsTab() {
   };
 
   // Mini stat card for secondary stats
-  const MiniStatCard = ({ title, value, icon: Icon, valueColor = "text-gray-900" }) => (
+  const MiniStatCard = ({
+    title,
+    value,
+    icon: Icon,
+    valueColor = "text-gray-900",
+  }) => (
     <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
           <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{title}</p>
-          <p className={`text-lg font-bold ${valueColor}`}>{formatNumber(value)}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            {title}
+          </p>
+          <p className={`text-lg font-bold ${valueColor}`}>
+            {formatNumber(value)}
+          </p>
         </div>
       </div>
     </div>
@@ -332,14 +373,18 @@ function AdminReportsTab() {
 
   // Simple bar chart component (CSS-based)
   const SimpleBarChart = ({ data, valueKey, labelKey, height = 200 }) => {
-    if (!data || data.length === 0) return <div className="text-center text-gray-400 py-8">No data available</div>;
+    if (!data || data.length === 0)
+      return (
+        <div className="text-center text-gray-400 py-8">No data available</div>
+      );
 
     const maxValue = Math.max(...data.map((d) => d[valueKey] || 0));
 
     return (
       <div className="space-y-2" style={{ height }}>
         {data.map((item, index) => {
-          const percentage = maxValue > 0 ? ((item[valueKey] || 0) / maxValue) * 100 : 0;
+          const percentage =
+            maxValue > 0 ? ((item[valueKey] || 0) / maxValue) * 100 : 0;
           return (
             <div key={index} className="flex items-center gap-3">
               <div className="w-24 text-xs text-gray-600 dark:text-gray-400 truncate">
@@ -350,7 +395,8 @@ function AdminReportsTab() {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${percentage}%`,
-                    backgroundColor: CHART_COLORS.palette[index % CHART_COLORS.palette.length],
+                    backgroundColor:
+                      CHART_COLORS.palette[index % CHART_COLORS.palette.length],
                   }}
                 />
               </div>
@@ -368,7 +414,10 @@ function AdminReportsTab() {
 
   // Simple pie chart component (CSS-based)
   const SimplePieChart = ({ data, valueKey, labelKey }) => {
-    if (!data || data.length === 0) return <div className="text-center text-gray-400 py-8">No data available</div>;
+    if (!data || data.length === 0)
+      return (
+        <div className="text-center text-gray-400 py-8">No data available</div>
+      );
 
     const total = data.reduce((sum, item) => sum + (item[valueKey] || 0), 0);
 
@@ -377,9 +426,11 @@ function AdminReportsTab() {
         <div className="relative w-40 h-40">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
             {data.map((item, index) => {
-              const percentage = total > 0 ? ((item[valueKey] || 0) / total) * 100 : 0;
+              const percentage =
+                total > 0 ? ((item[valueKey] || 0) / total) * 100 : 0;
               const offset = data.slice(0, index).reduce((sum, d) => {
-                const prevPercentage = total > 0 ? ((d[valueKey] || 0) / total) * 100 : 0;
+                const prevPercentage =
+                  total > 0 ? ((d[valueKey] || 0) / total) * 100 : 0;
                 return sum + (prevPercentage / 100) * 360;
               }, 0);
               const strokeDasharray = `${percentage * 3.6} 1000`;
@@ -393,7 +444,9 @@ function AdminReportsTab() {
                   r="40"
                   fill="none"
                   strokeWidth="20"
-                  stroke={CHART_COLORS.palette[index % CHART_COLORS.palette.length]}
+                  stroke={
+                    CHART_COLORS.palette[index % CHART_COLORS.palette.length]
+                  }
                   strokeDasharray={strokeDasharray}
                   strokeDashoffset={strokeDashoffset}
                   className="transition-all duration-500"
@@ -403,7 +456,9 @@ function AdminReportsTab() {
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatNumber(total)}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {formatNumber(total)}
+              </p>
               <p className="text-xs text-gray-500">Total</p>
             </div>
           </div>
@@ -413,10 +468,17 @@ function AdminReportsTab() {
             <div key={index} className="flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: CHART_COLORS.palette[index % CHART_COLORS.palette.length] }}
+                style={{
+                  backgroundColor:
+                    CHART_COLORS.palette[index % CHART_COLORS.palette.length],
+                }}
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300 flex-1">{item[labelKey]}</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">{formatNumber(item[valueKey])}</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300 flex-1">
+                {item[labelKey]}
+              </span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                {formatNumber(item[valueKey])}
+              </span>
             </div>
           ))}
         </div>
@@ -464,11 +526,12 @@ function AdminReportsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <BarChart3 className="w-7 h-7 text-amber-600" />
+            <BarChart3 className="w-7 h-7 text-[#1A9E8E]" />
             Analytics & Reports
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Live business insights and performance metrics for {reportWindowLabel.toLowerCase()}
+            Live business insights and performance metrics for{" "}
+            {reportWindowLabel.toLowerCase()}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:justify-end">
@@ -489,7 +552,11 @@ function AdminReportsTab() {
             }}
           />
           <Button
-            icon={<RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />}
+            icon={
+              <RefreshCw
+                className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+              />
+            }
             label="Refresh"
             onClick={handleRefresh}
             className="!bg-teal-600 !border-teal-600 hover:!bg-teal-700 !text-white !rounded-xl !px-4 !py-2"
@@ -503,7 +570,7 @@ function AdminReportsTab() {
             icon={<Download className="w-4 h-4" />}
             label="Export"
             onClick={handleExport}
-            className="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 !text-white !rounded-xl !px-4 !py-2"
+            className="!bg-[#1A9E8E] !border-[#1A9E8E] hover:!bg-[#168c7e] !text-white !rounded-xl !px-4 !py-2"
             pt={{
               icon: { className: "!mr-2" },
               label: { className: "!text-sm !font-semibold" },
@@ -542,11 +609,36 @@ function AdminReportsTab() {
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <MiniStatCard title="Pending Orders" value={overview?.pending_orders} icon={Clock} valueColor="text-amber-600" />
-        <MiniStatCard title="Delivered" value={overview?.delivered_orders} icon={CheckCircle} valueColor="text-green-600" />
-        <MiniStatCard title="Active Offers" value={overview?.active_offers} icon={Gift} valueColor="text-purple-600" />
-        <MiniStatCard title="Total Users" value={overview?.total_users} icon={Users} valueColor="text-blue-600" />
-        <MiniStatCard title="Categories" value={overview?.total_categories} icon={Boxes} valueColor="text-teal-600" />
+        <MiniStatCard
+          title="Pending Orders"
+          value={overview?.pending_orders}
+          icon={Clock}
+          valueColor="text-[#1A9E8E]"
+        />
+        <MiniStatCard
+          title="Delivered"
+          value={overview?.delivered_orders}
+          icon={CheckCircle}
+          valueColor="text-green-600"
+        />
+        <MiniStatCard
+          title="Active Offers"
+          value={overview?.active_offers}
+          icon={Gift}
+          valueColor="text-purple-600"
+        />
+        <MiniStatCard
+          title="Total Users"
+          value={overview?.total_users}
+          icon={Users}
+          valueColor="text-blue-600"
+        />
+        <MiniStatCard
+          title="Categories"
+          value={overview?.total_categories}
+          icon={Boxes}
+          valueColor="text-teal-600"
+        />
       </div>
 
       {/* Charts Row */}
@@ -555,7 +647,7 @@ function AdminReportsTab() {
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-amber-600" />
+              <TrendingUp className="w-5 h-5 text-[#1A9E8E]" />
               Revenue Trend
             </h3>
           </div>
@@ -631,7 +723,7 @@ function AdminReportsTab() {
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <Package className="w-5 h-5 text-amber-600" />
+              <Package className="w-5 h-5 text-[#1A9E8E]" />
               Top Selling Products
             </h3>
           </div>
@@ -686,7 +778,9 @@ function AdminReportsTab() {
                 header="Order"
                 className="!text-sm"
                 body={(rowData) => (
-                  <span className="font-mono text-amber-600">{rowData.order_number}</span>
+                  <span className="font-mono text-[#1A9E8E]">
+                    {rowData.order_number}
+                  </span>
                 )}
               />
               <Column
@@ -733,7 +827,9 @@ function AdminReportsTab() {
                       <p className="font-medium text-gray-900 dark:text-white">
                         {product.display_name || product.name}
                       </p>
-                      <p className="text-xs text-gray-500">ID: {product.product_id}</p>
+                      <p className="text-xs text-gray-500">
+                        ID: {product.product_id}
+                      </p>
                     </div>
                     <Tag
                       value={`${product.stock} left`}
@@ -769,12 +865,20 @@ function AdminReportsTab() {
                     className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/10 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{offer.offer_name}</p>
-                      <p className="text-xs text-gray-500">{offer.offer_type}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {offer.offer_name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {offer.offer_type}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-purple-600">{formatNumber(offer.total_usage)} uses</p>
-                      <p className="text-xs text-gray-500">{formatCurrency(offer.total_discount_given)} saved</p>
+                      <p className="font-bold text-purple-600">
+                        {formatNumber(offer.total_usage)} uses
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatCurrency(offer.total_discount_given)} saved
+                      </p>
                     </div>
                   </div>
                 ))}

@@ -9,7 +9,10 @@ import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Toast } from "primereact/toast";
 import api from "../../../../../api/api";
-import { applyToBeSeller, getMySellerProfile } from "../../../../../api/sellerApi";
+import {
+  applyToBeSeller,
+  getMySellerProfile,
+} from "../../../../../api/sellerApi";
 import EditProfileForm from "./EditProfileForm";
 
 const extractData = (response) => response?.data?.data ?? null;
@@ -30,9 +33,7 @@ const extractErrorMessage = (error, fallback) => {
 
   const errors = responseData?.errors;
   if (Array.isArray(errors) && errors.length > 0) {
-    return errors
-      .map((entry) => entry?.message || "Invalid value")
-      .join(" | ");
+    return errors.map((entry) => entry?.message || "Invalid value").join(" | ");
   }
 
   return error?.message || fallback;
@@ -94,8 +95,13 @@ const validateSellerForm = (form) => {
     }
   }
 
-  if (form.bank_account_holder && form.bank_account_holder.length > 0 && form.bank_account_holder.length < 2) {
-    errors.bank_account_holder = "Account holder name must be at least 2 characters";
+  if (
+    form.bank_account_holder &&
+    form.bank_account_holder.length > 0 &&
+    form.bank_account_holder.length < 2
+  ) {
+    errors.bank_account_holder =
+      "Account holder name must be at least 2 characters";
   }
 
   return errors;
@@ -108,7 +114,7 @@ function ProfileInfoTile({ icon, label, value }) {
         <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
           {label}
         </p>
-        <i className={`${icon} text-sm text-amber-600 dark:text-amber-300`} />
+        <i className={`${icon} text-sm text-[#1A9E8E] dark:text-[#26c9b4]`} />
       </div>
       <p className="mt-2 break-all text-sm font-semibold text-slate-800 dark:text-slate-200">
         {value}
@@ -216,7 +222,9 @@ function UserProfilePage({ currentUser, showToast }) {
 
       try {
         const response = await api.put("/users/update", payload);
-        setInfoMessage(extractMessage(response, "Profile updated successfully."));
+        setInfoMessage(
+          extractMessage(response, "Profile updated successfully."),
+        );
         await loadProfile();
       } catch (error) {
         setErrorMessage(
@@ -247,14 +255,14 @@ function UserProfilePage({ currentUser, showToast }) {
     try {
       setApplying(true);
       await applyToBeSeller(sellerForm);
-      
+
       toast.current.show({
         severity: "success",
         summary: "Success",
         detail: "Application submitted! Wait for admin approval.",
         life: 3000,
       });
-      
+
       setApplyDialogVisible(false);
       setSellerStatus("pending");
       setSellerForm({
@@ -286,7 +294,10 @@ function UserProfilePage({ currentUser, showToast }) {
     return (
       <Card className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_34px_-28px_rgba(15,23,42,0.8)] dark:border-[#1f2933] dark:bg-[#151e22]">
         <div className="flex items-center gap-3">
-          <ProgressSpinner style={{ width: "24px", height: "24px" }} strokeWidth="4" />
+          <ProgressSpinner
+            style={{ width: "24px", height: "24px" }}
+            strokeWidth="4"
+          />
           <p className="text-sm text-gray-600 dark:text-slate-300">
             Loading profile details...
           </p>
@@ -305,14 +316,20 @@ function UserProfilePage({ currentUser, showToast }) {
             <Avatar
               shape="circle"
               size="xlarge"
-              className="!bg-[#c9b88a]/15 !text-[#c9b88a]"
+              className="!bg-[#1A9E8E]/15 !text-[#1A9E8E]"
             >
               {(profileSummary.name || "U").charAt(0).toUpperCase()}
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="text-xs tracking-[0.18em] text-[#c9b88a]">ACCOUNT PROFILE</p>
-              <h2 className="truncate font-serif text-xl text-white sm:text-2xl">{profileSummary.name}</h2>
-              <p className="truncate text-sm text-slate-100/90">{profileSummary.email}</p>
+              <p className="text-xs tracking-[0.18em] text-[#1A9E8E]">
+                ACCOUNT PROFILE
+              </p>
+              <h2 className="truncate font-serif text-xl text-white sm:text-2xl">
+                {profileSummary.name}
+              </h2>
+              <p className="truncate text-sm text-slate-100/90">
+                {profileSummary.email}
+              </p>
             </div>
             <Chip
               label={profileSummary.role}
@@ -323,9 +340,21 @@ function UserProfilePage({ currentUser, showToast }) {
 
         <div className="p-5 sm:p-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <ProfileInfoTile icon="pi pi-user" label="Name" value={profileSummary.name} />
-            <ProfileInfoTile icon="pi pi-envelope" label="Email" value={profileSummary.email} />
-            <ProfileInfoTile icon="pi pi-id-card" label="Role" value={profileSummary.role} />
+            <ProfileInfoTile
+              icon="pi pi-user"
+              label="Name"
+              value={profileSummary.name}
+            />
+            <ProfileInfoTile
+              icon="pi pi-envelope"
+              label="Email"
+              value={profileSummary.email}
+            />
+            <ProfileInfoTile
+              icon="pi pi-id-card"
+              label="Role"
+              value={profileSummary.role}
+            />
             <ProfileInfoTile
               icon="pi pi-clock"
               label="Last Login"
@@ -336,13 +365,13 @@ function UserProfilePage({ currentUser, showToast }) {
       </Card>
 
       {!isSeller && !sellerStatus && (
-        <Card className="rounded-2xl border border-amber-200/80 bg-amber-50/80 p-6 shadow-[0_18px_34px_-28px_rgba(15,23,42,0.8)] dark:border-amber-700/50 dark:bg-amber-900/20">
+        <Card className="rounded-2xl border border-[#1A9E8E]/30 bg-[#e6f7f5]/80 p-6 shadow-[0_18px_34px_-28px_rgba(15,23,42,0.8)] dark:border-[#1A9E8E]/50 dark:bg-[#1A9E8E]/10">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div>
-              <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200">
+              <h3 className="text-lg font-semibold text-[#117a6e] dark:text-[#4dd3c2]">
                 Become a Seller
               </h3>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
+              <p className="text-sm text-[#1A9E8E] dark:text-[#26c9b4]">
                 Start selling your products on our platform
               </p>
             </div>
@@ -350,7 +379,7 @@ function UserProfilePage({ currentUser, showToast }) {
               label="Apply Now"
               icon="pi pi-store"
               onClick={() => setApplyDialogVisible(true)}
-              className="!bg-amber-600 !border-amber-600 hover:!bg-amber-700"
+              className="!bg-[#1A9E8E] !border-[#1A9E8E] hover:!bg-[#168c7e]"
             />
           </div>
         </Card>
@@ -359,24 +388,35 @@ function UserProfilePage({ currentUser, showToast }) {
       {sellerStatus && !isSeller && (
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_34px_-28px_rgba(15,23,42,0.8)] dark:border-[#1f2933] dark:bg-[#151e22]">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-              <i className="pi pi-clock text-amber-600 dark:text-amber-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e6f7f5] dark:bg-[#1A9E8E]/20">
+              <i className="pi pi-clock text-[#1A9E8E] dark:text-[#26c9b4]" />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-slate-800 dark:text-slate-200">
-                Seller Application {sellerStatus === "approved" ? "Approved" : sellerStatus === "rejected" ? "Rejected" : "Pending"}
+                Seller Application{" "}
+                {sellerStatus === "approved"
+                  ? "Approved"
+                  : sellerStatus === "rejected"
+                    ? "Rejected"
+                    : "Pending"}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {sellerStatus === "approved" 
+                {sellerStatus === "approved"
                   ? "Your application has been approved! You can now access the seller dashboard."
                   : sellerStatus === "rejected"
-                  ? "Your application was rejected. Please contact support for more information."
-                  : "Your application is being reviewed. You'll be notified once approved."}
+                    ? "Your application was rejected. Please contact support for more information."
+                    : "Your application is being reviewed. You'll be notified once approved."}
               </p>
             </div>
             <Chip
               value={sellerStatus}
-              severity={sellerStatus === "approved" ? "success" : sellerStatus === "rejected" ? "danger" : "warning"}
+              severity={
+                sellerStatus === "approved"
+                  ? "success"
+                  : sellerStatus === "rejected"
+                    ? "danger"
+                    : "warning"
+              }
             />
           </div>
         </Card>
@@ -395,14 +435,18 @@ function UserProfilePage({ currentUser, showToast }) {
 
       <Dialog
         visible={applyDialogVisible}
-        onHide={() => { setApplyDialogVisible(false); setFormErrors({}); }}
+        onHide={() => {
+          setApplyDialogVisible(false);
+          setFormErrors({});
+        }}
         header="Apply to Become a Seller"
         style={{ width: "650px" }}
         modal
       >
         <div className="space-y-4">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Fill in your business details to start selling on our platform. Fields marked with * are required.
+            Fill in your business details to start selling on our platform.
+            Fields marked with * are required.
           </p>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -418,12 +462,16 @@ function UserProfilePage({ currentUser, showToast }) {
                 placeholder="Your business name"
               />
               {formErrors.business_name && (
-                <small className="text-red-500">{formErrors.business_name}</small>
+                <small className="text-red-500">
+                  {formErrors.business_name}
+                </small>
               )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">Business Description</label>
+              <label className="block text-sm font-medium mb-1">
+                Business Description
+              </label>
               <InputTextarea
                 name="business_description"
                 value={sellerForm.business_description}
@@ -435,7 +483,9 @@ function UserProfilePage({ currentUser, showToast }) {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">Business Address</label>
+              <label className="block text-sm font-medium mb-1">
+                Business Address
+              </label>
               <InputTextarea
                 name="business_address"
                 value={sellerForm.business_address}
@@ -447,7 +497,9 @@ function UserProfilePage({ currentUser, showToast }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Phone (10 digits)</label>
+              <label className="block text-sm font-medium mb-1">
+                Phone (10 digits)
+              </label>
               <InputText
                 name="phone"
                 value={sellerForm.phone}
@@ -463,7 +515,9 @@ function UserProfilePage({ currentUser, showToast }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">GST Number</label>
+              <label className="block text-sm font-medium mb-1">
+                GST Number
+              </label>
               <InputText
                 name="gst_number"
                 value={sellerForm.gst_number}
@@ -481,7 +535,9 @@ function UserProfilePage({ currentUser, showToast }) {
             <h4 className="font-semibold mb-3">Bank Details (Optional)</h4>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium mb-1">Account Number</label>
+                <label className="block text-sm font-medium mb-1">
+                  Account Number
+                </label>
                 <InputText
                   name="bank_account_number"
                   value={sellerForm.bank_account_number}
@@ -491,12 +547,16 @@ function UserProfilePage({ currentUser, showToast }) {
                   keyfilter="num"
                 />
                 {formErrors.bank_account_number && (
-                  <small className="text-red-500">{formErrors.bank_account_number}</small>
+                  <small className="text-red-500">
+                    {formErrors.bank_account_number}
+                  </small>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">IFSC Code</label>
+                <label className="block text-sm font-medium mb-1">
+                  IFSC Code
+                </label>
                 <InputText
                   name="bank_ifsc_code"
                   value={sellerForm.bank_ifsc_code}
@@ -505,12 +565,16 @@ function UserProfilePage({ currentUser, showToast }) {
                   placeholder="HDFC0001234"
                 />
                 {formErrors.bank_ifsc_code && (
-                  <small className="text-red-500">{formErrors.bank_ifsc_code}</small>
+                  <small className="text-red-500">
+                    {formErrors.bank_ifsc_code}
+                  </small>
                 )}
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Account Holder Name</label>
+                <label className="block text-sm font-medium mb-1">
+                  Account Holder Name
+                </label>
                 <InputText
                   name="bank_account_holder"
                   value={sellerForm.bank_account_holder}
@@ -519,7 +583,9 @@ function UserProfilePage({ currentUser, showToast }) {
                   placeholder="Name as per bank records"
                 />
                 {formErrors.bank_account_holder && (
-                  <small className="text-red-500">{formErrors.bank_account_holder}</small>
+                  <small className="text-red-500">
+                    {formErrors.bank_account_holder}
+                  </small>
                 )}
               </div>
             </div>
@@ -529,7 +595,10 @@ function UserProfilePage({ currentUser, showToast }) {
             <Button
               label="Cancel"
               text
-              onClick={() => { setApplyDialogVisible(false); setFormErrors({}); }}
+              onClick={() => {
+                setApplyDialogVisible(false);
+                setFormErrors({});
+              }}
             />
             <Button
               label="Submit Application"

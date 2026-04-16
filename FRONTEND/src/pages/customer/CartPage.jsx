@@ -327,7 +327,7 @@ function CartPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b]">
+      <div className="min-h-screen bg-[#f5faf9] dark:bg-[#0b151b]">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="mb-8">
             <Skeleton
@@ -358,7 +358,7 @@ function CartPage() {
   // Empty cart state
   if (!cart?.items?.length) {
     return (
-      <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b]">
+      <div className="min-h-screen bg-[#f5faf9] dark:bg-[#0b151b]">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <EmptyCart onContinueShopping={continueShopping} />
         </div>
@@ -370,7 +370,7 @@ function CartPage() {
   const hasOffer = cart.appliedCartOffer;
 
   return (
-    <div className="min-h-screen bg-[#fff8ee] dark:bg-[#0b151b]">
+    <div className="min-h-screen bg-[#f5faf9] dark:bg-[#0b151b]">
       <ConfirmDialog
         className="cart-confirm-dialog"
         contentClassName="dark:bg-[#151e22]"
@@ -515,7 +515,7 @@ function CartPage() {
                                 className="text-xs"
                               />
                             ) : item.modifiers && item.modifiers.length > 0 ? (
-                              item.modifiers.map((mod, idx) => (
+                              item.modifiers.map((mod, idx) =>
                                 (() => {
                                   const value =
                                     mod.modifier_value ??
@@ -525,24 +525,28 @@ function CartPage() {
                                     "Modifier";
                                   const add =
                                     Number(
-                                      mod.additional_price ?? mod.additionalPrice ?? 0,
+                                      mod.additional_price ??
+                                        mod.additionalPrice ??
+                                        0,
                                     ) || 0;
                                   return (
+                                    <Tag
+                                      key={idx}
+                                      value={`${value}${add > 0 ? ` (+₹${add})` : ""}`}
+                                      severity="secondary"
+                                      className="text-xs"
+                                    />
+                                  );
+                                })(),
+                              )
+                            ) : (
+                              item.modifierValue && (
                                 <Tag
-                                  key={idx}
-                                  value={`${value}${add > 0 ? ` (+₹${add})` : ""}`}
+                                  value={item.modifierValue}
                                   severity="secondary"
                                   className="text-xs"
                                 />
-                                  );
-                                })()
-                              ))
-                            ) : item.modifierValue && (
-                              <Tag
-                                value={item.modifierValue}
-                                severity="secondary"
-                                className="text-xs"
-                              />
+                              )
                             )}
                           </div>
                         )}
@@ -573,15 +577,16 @@ function CartPage() {
 
                       {/* Price */}
                       <div className="text-right sm:text-right">
-                  <p className="text-xs text-gray-500 dark:text-slate-400">
-                    ₹{formatINR(item.price)} each
-                  </p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
+                          ₹{formatINR(item.price)} each
+                        </p>
                         <p className="font-semibold text-gray-900 dark:text-slate-100 text-base sm:text-lg">
                           ₹{formatINR(item.lineTotal)}
                         </p>
                         {Number(item.taxAmount) > 0 ? (
                           <p className="mt-0.5 text-[11px] text-gray-500 dark:text-slate-400">
-                            GST {Number(item.taxPercent || 0)}%: ₹{formatINR(item.taxAmount)}
+                            GST {Number(item.taxPercent || 0)}%: ₹
+                            {formatINR(item.taxAmount)}
                           </p>
                         ) : null}
                         {item.appliedOffer && (
@@ -662,7 +667,7 @@ function CartPage() {
             <div className="mt-6 bg-white dark:bg-[#151e22] rounded-2xl p-4 sm:p-6 shadow-sm border border-[#e8dccf] dark:border-[#243440]">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-serif text-lg sm:text-xl font-semibold text-gray-900 dark:text-slate-100">
-                  <i className="pi pi-tags text-amber-600 mr-2" />
+                  <i className="pi pi-tags text-[#1A9E8E] mr-2" />
                   Available Offers
                 </h2>
                 <Button
@@ -694,12 +699,12 @@ function CartPage() {
                           className={`flex items-center justify-between p-3 rounded-lg transition-all ${
                             isApplied
                               ? "bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30"
-                              : "bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30"
+                              : "bg-[#e6f7f5] dark:bg-[#1A9E8E]/10 border border-[#1A9E8E]/30 dark:border-[#1A9E8E]/30"
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <i
-                              className={`pi ${isApplied ? "pi-check-circle text-green-600" : "pi-tag text-amber-600"}`}
+                              className={`pi ${isApplied ? "pi-check-circle text-green-600" : "pi-tag text-[#1A9E8E]"}`}
                             />
                             <div>
                               <p className="text-sm font-medium text-gray-900 dark:text-slate-100">
@@ -707,7 +712,7 @@ function CartPage() {
                               </p>
                               <p className="text-xs text-gray-500 dark:text-slate-400">
                                 {productItem?.productName && (
-                                  <span className="text-amber-700 dark:text-amber-400 font-medium">
+                                  <span className="text-[#117a6e] dark:text-[#26c9b4] font-medium">
                                     on {productItem.productName}
                                   </span>
                                 )}
@@ -729,7 +734,7 @@ function CartPage() {
                                 label="Apply"
                                 size="small"
                                 onClick={() => applyProductOffer(offer)}
-                                className="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 !text-white !text-xs !px-2 !py-1"
+                                className="!bg-[#1A9E8E] !border-[#1A9E8E] hover:!bg-[#168c7e] !text-white !text-xs !px-2 !py-1"
                               />
                             )}
                             {isApplied && (
@@ -972,4 +977,3 @@ function CartPage() {
 }
 
 export default CartPage;
-

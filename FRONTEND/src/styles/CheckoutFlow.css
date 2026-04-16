@@ -14,8 +14,8 @@
   margin-bottom: 2rem;
   padding: 2rem;
   border-radius: 1.5rem;
-  border: 1px solid rgba(214, 192, 144, 0.4);
-  background: linear-gradient(135deg, #fff8ee 0%, #fffdf8 100%);
+  border: 1px solid rgba(26, 158, 142, 0.15);
+  background: linear-gradient(135deg, #f5faf9 0%, #fafcfb 100%);
 }
 .dark .order-flow-hero {
   background: linear-gradient(135deg, #10171b 0%, #151e22 100%);
@@ -27,7 +27,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: #d97706;
+  color: #1a9e8e;
 }
 .order-flow-title {
   font-size: clamp(1.45rem, 3vw, 1.9rem);
@@ -66,7 +66,7 @@
 .order-flow-card {
   padding: 1.75rem;
   border-radius: 1.25rem;
-  border: 1px solid rgba(214, 192, 144, 0.45);
+  border: 1px solid rgba(26, 158, 142, 0.12);
   background: #ffffff;
 }
 .dark .order-flow-card {
@@ -76,8 +76,8 @@
 .order-flow-card-muted {
   padding: 1rem 1.25rem;
   border-radius: 0.875rem;
-  border: 1px solid rgba(214, 192, 144, 0.35);
-  background: rgba(255, 248, 238, 0.65);
+  border: 1px solid rgba(26, 158, 142, 0.1);
+  background: rgba(230, 247, 245, 0.5);
 }
 .dark .order-flow-card-muted {
   background: rgba(26, 35, 39, 0.8);
@@ -239,8 +239,8 @@
 }
 .orders-card {
   border-radius: 1.25rem;
-  border: 1px solid rgba(214, 192, 144, 0.35);
-  background: #f8f3ea;
+  border: 1px solid rgba(26, 158, 142, 0.12);
+  background: #f5faf9;
   overflow: hidden;
 }
 .dark .orders-card {
@@ -330,13 +330,13 @@
 
 .order-items-table-shell {
   overflow: hidden;
-  border: 1px solid rgba(214, 192, 144, 0.22);
+  border: 1px solid rgba(26, 158, 142, 0.1);
   border-radius: 1rem;
-  background: rgba(255, 251, 245, 0.78);
+  background: rgba(245, 250, 249, 0.78);
 }
 
 .dark .order-items-table-shell {
-  border-color: rgba(201, 184, 138, 0.14);
+  border-color: rgba(26, 158, 142, 0.1);
   background: rgba(16, 23, 27, 0.92);
 }
 
@@ -354,7 +354,7 @@
 }
 
 .order-items-table .p-datatable-thead > tr {
-  background: #f5f0e8 !important;
+  background: #f1f5f4 !important;
 }
 
 .order-items-table .p-datatable-thead > tr > th {
@@ -376,20 +376,20 @@
 
 .order-items-table .p-datatable-tbody > tr {
   background: transparent !important;
-  border-bottom: 1px solid rgba(201, 184, 138, 0.16);
+  border-bottom: 1px solid rgba(26, 158, 142, 0.1);
   transition: background-color 0.2s ease;
 }
 
 .order-items-table .p-datatable-tbody > tr:hover {
-  background: rgba(201, 184, 138, 0.08) !important;
+  background: rgba(26, 158, 142, 0.06) !important;
 }
 
 .dark .order-items-table .p-datatable-tbody > tr {
-  border-bottom: 1px solid rgba(201, 184, 138, 0.08);
+  border-bottom: 1px solid rgba(26, 158, 142, 0.08);
 }
 
 .dark .order-items-table .p-datatable-tbody > tr:hover {
-  background: rgba(201, 184, 138, 0.05) !important;
+  background: rgba(26, 158, 142, 0.05) !important;
 }
 
 .order-items-table .p-datatable-tbody > tr > td {
@@ -437,13 +437,16 @@
   background: transparent;
 }
 
-.order-items-table .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+.order-items-table
+  .p-paginator
+  .p-paginator-pages
+  .p-paginator-page.p-highlight {
   background: #2a6857 !important;
   color: #ffffff !important;
 }
 
 .order-items-table .p-paginator .p-dropdown {
-  border: 1px solid rgba(201, 184, 138, 0.28);
+  border: 1px solid rgba(26, 158, 142, 0.2);
   border-radius: 0.75rem;
   background: transparent;
 }
@@ -457,7 +460,7 @@
 }
 
 .order-items-scrollbox {
-  background: rgba(255, 251, 245, 0.78);
+  background: rgba(245, 250, 249, 0.78);
 }
 
 .dark .order-items-scrollbox {

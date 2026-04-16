@@ -61,7 +61,7 @@ export const getCart = async (user_id) => {
       `SELECT cim.cart_item_id, cim.modifier_id 
        FROM cart_item_modifiers cim 
        WHERE cim.cart_item_id IN (?)`,
-      [cartItemIds]
+      [cartItemIds],
     );
     const modMap = {};
     modifierRows.forEach((m) => {
@@ -280,6 +280,32 @@ export const getRootCategoryId = async (categoryId) => {
   return rows;
 };
 
+// Walk up the category tree and return the first non-zero tax_percent found
+export const getTaxPercentByCategory = async (categoryId) => {
+  const query = `
+  WITH RECURSIVE cat_tree AS (
+      SELECT category_id, parent_id, tax_percent
+      FROM category_master
+      WHERE category_id = ?
+
+      UNION ALL
+
+      SELECT c.category_id, c.parent_id, c.tax_percent
+      FROM category_master c
+      JOIN cat_tree ct
+          ON c.category_id = ct.parent_id
+  )
+  SELECT tax_percent
+  FROM cat_tree
+  WHERE tax_percent > 0
+  ORDER BY tax_percent DESC
+  LIMIT 1;
+  `;
+
+  const [rows] = await pool.query(query, [categoryId]);
+  return Number(rows[0]?.tax_percent) || 0;
+};
+
 // Fetch category-level discounts from offer master
 export const getDisCountOnCat = async (categoryId) => {
   const [rows] = await pool.query(
@@ -378,10 +404,7 @@ export const createCancelRequest = async ({
   return { reason: null, data: rows[0] || null };
 };
 
-export const getCancelRequestsAdmin = async ({
-  status,
-  limit = 100,
-} = {}) => {
+export const getCancelRequestsAdmin = async ({ status, limit = 100 } = {}) => {
   await ensureCancelRequestTable();
 
   const conditions = [];
@@ -483,7 +506,9 @@ export const reviewCancelRequest = async ({
     }
 
     if (normalizedAction === "approve") {
-      const currentOrderStatus = String(request.order_status || "").toLowerCase();
+      const currentOrderStatus = String(
+        request.order_status || "",
+      ).toLowerCase();
       if (!["pending", "processing"].includes(currentOrderStatus)) {
         await connection.rollback();
         return {
@@ -894,26 +919,26 @@ export const getOrderDetailAdmin = async (orderId) => {
 
   // Fetch multiple modifiers if they exist
   if (itemRows.length > 0) {
-    const orderItemIds = itemRows.map(i => i.order_item_id);
+    const orderItemIds = itemRows.map((i) => i.order_item_id);
     const [modifierRows] = await pool.query(
       `SELECT * FROM order_item_modifiers WHERE order_item_id IN (?)`,
-      [orderItemIds]
+      [orderItemIds],
     );
     const modMap = {};
-    modifierRows.forEach(m => {
-       if (!modMap[m.order_item_id]) modMap[m.order_item_id] = [];
-       modMap[m.order_item_id].push(m);
+    modifierRows.forEach((m) => {
+      if (!modMap[m.order_item_id]) modMap[m.order_item_id] = [];
+      modMap[m.order_item_id].push(m);
     });
-    itemRows.forEach(item => {
-       item.modifiers = modMap[item.order_item_id] || [];
-       if (item.modifiers.length === 0 && item.modifier_value) {
-          item.modifiers.push({
-             modifier_id: item.modifier_id,
-             modifier_name: null,
-             modifier_value: item.modifier_value,
-             additional_price: 0
-          });
-       }
+    itemRows.forEach((item) => {
+      item.modifiers = modMap[item.order_item_id] || [];
+      if (item.modifiers.length === 0 && item.modifier_value) {
+        item.modifiers.push({
+          modifier_id: item.modifier_id,
+          modifier_name: null,
+          modifier_value: item.modifier_value,
+          additional_price: 0,
+        });
+      }
     });
   }
 
@@ -1016,7 +1041,12 @@ export const updatePaymentStatusAdmin = async (
     ).toLowerCase();
     const nextPaymentStatus = String(paymentStatus || "").toLowerCase();
 
-    if (!Object.prototype.hasOwnProperty.call(PAYMENT_STATUS_TRANSITIONS, nextPaymentStatus)) {
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        PAYMENT_STATUS_TRANSITIONS,
+        nextPaymentStatus,
+      )
+    ) {
       await connection.rollback();
       return { affectedRows: 0, reason: "INVALID_STATUS" };
     }
@@ -1056,7 +1086,9 @@ export const updatePaymentStatusAdmin = async (
     if (
       nextPaymentStatus === "completed" &&
       order.payment_method === "cash_on_delivery" &&
-      !["delivered", "completed"].includes(String(order.order_status).toLowerCase())
+      !["delivered", "completed"].includes(
+        String(order.order_status).toLowerCase(),
+      )
     ) {
       await connection.rollback();
       return {
@@ -1112,7 +1144,12 @@ export const updatePaymentStatusAdmin = async (
       );
     }
 
-    await syncOrderPaymentFields(connection, orderId, nextPaymentStatus, updatedBy);
+    await syncOrderPaymentFields(
+      connection,
+      orderId,
+      nextPaymentStatus,
+      updatedBy,
+    );
 
     await connection.commit();
 
@@ -1121,7 +1158,9 @@ export const updatePaymentStatusAdmin = async (
       payment_status: nextPaymentStatus,
       order_status:
         nextPaymentStatus === "refunded" &&
-        !["cancelled", "refunded"].includes(String(order.order_status).toLowerCase())
+        !["cancelled", "refunded"].includes(
+          String(order.order_status).toLowerCase(),
+        )
           ? "refunded"
           : order.order_status,
     };

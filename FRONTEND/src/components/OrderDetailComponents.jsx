@@ -66,7 +66,9 @@ export default function OrderDetailComponents({
   const { id } = useParams();
 
   const data = location.state?.data;
-  const { loading, error, orderItems, itemPagination, orders } = useSelector((state) => state.order || {});
+  const { loading, error, orderItems, itemPagination, orders } = useSelector(
+    (state) => state.order || {},
+  );
   const { currentUser } = useSelector((state) => state.auth || {});
 
   const resolvedOrderId = orderIdProp || id;
@@ -81,14 +83,25 @@ export default function OrderDetailComponents({
 
   const getAvailableOrderStatuses = (currentOrder) => {
     if (!currentOrder) return ADMIN_ORDER_STATUSES;
-    const orderStages = ["pending", "processing", "shipped", "delivered", "completed"];
+    const orderStages = [
+      "pending",
+      "processing",
+      "shipped",
+      "delivered",
+      "completed",
+    ];
     const currentIdx = orderStages.indexOf(currentOrder.order_status);
-    const paymentMethod = currentOrder.payment_method || (currentOrder.payments?.length > 0 ? currentOrder.payments[0].payment_method : "online");
+    const paymentMethod =
+      currentOrder.payment_method ||
+      (currentOrder.payments?.length > 0
+        ? currentOrder.payments[0].payment_method
+        : "online");
 
-    return ADMIN_ORDER_STATUSES.filter(status => {
+    return ADMIN_ORDER_STATUSES.filter((status) => {
       // Cannot go backward
       const optIdx = orderStages.indexOf(status);
-      if (currentIdx !== -1 && optIdx !== -1 && optIdx < currentIdx) return false;
+      if (currentIdx !== -1 && optIdx !== -1 && optIdx < currentIdx)
+        return false;
 
       // Delivery requirements
       if (paymentMethod !== "cash_on_delivery") {
@@ -97,11 +110,21 @@ export default function OrderDetailComponents({
         }
       } else {
         if (currentOrder.payment_status === "completed") {
-           if (optIdx !== -1 && status !== "delivered" && status !== "completed" && status !== currentOrder.order_status) return false;
+          if (
+            optIdx !== -1 &&
+            status !== "delivered" &&
+            status !== "completed" &&
+            status !== currentOrder.order_status
+          )
+            return false;
         }
       }
 
-      if (["cancelled", "refunded", "returned"].includes(currentOrder.order_status)) {
+      if (
+        ["cancelled", "refunded", "returned"].includes(
+          currentOrder.order_status,
+        )
+      ) {
         if (status !== currentOrder.order_status) return false;
       }
       return true;
@@ -151,7 +174,12 @@ export default function OrderDetailComponents({
 
   const handleStatusChange = async (event) => {
     const nextStatus = event.target.value;
-    if (!resolvedOrderId || !nextStatus || nextStatus === orderData?.order_status) return;
+    if (
+      !resolvedOrderId ||
+      !nextStatus ||
+      nextStatus === orderData?.order_status
+    )
+      return;
 
     setStatusSaving(true);
     setStatusError("");
@@ -278,18 +306,24 @@ export default function OrderDetailComponents({
       )}
 
       <section className={`${isDialog ? "mb-4" : "order-flow-hero mb-6"}`}>
-        <div className={isDialog ? "flex flex-wrap items-start justify-between gap-3" : "order-flow-hero-content flex flex-wrap items-start justify-between gap-4"}>
+        <div
+          className={
+            isDialog
+              ? "flex flex-wrap items-start justify-between gap-3"
+              : "order-flow-hero-content flex flex-wrap items-start justify-between gap-4"
+          }
+        >
           <div>
             <p className="order-flow-eyebrow">Order Details</p>
             <h2 className="order-flow-title">
-            Order #{orderData?.order_number || resolvedOrderId}
+              Order #{orderData?.order_number || resolvedOrderId}
             </h2>
             <p className="order-flow-text">
-              Review item-level pricing, tax, and the final order summary in the same
-              style used across the rest of the storefront.
+              Review item-level pricing, tax, and the final order summary in the
+              same style used across the rest of the storefront.
             </p>
             {hasPendingCancelRequest && (
-              <p className="mt-2 text-sm font-medium text-amber-600 dark:text-amber-300">
+              <p className="mt-2 text-sm font-medium text-yellow-600 dark:text-yellow-300">
                 Cancellation request pending admin approval.
               </p>
             )}
@@ -307,9 +341,7 @@ export default function OrderDetailComponents({
             )}
             {canCancelOrder && (
               <Button
-                label={
-                  statusSaving ? "Submitting..." : "Request Cancellation"
-                }
+                label={statusSaving ? "Submitting..." : "Request Cancellation"}
                 icon="pi pi-times"
                 outlined
                 onClick={handleCancelOrder}
@@ -324,7 +356,7 @@ export default function OrderDetailComponents({
                 outlined
                 onClick={handleReturnOrder}
                 disabled={statusSaving}
-                className="order-flow-secondary-button !border-amber-300 !text-amber-700 hover:!bg-amber-50 dark:!border-amber-500/40 dark:!text-amber-300 dark:hover:!bg-amber-500/10"
+                className="order-flow-secondary-button !border-[#1A9E8E] !text-[#117a6e] hover:!bg-[#e6f7f5] dark:!border-[#1A9E8E]/40 dark:!text-[#26c9b4] dark:hover:!bg-[#1A9E8E]/10"
               />
             )}
             {!isDialog && (
@@ -341,35 +373,44 @@ export default function OrderDetailComponents({
       </section>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <CalendarDays className="h-5 w-5" />
             </span>
             <div>
               <p className="order-flow-stat-label">Order Date</p>
               <p className="order-flow-stat-value text-xl">
-              {formatDate(orderData?.created_at)}
+                {formatDate(orderData?.created_at)}
               </p>
             </div>
           </div>
         </Card>
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <ReceiptIndianRupee className="h-5 w-5" />
             </span>
             <div>
               <p className="order-flow-stat-label">Order Total</p>
               <p className="order-flow-stat-value text-xl">
-              {formatINR(orderData?.total_amount)}
+                {formatINR(orderData?.total_amount)}
               </p>
             </div>
           </div>
         </Card>
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <PackageCheck className="h-5 w-5" />
             </span>
             <div>
@@ -390,7 +431,9 @@ export default function OrderDetailComponents({
           >
             <div className="mb-2 flex items-center justify-between gap-3 p-5 pb-0">
               <div>
-                <h3 className="order-flow-section-title text-[1.45rem]">Order Items</h3>
+                <h3 className="order-flow-section-title text-[1.45rem]">
+                  Order Items
+                </h3>
                 <p className="order-flow-section-copy mt-1">
                   Item-level totals, taxes, and quantity for this order.
                 </p>
@@ -405,7 +448,7 @@ export default function OrderDetailComponents({
                       value={orderData?.order_status || "pending"}
                       onChange={handleStatusChange}
                       disabled={statusSaving}
-                      className="min-w-[180px] rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 outline-none transition-all focus:border-amber-500 dark:border-[#334155] dark:bg-[#10171b] dark:text-slate-100"
+                      className="min-w-[180px] rounded-xl border border-[#1A9E8E]/40 bg-white px-3 py-2 text-sm font-medium text-gray-800 outline-none transition-all focus:border-[#1A9E8E] dark:border-[#334155] dark:bg-[#10171b] dark:text-slate-100"
                     >
                       {getAvailableOrderStatuses(orderData).map((status) => (
                         <option key={status} value={status}>
@@ -416,7 +459,8 @@ export default function OrderDetailComponents({
                   </label>
                 )}
                 <span className="order-flow-badge">
-                  {itemPagination?.totalItems || orderItems?.length || 0} item(s)
+                  {itemPagination?.totalItems || orderItems?.length || 0}{" "}
+                  item(s)
                 </span>
               </div>
             </div>
@@ -424,15 +468,25 @@ export default function OrderDetailComponents({
 
             {isDialog ? (
               <div className="px-5 pb-5">
-                <div className="order-items-scrollbox max-h-[320px] overflow-y-auto rounded-2xl border border-[rgba(214,192,144,0.22)]">
+                <div className="order-items-scrollbox max-h-[320px] overflow-y-auto rounded-2xl border border-[rgba(26,158,142,0.12)]">
                   <table className="w-full border-collapse">
-                    <thead className="bg-[#f5f0e8] dark:bg-[#1a2528]">
+                    <thead className="bg-[#f1f5f4] dark:bg-[#1a2528]">
                       <tr>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Product</th>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Qty</th>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Price</th>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Tax</th>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Total</th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Product
+                        </th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Qty
+                        </th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Price
+                        </th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Tax
+                        </th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Total
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -510,7 +564,9 @@ export default function OrderDetailComponents({
                     field="price"
                     header="Price"
                     body={(row) => (
-                      <span className="font-medium">{formatINR(row.price)}</span>
+                      <span className="font-medium">
+                        {formatINR(row.price)}
+                      </span>
                     )}
                   />
                   <Column

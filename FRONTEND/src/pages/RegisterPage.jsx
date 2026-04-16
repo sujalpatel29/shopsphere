@@ -12,6 +12,7 @@ function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,15 +22,59 @@ function RegisterPage() {
   const [otp, setOtp] = useState("");
   const [otpToken, setOtpToken] = useState("");
 
+  const validateDetailsForm = () => {
+    const errors = {};
+
+    if (!name.trim()) {
+      errors.name = "Name is required";
+    } else if (name.length < 2) {
+      errors.name = "Name must be at least 2 characters";
+    }
+
+    if (!email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    if (!password) {
+      errors.password = "Password is required";
+    } else if (password.length < 8) {
+      errors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      errors.password =
+        "Password must contain uppercase, lowercase, and number";
+    }
+
+    if (!confirmPassword) {
+      errors.confirmPassword = "Please confirm your password";
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateOtpForm = () => {
+    const errors = {};
+
+    if (!otp.trim()) {
+      errors.otp = "OTP is required";
+    } else if (!/^\d{6}$/.test(otp)) {
+      errors.otp = "Please enter a valid 6-digit OTP";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const requestOtp = async (event) => {
     event.preventDefault();
     setError("");
     setSuccess("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (!validateDetailsForm()) return;
 
     try {
       setLoading(true);
@@ -53,6 +98,8 @@ function RegisterPage() {
     event.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!validateOtpForm()) return;
 
     try {
       setLoading(true);
@@ -83,7 +130,7 @@ function RegisterPage() {
             fetchPriority="high"
             sizes="(min-width: 768px) 50vw, 100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/65 via-transparent to-amber-600/25" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/65 via-transparent to-[#1A9E8E]/25" />
           <div className="absolute bottom-10 left-10 max-w-sm text-white">
             <h1 className="font-serif text-4xl leading-tight">
               &ldquo;Start simple. Shop smarter.&rdquo;
@@ -93,7 +140,7 @@ function RegisterPage() {
             </p>
             <Link
               to="/"
-              className="mt-8 inline-flex items-center justify-center rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 shadow-2xl shadow-slate-950/30 transition hover:-translate-y-0.5 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-white/70"
+              className="mt-8 inline-flex items-center justify-center rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 shadow-2xl shadow-slate-950/30 transition hover:-translate-y-0.5 hover:bg-[#e6f7f5] focus:outline-none focus:ring-2 focus:ring-white/70"
             >
               Explore Shop
             </Link>
@@ -121,62 +168,157 @@ function RegisterPage() {
             <div className="mt-8 space-y-4">
               {step === "details" ? (
                 <>
-                  <InputText
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:shadow-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-                    placeholder="Enter Your Name"
-                    required
-                  />
-                  <InputText
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:shadow-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-                    placeholder="Email"
-                    required
-                  />
-                  <Password
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    feedback={false}
-                    toggleMask
-                    className="w-full"
-                    inputClassName="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:shadow-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-                    placeholder="Password"
-                    required
-                  />
-                  <Password
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    feedback={false}
-                    toggleMask
-                    className="w-full"
-                    inputClassName="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:shadow-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-                    placeholder="Confirm Password"
-                    required
-                  />
+                  <div className="space-y-1">
+                    <InputText
+                      value={name}
+                      onChange={(event) => {
+                        setName(event.target.value);
+                        if (validationErrors.name)
+                          setValidationErrors((prev) => ({
+                            ...prev,
+                            name: undefined,
+                          }));
+                      }}
+                      className={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:ring-2 focus:shadow-none dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 ${
+                        validationErrors.name
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                          : "border-gray-200 focus:border-[#1A9E8E] focus:ring-[#1A9E8E]/20 dark:border-slate-700"
+                      }`}
+                      placeholder="Enter Your Name"
+                      aria-invalid={!!validationErrors.name}
+                    />
+                    {validationErrors.name && (
+                      <p className="text-sm text-red-500 dark:text-red-400">
+                        {validationErrors.name}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <InputText
+                      value={email}
+                      onChange={(event) => {
+                        setEmail(event.target.value);
+                        if (validationErrors.email)
+                          setValidationErrors((prev) => ({
+                            ...prev,
+                            email: undefined,
+                          }));
+                      }}
+                      className={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:ring-2 focus:shadow-none dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 ${
+                        validationErrors.email
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                          : "border-gray-200 focus:border-[#1A9E8E] focus:ring-[#1A9E8E]/20 dark:border-slate-700"
+                      }`}
+                      placeholder="Email"
+                      type="email"
+                      aria-invalid={!!validationErrors.email}
+                    />
+                    {validationErrors.email && (
+                      <p className="text-sm text-red-500 dark:text-red-400">
+                        {validationErrors.email}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Password
+                      value={password}
+                      onChange={(event) => {
+                        setPassword(event.target.value);
+                        if (validationErrors.password)
+                          setValidationErrors((prev) => ({
+                            ...prev,
+                            password: undefined,
+                          }));
+                      }}
+                      feedback={false}
+                      toggleMask
+                      className="w-full"
+                      inputClassName={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:ring-2 focus:shadow-none dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 ${
+                        validationErrors.password
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                          : "border-gray-200 focus:border-[#1A9E8E] focus:ring-[#1A9E8E]/20 dark:border-slate-700"
+                      }`}
+                      placeholder="Password"
+                      aria-invalid={!!validationErrors.password}
+                    />
+                    {validationErrors.password && (
+                      <p className="text-sm text-red-500 dark:text-red-400">
+                        {validationErrors.password}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Password
+                      value={confirmPassword}
+                      onChange={(event) => {
+                        setConfirmPassword(event.target.value);
+                        if (validationErrors.confirmPassword)
+                          setValidationErrors((prev) => ({
+                            ...prev,
+                            confirmPassword: undefined,
+                          }));
+                      }}
+                      feedback={false}
+                      toggleMask
+                      className="w-full"
+                      inputClassName={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:ring-2 focus:shadow-none dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 ${
+                        validationErrors.confirmPassword
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                          : "border-gray-200 focus:border-[#1A9E8E] focus:ring-[#1A9E8E]/20 dark:border-slate-700"
+                      }`}
+                      placeholder="Confirm Password"
+                      aria-invalid={!!validationErrors.confirmPassword}
+                    />
+                    {validationErrors.confirmPassword && (
+                      <p className="text-sm text-red-500 dark:text-red-400">
+                        {validationErrors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
                 </>
               ) : (
-                <InputText
-                  value={otp}
-                  onChange={(event) =>
-                    setOtp(event.target.value.replace(/[^\d]/g, "").slice(0, 6))
-                  }
-                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-center text-gray-900 shadow-none outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:shadow-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-                  placeholder="Enter 6-digit OTP"
-                  required
-                />
+                <div className="space-y-1">
+                  <InputText
+                    value={otp}
+                    onChange={(event) => {
+                      setOtp(
+                        event.target.value.replace(/[^\d]/g, "").slice(0, 6),
+                      );
+                      if (validationErrors.otp)
+                        setValidationErrors((prev) => ({
+                          ...prev,
+                          otp: undefined,
+                        }));
+                    }}
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-center text-gray-900 shadow-none outline-none transition focus:ring-2 focus:shadow-none dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 ${
+                      validationErrors.otp
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                        : "border-gray-200 focus:border-[#1A9E8E] focus:ring-[#1A9E8E]/20 dark:border-slate-700"
+                    }`}
+                    placeholder="Enter 6-digit OTP"
+                    aria-invalid={!!validationErrors.otp}
+                  />
+                  {validationErrors.otp && (
+                    <p className="text-sm text-red-500 dark:text-red-400">
+                      {validationErrors.otp}
+                    </p>
+                  )}
+                </div>
               )}
 
               {error && (
-                <p className="text-sm text-red-500 dark:text-red-400">
-                  {error}
-                </p>
+                <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {error}
+                  </p>
+                </div>
               )}
               {success && (
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                  {success}
-                </p>
+                <div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                    {success}
+                  </p>
+                </div>
               )}
 
               <Button
@@ -189,7 +331,8 @@ function RegisterPage() {
                       : "Verify OTP & Create Account"
                 }
                 disabled={loading}
-                className="w-full !rounded-lg !bg-amber-600 !px-6 !py-3 !font-medium !text-white !shadow-lg !shadow-amber-600/20 transition-all hover:!bg-amber-700"
+                loading={loading}
+                className="w-full !rounded-lg !bg-[#1A9E8E] !px-6 !py-3 !font-medium !text-white !shadow-lg !shadow-[#1A9E8E]/20 transition-all hover:!bg-[#168c7e] disabled:opacity-70"
               />
 
               {step === "otp" && (
@@ -198,7 +341,7 @@ function RegisterPage() {
                   label="Resend OTP"
                   disabled={loading}
                   onClick={requestOtp}
-                  className="w-full !rounded-lg !border !border-amber-600 !bg-transparent !px-6 !py-3 !font-medium !text-amber-700 hover:!bg-amber-50 dark:!text-amber-300 dark:hover:!bg-slate-800"
+                  className="w-full !rounded-lg !border !border-[#1A9E8E] !bg-transparent !px-6 !py-3 !font-medium !text-[#1A9E8E] hover:!bg-[#e6f7f5] dark:!text-[#26c9b4] dark:hover:!bg-[#1a2e28]"
                 />
               )}
             </div>
@@ -207,7 +350,7 @@ function RegisterPage() {
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                className="font-medium text-[#1A9E8E] hover:text-[#168c7e] dark:text-[#26c9b4] dark:hover:text-[#4dd3c2]"
               >
                 Sign in
               </Link>

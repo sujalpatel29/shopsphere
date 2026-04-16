@@ -3,7 +3,7 @@
  * Shared admin theme overrides for PrimeReact components.
  *
  * This single stylesheet themes every admin tab (Products, Portions,
- * Modifiers, Orders) to match the ShopSphere beige/teal/gold palette.
+ * Modifiers, Orders) to match the ShopSphere teal/neutral palette.
  *
  * Sections:
  *  1. Dashboard grid layout (full-height, independent column scroll)
@@ -25,7 +25,7 @@
  */
 
 /* Admin Products Dashboard - Custom Styles */
-/* Enforces transparent/beige theme and premium aesthetics */
+/* Enforces transparent/neutral theme and premium aesthetics */
 
 /* ===== Dashboard Grid: full-screen, both columns scroll independently ===== */
 .admin-dashboard-grid {
@@ -61,16 +61,16 @@
   border-radius: inherit;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.55),
-    rgba(255, 255, 255, 0)
+    rgba(26, 158, 142, 0.04),
+    rgba(26, 158, 142, 0)
   );
 }
 
 .dark .admin-products-table-shell::before {
   background: linear-gradient(
     135deg,
-    rgba(201, 184, 138, 0.08),
-    rgba(201, 184, 138, 0)
+    rgba(26, 158, 142, 0.06),
+    rgba(26, 158, 142, 0)
   );
 }
 
@@ -101,16 +101,21 @@
 
 .admin-products-table .p-datatable-table {
   background: transparent !important;
+  border-spacing: 0;
+  border-collapse: collapse;
 }
 
 /* Header row styling — solid bg needed for sticky header over scrolling rows */
 .admin-products-table .p-datatable-thead > tr {
-  background: #f5f0e8 !important;
+  background: #f1f5f4 !important;
 }
 
-.admin-products-table .p-datatable-thead > tr > th {
+.admin-products-table .p-datatable-thead > tr > th,
+html:not(.dark) .admin-products-table .p-datatable-thead > tr > th {
   background: transparent !important;
   border: none !important;
+  border-color: transparent !important;
+  border-style: none !important;
   color: #374151;
   font-weight: 600;
   font-size: 0.875rem;
@@ -128,26 +133,29 @@
 /* Body rows - FORCE transparent */
 .admin-products-table .p-datatable-tbody > tr {
   background: transparent !important;
-  border-bottom: 1px solid rgba(201, 184, 138, 0.15);
+  border-bottom: 1px solid rgba(26, 158, 142, 0.1);
   transition: background-color 0.2s ease;
 }
 
 .admin-products-table .p-datatable-tbody > tr:hover {
-  background: rgba(201, 184, 138, 0.08) !important;
+  background: rgba(26, 158, 142, 0.06) !important;
 }
 
 .dark .admin-products-table .p-datatable-tbody > tr {
-  border-bottom: 1px solid rgba(201, 184, 138, 0.1);
+  border-bottom: 1px solid rgba(26, 158, 142, 0.08);
 }
 
 .dark .admin-products-table .p-datatable-tbody > tr:hover {
-  background: rgba(201, 184, 138, 0.05) !important;
+  background: rgba(26, 158, 142, 0.05) !important;
 }
 
-/* Body cells */
-.admin-products-table .p-datatable-tbody > tr > td {
+/* Body cells — specificity must beat the global html:not(.dark) rule in index.css */
+.admin-products-table .p-datatable-tbody > tr > td,
+html:not(.dark) .admin-products-table .p-datatable-tbody > tr > td {
   background: transparent !important;
   border: none !important;
+  border-color: transparent !important;
+  border-style: none !important;
   padding: 1rem 1rem;
   color: #374151;
   font-size: 0.875rem;
@@ -170,7 +178,7 @@
   .admin-products-table
   .p-sortable-column.p-highlight
   .p-sortable-column-icon {
-  color: #c9b88a;
+  color: #26c9b4;
 }
 
 /* Sort icon */
@@ -181,7 +189,7 @@
 
 /* Hover state for sortable columns */
 .admin-products-table .p-sortable-column:not(.p-highlight):hover {
-  background: rgba(201, 184, 138, 0.1) !important;
+  background: rgba(26, 158, 142, 0.08) !important;
 }
 
 /* ===== Paginator Styles ===== */
@@ -218,8 +226,8 @@
   .p-paginator
   .p-paginator-pages
   .p-paginator-page:hover:not(.p-highlight) {
-  background: rgba(201, 184, 138, 0.1);
-  color: #c9b88a;
+  background: rgba(26, 158, 142, 0.1);
+  color: #26c9b4;
 }
 
 .admin-products-table
@@ -236,9 +244,9 @@
   .p-paginator
   .p-paginator-pages
   .p-paginator-page.p-highlight {
-  background: #c9b88a !important;
-  color: #163332 !important;
-  box-shadow: 0 4px 12px rgba(201, 184, 138, 0.3);
+  background: #1a9e8e !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(26, 158, 142, 0.3);
 }
 
 .admin-products-table .p-paginator .p-paginator-first,
@@ -263,14 +271,14 @@
 
 /* Rows per page dropdown */
 .admin-products-table .p-paginator .p-dropdown {
-  border: 1px solid rgba(201, 184, 138, 0.3);
+  border: 1px solid rgba(26, 158, 142, 0.2);
   border-radius: 0.75rem;
   background: transparent;
   margin-left: 1rem;
 }
 
 .dark .admin-products-table .p-paginator .p-dropdown {
-  border-color: rgba(201, 184, 138, 0.2);
+  border-color: rgba(26, 158, 142, 0.15);
 }
 
 /* ===== Primary Button Styles ===== */
@@ -285,12 +293,12 @@
 }
 
 .dark .admin-btn-primary {
-  background-color: #c9b88a !important;
-  color: #163332 !important;
+  background-color: #1a9e8e !important;
+  color: #ffffff !important;
 }
 
 .dark .admin-btn-primary:hover {
-  background-color: #b5a577 !important;
+  background-color: #168c7e !important;
 }
 
 /* ===== Secondary Button Styles ===== */
@@ -315,40 +323,40 @@
 
 /* ===== Search Input Styles ===== */
 .admin-search-input {
-  background-color: rgba(201, 184, 138, 0.05) !important;
-  border-color: rgba(201, 184, 138, 0.2) !important;
+  background-color: rgba(26, 158, 142, 0.04) !important;
+  border-color: rgba(26, 158, 142, 0.15) !important;
 }
 
 .admin-search-input:hover {
-  background-color: rgba(201, 184, 138, 0.08) !important;
+  background-color: rgba(26, 158, 142, 0.06) !important;
 }
 
 .admin-search-input:focus {
-  background-color: rgba(201, 184, 138, 0.1) !important;
-  border-color: #2a6857 !important;
-  box-shadow: 0 0 0 2px rgba(42, 104, 87, 0.15) !important;
+  background-color: rgba(26, 158, 142, 0.08) !important;
+  border-color: #1a9e8e !important;
+  box-shadow: 0 0 0 2px rgba(26, 158, 142, 0.15) !important;
 }
 
 .dark .admin-search-input {
-  background-color: rgba(201, 184, 138, 0.03) !important;
-  border-color: rgba(201, 184, 138, 0.15) !important;
+  background-color: rgba(26, 158, 142, 0.03) !important;
+  border-color: rgba(26, 158, 142, 0.1) !important;
   color: #e5e7eb;
 }
 
 .dark .admin-search-input:focus {
-  border-color: #c9b88a !important;
-  box-shadow: 0 0 0 2px rgba(201, 184, 138, 0.15) !important;
+  border-color: #26c9b4 !important;
+  box-shadow: 0 0 0 2px rgba(38, 201, 180, 0.15) !important;
 }
 
 /* ===== Filter Dropdown Styles ===== */
 .admin-filter-dropdown .admin-dropdown-root {
-  background-color: rgba(201, 184, 138, 0.05) !important;
-  border-color: rgba(201, 184, 138, 0.2) !important;
+  background-color: rgba(26, 158, 142, 0.04) !important;
+  border-color: rgba(26, 158, 142, 0.15) !important;
 }
 
 .dark .admin-filter-dropdown .admin-dropdown-root {
-  background-color: rgba(201, 184, 138, 0.03) !important;
-  border-color: rgba(201, 184, 138, 0.15) !important;
+  background-color: rgba(26, 158, 142, 0.03) !important;
+  border-color: rgba(26, 158, 142, 0.1) !important;
   color: #e5e7eb !important;
 }
 
@@ -399,7 +407,7 @@
 
 /* Dark mode - checked (gold) */
 .dark .admin-status-switch.p-inputswitch.p-highlight .p-inputswitch-slider {
-  background: #c9b88a !important;
+  background: #1a9e8e !important;
 }
 
 .dark
@@ -407,7 +415,7 @@
     .p-inputswitch-input:hover
   ).p-highlight
   .p-inputswitch-slider {
-  background: #b5a577 !important;
+  background: #168c7e !important;
 }
 
 /* ===== Dialog Styles ===== */
@@ -420,31 +428,31 @@
 
 /* Dialog container */
 .admin-dialog {
-  background-color: #faf8f4 !important;
-  border: 1px solid rgba(201, 184, 138, 0.2) !important;
+  background-color: #fafafa !important;
+  border: 1px solid rgba(26, 158, 142, 0.15) !important;
   box-shadow:
     0 25px 60px rgba(22, 51, 50, 0.2),
-    0 0 0 1px rgba(201, 184, 138, 0.1) !important;
+    0 0 0 1px rgba(26, 158, 142, 0.08) !important;
 }
 
 .dark .admin-dialog {
   background-color: #1a2327 !important;
-  border-color: rgba(201, 184, 138, 0.12) !important;
+  border-color: rgba(26, 158, 142, 0.12) !important;
   box-shadow:
     0 25px 60px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(201, 184, 138, 0.08) !important;
+    0 0 0 1px rgba(26, 158, 142, 0.08) !important;
 }
 
 /* Header */
 .admin-dialog-header {
-  background: rgba(201, 184, 138, 0.1) !important;
-  border-color: rgba(201, 184, 138, 0.2) !important;
+  background: rgba(26, 158, 142, 0.06) !important;
+  border-color: rgba(26, 158, 142, 0.12) !important;
   color: #163332 !important;
 }
 
 .dark .admin-dialog-header {
-  background: rgba(201, 184, 138, 0.06) !important;
-  border-color: rgba(201, 184, 138, 0.1) !important;
+  background: rgba(26, 158, 142, 0.06) !important;
+  border-color: rgba(26, 158, 142, 0.1) !important;
   color: #f3f4f6 !important;
 }
 
@@ -466,13 +474,13 @@
 }
 
 .admin-dialog .p-dialog-header-icon:hover {
-  background: rgba(201, 184, 138, 0.15) !important;
+  background: rgba(26, 158, 142, 0.1) !important;
   color: #163332 !important;
 }
 
 .dark .admin-dialog .p-dialog-header-icon:hover {
-  background: rgba(201, 184, 138, 0.1) !important;
-  color: #c9b88a !important;
+  background: rgba(26, 158, 142, 0.1) !important;
+  color: #26c9b4 !important;
 }
 
 /* Content area */
@@ -487,19 +495,19 @@
 
 /* Footer */
 .admin-dialog-footer {
-  background: rgba(201, 184, 138, 0.08) !important;
-  border-color: rgba(201, 184, 138, 0.2) !important;
+  background: rgba(26, 158, 142, 0.05) !important;
+  border-color: rgba(26, 158, 142, 0.12) !important;
 }
 
 .dark .admin-dialog-footer {
-  background: rgba(201, 184, 138, 0.04) !important;
-  border-color: rgba(201, 184, 138, 0.1) !important;
+  background: rgba(26, 158, 142, 0.04) !important;
+  border-color: rgba(26, 158, 142, 0.08) !important;
 }
 
 /* ===== Form Input Styles ===== */
 .admin-input {
-  background-color: rgba(201, 184, 138, 0.05) !important;
-  border: 1px solid rgba(201, 184, 138, 0.2) !important;
+  background-color: rgba(26, 158, 142, 0.04) !important;
+  border: 1px solid rgba(26, 158, 142, 0.15) !important;
   color: #1f2937 !important;
   padding: 0.5rem 0.75rem !important;
   height: 2.5rem !important;
@@ -508,42 +516,42 @@
 }
 
 .admin-input:focus {
-  border-color: #2a6857 !important;
-  box-shadow: 0 0 0 2px rgba(42, 104, 87, 0.1) !important;
+  border-color: #1a9e8e !important;
+  box-shadow: 0 0 0 2px rgba(26, 158, 142, 0.12) !important;
 }
 
 .dark .admin-input {
-  background-color: rgba(201, 184, 138, 0.03) !important;
-  border-color: rgba(201, 184, 138, 0.15) !important;
+  background-color: rgba(26, 158, 142, 0.03) !important;
+  border-color: rgba(26, 158, 142, 0.1) !important;
   color: #f3f4f6 !important;
 }
 
 .dark .admin-input:focus {
-  border-color: #c9b88a !important;
-  box-shadow: 0 0 0 2px rgba(201, 184, 138, 0.1) !important;
+  border-color: #26c9b4 !important;
+  box-shadow: 0 0 0 2px rgba(38, 201, 180, 0.12) !important;
 }
 
 /* ===== Dropdown Styles ===== */
 .admin-dropdown-root {
-  background-color: rgba(201, 184, 138, 0.05) !important;
-  border: 1px solid rgba(201, 184, 138, 0.2) !important;
+  background-color: rgba(26, 158, 142, 0.04) !important;
+  border: 1px solid rgba(26, 158, 142, 0.15) !important;
   height: 2.5rem !important;
   border-radius: 0.5rem !important;
 }
 
 .dark .admin-dropdown-root {
-  background-color: rgba(201, 184, 138, 0.03) !important;
-  border-color: rgba(201, 184, 138, 0.15) !important;
+  background-color: rgba(26, 158, 142, 0.03) !important;
+  border-color: rgba(26, 158, 142, 0.1) !important;
 }
 
 .admin-dropdown-panel {
   background-color: #ffffff !important;
-  border: 1px solid rgba(201, 184, 138, 0.2) !important;
+  border: 1px solid rgba(26, 158, 142, 0.15) !important;
 }
 
 .dark .admin-dropdown-panel {
   background-color: #1a2327 !important;
-  border-color: rgba(201, 184, 138, 0.15) !important;
+  border-color: rgba(26, 158, 142, 0.1) !important;
 }
 
 .admin-dropdown-panel .p-dropdown-items .p-dropdown-item {
@@ -560,7 +568,7 @@
 }
 
 .dark .admin-dropdown-panel .p-dropdown-items .p-dropdown-item:hover {
-  background: rgba(201, 184, 138, 0.1) !important;
+  background: rgba(26, 158, 142, 0.1) !important;
 }
 
 .admin-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
@@ -569,8 +577,8 @@
 }
 
 .dark .admin-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
-  background: rgba(201, 184, 138, 0.15) !important;
-  color: #c9b88a !important;
+  background: rgba(26, 158, 142, 0.15) !important;
+  color: #26c9b4 !important;
 }
 
 /* ===== InputNumber (Price fields) ===== */
@@ -584,8 +592,8 @@
 }
 
 .admin-inputnumber-wrap .p-inputtext {
-  background-color: rgba(201, 184, 138, 0.05) !important;
-  border: 1px solid rgba(201, 184, 138, 0.2) !important;
+  background-color: rgba(26, 158, 142, 0.04) !important;
+  border: 1px solid rgba(26, 158, 142, 0.15) !important;
   color: #1f2937 !important;
   border-radius: 0.5rem !important;
   height: 2.5rem !important;
@@ -594,45 +602,45 @@
 }
 
 .admin-inputnumber-wrap .p-inputtext:focus {
-  border-color: #2a6857 !important;
-  box-shadow: 0 0 0 2px rgba(42, 104, 87, 0.1) !important;
+  border-color: #1a9e8e !important;
+  box-shadow: 0 0 0 2px rgba(26, 158, 142, 0.12) !important;
 }
 
 .dark .admin-inputnumber-wrap .p-inputtext {
-  background-color: rgba(201, 184, 138, 0.03) !important;
-  border-color: rgba(201, 184, 138, 0.15) !important;
+  background-color: rgba(26, 158, 142, 0.03) !important;
+  border-color: rgba(26, 158, 142, 0.1) !important;
   color: #f3f4f6 !important;
 }
 
 .dark .admin-inputnumber-wrap .p-inputtext:focus {
-  border-color: #c9b88a !important;
-  box-shadow: 0 0 0 2px rgba(201, 184, 138, 0.1) !important;
+  border-color: #26c9b4 !important;
+  box-shadow: 0 0 0 2px rgba(38, 201, 180, 0.12) !important;
 }
 
 /* ===== InputNumber Buttons inside Dialog ===== */
 .admin-dialog .p-inputnumber-button {
-  background: rgba(42, 104, 87, 0.1) !important;
-  border: 1px solid rgba(201, 184, 138, 0.2) !important;
-  color: #2a6857 !important;
+  background: rgba(26, 158, 142, 0.1) !important;
+  border: 1px solid rgba(26, 158, 142, 0.15) !important;
+  color: #1a9e8e !important;
 }
 
 .admin-dialog .p-inputnumber-button:hover {
-  background: rgba(42, 104, 87, 0.2) !important;
+  background: rgba(26, 158, 142, 0.2) !important;
 }
 
 .dark .admin-dialog .p-inputnumber-button {
-  background: rgba(201, 184, 138, 0.08) !important;
-  border-color: rgba(201, 184, 138, 0.15) !important;
-  color: #c9b88a !important;
+  background: rgba(26, 158, 142, 0.08) !important;
+  border-color: rgba(26, 158, 142, 0.1) !important;
+  color: #26c9b4 !important;
 }
 
 .dark .admin-dialog .p-inputnumber-button:hover {
-  background: rgba(201, 184, 138, 0.15) !important;
+  background: rgba(26, 158, 142, 0.15) !important;
 }
 
 /* ===== Dropdown inside Dialog ===== */
 .admin-dialog .admin-dropdown-root {
-  border: 1px solid rgba(201, 184, 138, 0.2) !important;
+  border: 1px solid rgba(26, 158, 142, 0.15) !important;
   color: #374151 !important;
 }
 
@@ -703,9 +711,9 @@
 .admin-products-table .p-skeleton {
   background: linear-gradient(
     90deg,
-    rgba(201, 184, 138, 0.1) 25%,
-    rgba(201, 184, 138, 0.2) 50%,
-    rgba(201, 184, 138, 0.1) 75%
+    rgba(26, 158, 142, 0.08) 25%,
+    rgba(26, 158, 142, 0.15) 50%,
+    rgba(26, 158, 142, 0.08) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -730,30 +738,30 @@
   background: transparent;
 }
 .admin-products-table .p-datatable-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(201, 184, 138, 0.3);
+  background: rgba(26, 158, 142, 0.25);
   border-radius: 3px;
 }
 .admin-products-table .p-datatable-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 184, 138, 0.5);
+  background: rgba(26, 158, 142, 0.4);
 }
 
 /* Dark mode scrollbar */
 .dark .admin-products-table .p-datatable-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(201, 184, 138, 0.15);
+  background: rgba(26, 158, 142, 0.15);
 }
 .dark
   .admin-products-table
   .p-datatable-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 184, 138, 0.3);
+  background: rgba(26, 158, 142, 0.3);
 }
 
 /* Firefox */
 .admin-products-table .p-datatable-wrapper {
   scrollbar-width: thin;
-  scrollbar-color: rgba(201, 184, 138, 0.3) transparent;
+  scrollbar-color: rgba(26, 158, 142, 0.25) transparent;
 }
 .dark .admin-products-table .p-datatable-wrapper {
-  scrollbar-color: rgba(201, 184, 138, 0.15) transparent;
+  scrollbar-color: rgba(26, 158, 142, 0.15) transparent;
 }
 
 /* ===== Offer View Dialog Scrollbar (matches DataTable) ===== */
@@ -765,24 +773,24 @@
   background: transparent;
 }
 .admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-thumb {
-  background: rgba(201, 184, 138, 0.3);
+  background: rgba(26, 158, 142, 0.25);
   border-radius: 3px;
 }
 .admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 184, 138, 0.5);
+  background: rgba(26, 158, 142, 0.4);
 }
 .dark .admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-thumb {
-  background: rgba(201, 184, 138, 0.15);
+  background: rgba(26, 158, 142, 0.15);
 }
 .dark .admin-dialog .admin-offer-view-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 184, 138, 0.3);
+  background: rgba(26, 158, 142, 0.3);
 }
 .admin-dialog .admin-offer-view-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(201, 184, 138, 0.3) transparent;
+  scrollbar-color: rgba(26, 158, 142, 0.25) transparent;
 }
 .dark .admin-dialog .admin-offer-view-scroll {
-  scrollbar-color: rgba(201, 184, 138, 0.15) transparent;
+  scrollbar-color: rgba(26, 158, 142, 0.15) transparent;
 }
 
 /* ===== DataTable scrollable mode fixes ===== */
@@ -794,7 +802,7 @@
   z-index: 1;
 }
 .admin-products-table .p-datatable-thead > tr > th {
-  background: #faf8f4 !important;
+  background: #f1f5f4 !important;
 }
 .dark .admin-products-table .p-datatable-thead > tr > th {
   background: #151e22 !important;
@@ -817,8 +825,8 @@
 .dark .admin-products-table .p-paginator .p-paginator-prev:hover,
 .dark .admin-products-table .p-paginator .p-paginator-next:hover,
 .dark .admin-products-table .p-paginator .p-paginator-last:hover {
-  background: rgba(201, 184, 138, 0.1);
-  color: #c9b88a;
+  background: rgba(26, 158, 142, 0.1);
+  color: #26c9b4;
 }
 
 /* Paginator page numbers — dark mode base */
@@ -848,7 +856,7 @@
 .admin-dialog .p-tabview-nav {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(201, 184, 138, 0.2) !important;
+  border-bottom: 1px solid rgba(26, 158, 142, 0.12) !important;
   padding: 0 1.5rem !important;
   gap: 0;
 }
@@ -880,7 +888,7 @@
 }
 
 .dark .admin-dialog .p-tabview-nav {
-  border-bottom-color: rgba(201, 184, 138, 0.12) !important;
+  border-bottom-color: rgba(26, 158, 142, 0.1) !important;
 }
 
 .dark .admin-dialog .p-tabview-nav li .p-tabview-nav-link {
@@ -888,12 +896,12 @@
 }
 
 .dark .admin-dialog .p-tabview-nav li .p-tabview-nav-link:hover {
-  color: #c9b88a !important;
+  color: #26c9b4 !important;
 }
 
 .dark .admin-dialog .p-tabview-nav li.p-highlight .p-tabview-nav-link {
-  color: #c9b88a !important;
-  border-bottom-color: #c9b88a !important;
+  color: #26c9b4 !important;
+  border-bottom-color: #26c9b4 !important;
 }
 
 .admin-dialog .p-tabview-panels {
@@ -1046,9 +1054,9 @@
 /* ===== Product Images Panel ===== */
 
 .admin-image-dropzone {
-  border: 2px dashed rgba(201, 184, 138, 0.3);
+  border: 2px dashed rgba(26, 158, 142, 0.25);
   border-radius: 0.75rem;
-  background: rgba(201, 184, 138, 0.03);
+  background: rgba(26, 158, 142, 0.03);
   transition:
     border-color 0.2s,
     background 0.2s;
@@ -1059,22 +1067,22 @@
   background: rgba(42, 104, 87, 0.05);
 }
 .dark .admin-image-dropzone {
-  border-color: rgba(201, 184, 138, 0.15);
-  background: rgba(201, 184, 138, 0.02);
+  border-color: rgba(26, 158, 142, 0.15);
+  background: rgba(26, 158, 142, 0.02);
 }
 .dark .admin-image-dropzone:hover {
-  border-color: #c9b88a;
-  background: rgba(201, 184, 138, 0.05);
+  border-color: #26c9b4;
+  background: rgba(26, 158, 142, 0.05);
 }
 
 .admin-image-preview {
-  border: 2px solid rgba(201, 184, 138, 0.2);
+  border: 2px solid rgba(26, 158, 142, 0.15);
   border-radius: 0.75rem;
   overflow: hidden;
   position: relative;
 }
 .dark .admin-image-preview {
-  border-color: rgba(201, 184, 138, 0.12);
+  border-color: rgba(26, 158, 142, 0.1);
 }
 
 .admin-image-overlay {
@@ -1134,54 +1142,52 @@
   gap: 0.75rem;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  background: rgba(201, 184, 138, 0.04);
-  border: 1px solid rgba(201, 184, 138, 0.15);
+  background: rgba(26, 158, 142, 0.03);
+  border: 1px solid rgba(26, 158, 142, 0.12);
   transition: border-color 0.2s;
 }
 .admin-modifier-image-card:hover {
-  border-color: rgba(201, 184, 138, 0.3);
+  border-color: rgba(26, 158, 142, 0.25);
 }
 .dark .admin-modifier-image-card {
-  background: rgba(201, 184, 138, 0.02);
-  border-color: rgba(201, 184, 138, 0.1);
+  background: rgba(26, 158, 142, 0.02);
+  border-color: rgba(26, 158, 142, 0.08);
 }
 .dark .admin-modifier-image-card:hover {
-  border-color: rgba(201, 184, 138, 0.2);
+  border-color: rgba(26, 158, 142, 0.18);
 }
 
 /* ===== Order Detail Modal Sections ===== */
 .admin-order-detail-section {
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(201, 184, 138, 0.15);
+  border-bottom: 1px solid rgba(26, 158, 142, 0.1);
 }
 .admin-order-detail-section:last-child {
   border-bottom: none;
   padding-bottom: 0;
 }
 .dark .admin-order-detail-section {
-  border-bottom-color: rgba(201, 184, 138, 0.08);
+  border-bottom-color: rgba(26, 158, 142, 0.06);
 }
 
 /* Date input filter */
 .admin-date-filter {
-  background-color: rgba(201, 184, 138, 0.05);
-  border-color: rgba(201, 184, 138, 0.2);
+  background-color: rgba(26, 158, 142, 0.04);
+  border-color: rgba(26, 158, 142, 0.15);
   color: #374151;
   transition: border-color 0.2s;
 }
 .admin-date-filter:focus {
-  border-color: #2a6857;
-  box-shadow: 0 0 0 2px rgba(42, 104, 87, 0.15);
+  border-color: #1a9e8e;
+  box-shadow: 0 0 0 2px rgba(26, 158, 142, 0.15);
 }
 .dark .admin-date-filter {
-  background-color: rgba(201, 184, 138, 0.03);
-  border-color: rgba(201, 184, 138, 0.15);
+  background-color: rgba(26, 158, 142, 0.03);
+  border-color: rgba(26, 158, 142, 0.1);
   color: #e5e7eb;
   color-scheme: dark;
 }
 .dark .admin-date-filter:focus {
-  border-color: #c9b88a;
-  box-shadow: 0 0 0 2px rgba(201, 184, 138, 0.15);
+  border-color: #26c9b4;
+  box-shadow: 0 0 0 2px rgba(38, 201, 180, 0.15);
 }
-
-

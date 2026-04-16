@@ -23,7 +23,14 @@ import { Button } from "primereact/button";
 import { InputSwitch } from "primereact/inputswitch";
 import { Dropdown } from "primereact/dropdown";
 import { Skeleton } from "primereact/skeleton";
-import { Lock, Pencil, ShieldCheck, Store, Trash2, ImageOff } from "lucide-react";
+import {
+  Lock,
+  Pencil,
+  ShieldCheck,
+  Store,
+  Trash2,
+  ImageOff,
+} from "lucide-react";
 import SmartImage from "../../components/common/SmartImage";
 import { getOptimizedImageProps } from "../../utils/image";
 
@@ -165,13 +172,15 @@ function AdminProductsTable({
       <div className="flex flex-col">
         <div className="inline-flex items-center gap-2">
           {isSellerOwned ? (
-            <Store className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+            <Store className="h-3.5 w-3.5 text-[#1A9E8E] dark:text-[#26c9b4]" />
           ) : (
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
           )}
           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
             {isSellerOwned
-              ? rowData.seller_business_name || rowData.seller_name || "Seller Store"
+              ? rowData.seller_business_name ||
+                rowData.seller_name ||
+                "Seller Store"
               : "Platform Catalog"}
           </span>
         </div>
@@ -274,7 +283,7 @@ function AdminProductsTable({
     if (stock === 0) {
       colorClass = "text-red-600 dark:text-red-400 font-semibold";
     } else if (stock < 10) {
-      colorClass = "text-amber-600 dark:text-amber-400";
+      colorClass = "text-yellow-600 dark:text-yellow-400";
     }
     return <span className={colorClass}>{stock}</span>;
   };
@@ -406,7 +415,7 @@ function AdminProductsTable({
         {rowData.is_active ? "Active" : "Inactive"}
       </span>
       {isAdminView && rowData.seller_id ? (
-        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+        <span className="rounded-full bg-[#e6f7f5] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
           Moderated
         </span>
       ) : null}
@@ -434,7 +443,11 @@ function AdminProductsTable({
           }
           tooltipOptions={{ position: "top" }}
         >
-          {sellerLocked ? <Lock className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+          {sellerLocked ? (
+            <Lock className="h-4 w-4" />
+          ) : (
+            <Pencil className="h-4 w-4" />
+          )}
         </Button>
         <Button
           type="button"
@@ -506,99 +519,99 @@ function AdminProductsTable({
   return (
     <div className="admin-products-table-shell flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-stone-200/80 bg-white/80 p-2 shadow-[0_18px_45px_rgba(148,130,90,0.08)] backdrop-blur-sm dark:border-stone-800 dark:bg-[linear-gradient(180deg,rgba(25,31,34,0.94),rgba(17,22,25,0.96))] dark:shadow-[0_20px_55px_rgba(0,0,0,0.35)]">
       <div className="admin-products-table-wrapper flex min-h-0 flex-1 flex-col">
-      <DataTable
-        value={loading ? skeletonData : tableData}
-        lazy
-        paginator={totalRecords > 5}
-        first={lazyParams.first}
-        rows={lazyParams.rows}
-        totalRecords={totalRecords}
-        onPage={handlePage}
-        onSort={handleSort}
-        sortField={lazyParams.sortField}
-        sortOrder={lazyParams.sortOrder}
-        dataKey="product_id"
-        scrollable
-        scrollHeight="calc(100vh - 18rem)"
-        emptyMessage="No products found."
-        className="admin-products-table"
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-        tableStyle={{ minWidth: "70rem" }}
-      >
-        <Column
-          field="product_id"
-          header="ID"
-          sortable
-          body={loading ? skeletonTemplate : null}
-          style={{ width: "5rem" }}
-        />
-        <Column
-          header="Image"
-          body={loading ? skeletonImageTemplate : imageBodyTemplate}
-          style={{ width: "5rem" }}
-        />
-        <Column
-          field="display_name"
-          header="Name"
-          sortable
-          body={loading ? skeletonTemplate : nameBodyTemplate}
-          style={{ minWidth: "14rem" }}
-        />
-        {isAdminView ? (
+        <DataTable
+          value={loading ? skeletonData : tableData}
+          lazy
+          paginator={totalRecords > 5}
+          first={lazyParams.first}
+          rows={lazyParams.rows}
+          totalRecords={totalRecords}
+          onPage={handlePage}
+          onSort={handleSort}
+          sortField={lazyParams.sortField}
+          sortOrder={lazyParams.sortOrder}
+          dataKey="product_id"
+          scrollable
+          scrollHeight="calc(100vh - 18rem)"
+          emptyMessage="No products found."
+          className="admin-products-table"
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          tableStyle={{ minWidth: "70rem" }}
+        >
           <Column
-            field="seller_business_name"
-            header="Owner"
-            body={loading ? skeletonTemplate : ownerBodyTemplate}
-            style={{ minWidth: "12rem" }}
+            field="product_id"
+            header="ID"
+            sortable
+            body={loading ? skeletonTemplate : null}
+            style={{ width: "5rem" }}
           />
-        ) : null}
-        <Column
-          field="category_name"
-          header="Category"
-          sortable
-          body={loading ? skeletonTemplate : null}
-          style={{ minWidth: "8rem" }}
-        />
-        <Column
-          field="price"
-          header="Price"
-          sortable
-          body={loading ? skeletonTemplate : priceBodyTemplate}
-          style={{ minWidth: "8rem" }}
-        />
-        <Column
-          field="stock"
-          header="Stock"
-          sortable
-          body={loading ? skeletonTemplate : stockBodyTemplate}
-          style={{ minWidth: "5rem" }}
-        />
-        <Column
-          field="portion_count"
-          header="Portions"
-          body={loading ? skeletonDropdownTemplate : portionsBodyTemplate}
-          style={{ minWidth: "10rem" }}
-        />
-        <Column
-          field="modifier_count"
-          header="Modifiers"
-          body={loading ? skeletonDropdownTemplate : modifiersBodyTemplate}
-          style={{ minWidth: "10rem" }}
-        />
-        <Column
-          field="is_active"
-          header="Status"
-          body={loading ? skeletonSwitchTemplate : statusBodyTemplate}
-          style={{ minWidth: "8rem" }}
-        />
-        <Column
-          header="Actions"
-          body={loading ? skeletonActionTemplate : actionBodyTemplate}
-          exportable={false}
-          style={{ minWidth: "7rem" }}
-        />
-      </DataTable>
+          <Column
+            header="Image"
+            body={loading ? skeletonImageTemplate : imageBodyTemplate}
+            style={{ width: "5rem" }}
+          />
+          <Column
+            field="display_name"
+            header="Name"
+            sortable
+            body={loading ? skeletonTemplate : nameBodyTemplate}
+            style={{ minWidth: "14rem" }}
+          />
+          {isAdminView ? (
+            <Column
+              field="seller_business_name"
+              header="Owner"
+              body={loading ? skeletonTemplate : ownerBodyTemplate}
+              style={{ minWidth: "12rem" }}
+            />
+          ) : null}
+          <Column
+            field="category_name"
+            header="Category"
+            sortable
+            body={loading ? skeletonTemplate : null}
+            style={{ minWidth: "8rem" }}
+          />
+          <Column
+            field="price"
+            header="Price"
+            sortable
+            body={loading ? skeletonTemplate : priceBodyTemplate}
+            style={{ minWidth: "8rem" }}
+          />
+          <Column
+            field="stock"
+            header="Stock"
+            sortable
+            body={loading ? skeletonTemplate : stockBodyTemplate}
+            style={{ minWidth: "5rem" }}
+          />
+          <Column
+            field="portion_count"
+            header="Portions"
+            body={loading ? skeletonDropdownTemplate : portionsBodyTemplate}
+            style={{ minWidth: "10rem" }}
+          />
+          <Column
+            field="modifier_count"
+            header="Modifiers"
+            body={loading ? skeletonDropdownTemplate : modifiersBodyTemplate}
+            style={{ minWidth: "10rem" }}
+          />
+          <Column
+            field="is_active"
+            header="Status"
+            body={loading ? skeletonSwitchTemplate : statusBodyTemplate}
+            style={{ minWidth: "8rem" }}
+          />
+          <Column
+            header="Actions"
+            body={loading ? skeletonActionTemplate : actionBodyTemplate}
+            exportable={false}
+            style={{ minWidth: "7rem" }}
+          />
+        </DataTable>
       </div>
     </div>
   );

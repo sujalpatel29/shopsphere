@@ -37,9 +37,15 @@ function getExpectedDelivery() {
 }
 
 const formatPaymentMethod = (value) => {
-  const normalized = String(value || "").trim().toLowerCase();
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
 
-  if (!normalized || normalized === "cod" || normalized === "cash_on_delivery") {
+  if (
+    !normalized ||
+    normalized === "cod" ||
+    normalized === "cash_on_delivery"
+  ) {
     return "Cash on Delivery";
   }
 
@@ -70,8 +76,8 @@ export default function OrderSuccessPage() {
     Boolean(query.get("session_id")),
   );
   const [verificationError, setVerificationError] = useState("");
-  const [verifiedOrderData, setVerifiedOrderData] = useState(() =>
-    location.state?.orderData || persistedCheckout?.orderData || null,
+  const [verifiedOrderData, setVerifiedOrderData] = useState(
+    () => location.state?.orderData || persistedCheckout?.orderData || null,
   );
 
   const selectedAddress =
@@ -159,7 +165,9 @@ export default function OrderSuccessPage() {
     return (
       <div className="order-flow-shell">
         <div className="order-flow-card space-y-4">
-          <h2 className="order-flow-section-title">Payment verification failed</h2>
+          <h2 className="order-flow-section-title">
+            Payment verification failed
+          </h2>
           <p className="order-flow-section-copy">{verificationError}</p>
           <div className="flex flex-wrap gap-3">
             <Button
@@ -218,7 +226,9 @@ export default function OrderSuccessPage() {
         </div>
 
         <p className="order-flow-eyebrow mb-2">Order Confirmed</p>
-        <h1 className="order-flow-title mb-3">Yay! Order Placed Successfully</h1>
+        <h1 className="order-flow-title mb-3">
+          Yay! Order Placed Successfully
+        </h1>
         <p className="order-flow-text max-w-md">
           We've received your order and it's being processed. You'll get a
           confirmation once it's shipped.
@@ -241,11 +251,13 @@ export default function OrderSuccessPage() {
             <Divider className="!my-1" />
 
             <div className="flex items-start gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
                 <Truck className="h-5 w-5" />
               </span>
               <div>
-                <p className="order-flow-stat-label mb-0.5">Expected Delivery</p>
+                <p className="order-flow-stat-label mb-0.5">
+                  Expected Delivery
+                </p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
                   Arrives by {getExpectedDelivery()}
                 </p>
@@ -271,7 +283,7 @@ export default function OrderSuccessPage() {
           {selectedAddress && (
             <div className="order-flow-card">
               <div className="mb-4 flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
                   <MapPin className="h-5 w-5" />
                 </span>
                 <h3 className="order-flow-section-title">Delivering To</h3>

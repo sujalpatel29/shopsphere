@@ -16,7 +16,6 @@ import SellerProductsTab from "../pages/seller/SellerProductsTab";
 import SellerOrdersTab from "../pages/seller/SellerOrdersTab";
 import SellerProfileTab from "../pages/seller/SellerProfileTab";
 import CategoryPage from "../pages/customer/categoryPage";
-import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPage";
 import ItemsPage from "../pages/customer/ItemsPage";
 import OrderPage from "../pages/OrderPage";
 import OrderDetailPage from "../pages/OrderDetailPage";

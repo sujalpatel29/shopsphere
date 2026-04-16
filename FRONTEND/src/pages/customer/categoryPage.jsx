@@ -123,7 +123,7 @@ function CategoryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser } = useSelector((state) => state.auth);
   const { darkMode } = useTheme();
-  
+
   const [isTreeLoading, setIsTreeLoading] = useState(true);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [products, setProducts] = useState([]);
@@ -404,7 +404,8 @@ function CategoryPage() {
 
         // Client-side sort fallback (in case backend ignores sortField/sortOrder)
         if (sortField && items.length > 1) {
-          const orderFactor = (sortOrder || "asc").toLowerCase() === "desc" ? -1 : 1;
+          const orderFactor =
+            (sortOrder || "asc").toLowerCase() === "desc" ? -1 : 1;
           const safeText = (value) => String(value ?? "").toLowerCase();
           const safeNumber = (value) => {
             const n = Number(value);
@@ -420,10 +421,14 @@ function CategoryPage() {
 
           const compare = (a, b) => {
             if (sortField === "price") {
-              return (getEffectivePrice(a) - getEffectivePrice(b)) * orderFactor;
+              return (
+                (getEffectivePrice(a) - getEffectivePrice(b)) * orderFactor
+              );
             }
             if (sortField === "created_at") {
-              return (safeDate(a.created_at) - safeDate(b.created_at)) * orderFactor;
+              return (
+                (safeDate(a.created_at) - safeDate(b.created_at)) * orderFactor
+              );
             }
             if (sortField === "name") {
               const left = safeText(a.display_name ?? a.name);
@@ -573,7 +578,9 @@ function CategoryPage() {
             : undefined,
         quantity: 1,
       });
-      window.dispatchEvent(new CustomEvent("cart:updated"));
+      window.dispatchEvent(
+        new CustomEvent("cart:updated", { detail: { delta: 1 } }),
+      );
       const id = pid;
       if (id) {
         setRecentlyAddedId(id);
@@ -588,12 +595,12 @@ function CategoryPage() {
 
         if (fromEl && cartEl) {
           const fromRect = fromEl.getBoundingClientRect();
-          const toRect   = cartEl.getBoundingClientRect();
+          const toRect = cartEl.getBoundingClientRect();
 
-          const fromX = fromRect.left + fromRect.width  / 2;
-          const fromY = fromRect.top  + fromRect.height / 2;
-          const toX   = toRect.left   + toRect.width    / 2;
-          const toY   = toRect.top    + toRect.height   / 2;
+          const fromX = fromRect.left + fromRect.width / 2;
+          const fromY = fromRect.top + fromRect.height / 2;
+          const toX = toRect.left + toRect.width / 2;
+          const toY = toRect.top + toRect.height / 2;
 
           const dx = toX - fromX;
           const dy = toY - fromY;
@@ -604,12 +611,16 @@ function CategoryPage() {
 
           // ── 1. Particle burst ────────────────────────────────────────
           const PARTICLE_COLORS = [
-            "#2f7a6f", "#34d399", "#6ee7b7",
-            "#fbbf24", "#f59e0b", "#fff",
+            "#2f7a6f",
+            "#34d399",
+            "#6ee7b7",
+            "#fbbf24",
+            "#f59e0b",
+            "#fff",
           ];
           for (let i = 0; i < 10; i++) {
             const angle = (i / 10) * 2 * Math.PI;
-            const dist  = 28 + Math.random() * 36;
+            const dist = 28 + Math.random() * 36;
             const p = document.createElement("div");
             p.className = "shopsphere-particle";
             p.style.cssText = `
@@ -631,7 +642,7 @@ function CategoryPage() {
 
           // ── 2. Flying bubble ────────────────────────────────────────
           const fly = document.createElement("div");
-          fly.className   = "shopsphere-fly-to-cart";
+          fly.className = "shopsphere-fly-to-cart";
           fly.style.cssText = `left: ${fromX}px; top: ${fromY}px;`;
 
           const inner = document.createElement("div");
@@ -651,13 +662,13 @@ function CategoryPage() {
           document.body.appendChild(fly);
 
           // Set CSS custom properties for the arc keyframes
-          fly.style.setProperty("--fly-dx",   `${dx}px`);
-          fly.style.setProperty("--fly-dy",   `0px`);  // Y handled on inner
-          inner.style.setProperty("--fly-dy",   `${dy}px`);
+          fly.style.setProperty("--fly-dx", `${dx}px`);
+          fly.style.setProperty("--fly-dy", `0px`); // Y handled on inner
+          inner.style.setProperty("--fly-dy", `${dy}px`);
           inner.style.setProperty("--fly-peak", `${peakY}px`);
 
           // Apply keyframe animations — X on outer (linear), Y+scale on inner (arc)
-          fly.style.animation   = `flyArcX ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards,
+          fly.style.animation = `flyArcX ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards,
                                     flyFadeOut ${DURATION}ms ease forwards`;
           inner.style.animation = `flyArcY ${DURATION}ms cubic-bezier(0.42, 0, 0.58, 1) forwards`;
 
@@ -701,10 +712,17 @@ function CategoryPage() {
       .map((seg) => {
         const [idPart, rest] = seg.split("@@");
         if (!idPart || !rest) return null;
-        const [portion_value, price, discounted_price, stock] = rest.split("||");
+        const [portion_value, price, discounted_price, stock] =
+          rest.split("||");
         const product_portion_id = Number(idPart);
         if (!product_portion_id) return null;
-        return { product_portion_id, portion_value, price: Number(price), discounted_price: discounted_price ? Number(discounted_price) : null, stock: Number(stock) };
+        return {
+          product_portion_id,
+          portion_value,
+          price: Number(price),
+          discounted_price: discounted_price ? Number(discounted_price) : null,
+          stock: Number(stock),
+        };
       })
       .filter(Boolean);
   };
@@ -741,68 +759,67 @@ function CategoryPage() {
       )}
       <div className="container mx-auto px-4 py-8">
         <div className="category-page-layout flex flex-col lg:flex-row gap-8">
-        <CategoryFilterSidebar
-          isLoading={isTreeLoading}
-          categoryTree={categoryTree}
-          selectedKeys={selectedKeys}
-          onSelectionChange={setSelectedKeys}
-          priceRange={priceRange}
-          minPrice={priceBounds.min}
-          maxPrice={priceBounds.max}
-          onPriceRangeChange={(nextRange) => {
-            hasUserPriceSelectionRef.current = true;
-            setPriceRange(nextRange);
-          }}
-        />
-
-
-        <div className="category-results flex-1 space-y-6">
-          <div className="category-controls flex flex-col gap-3 md:flex-row md:items-center">
-            <div className="category-control-item flex-1">
-              <CategorySearchBar
-                isLoading={isTreeLoading}
-                searchText={searchText}
-                onSearchChange={setSearchText}
-              />
-            </div>
-            <div className="category-control-item w-full md:w-64">
-              <Dropdown
-                value={sortKey || null}
-                options={sortOptions}
-                onChange={(e) => handleSortChange(e.value)}
-                placeholder="Sort by"
-                className={`category-sort-dropdown w-full ${
-                  darkMode ? "category-sort-dropdown-dark" : ""
-                }`}
-                panelClassName="category-sort-panel"
-              />
-            </div>
-          </div>
-          <SelectedFilters
-            isLoading={isProductsLoading}
-            categoryTags={categoryTags}
-            searchText={debouncedSearchText}
-            priceTag={priceTag}
-            onRemoveCategory={handleRemoveCategoryTag}
-            onClearSearch={() => setSearchText("")}
-            onClearPrice={handleClearPrice}
-          />
-          <ProductGrid
-            isLoading={isProductsLoading}
-            products={products}
-            onAddToCart={handleAddToCart}
-            paginator={{
-              enabled: true,
-              first: pager.first,
-              rows: pager.rows,
-              totalRecords: totalRecords,
-              rowsPerPageOptions: [8, 16, 24, 32],
+          <CategoryFilterSidebar
+            isLoading={isTreeLoading}
+            categoryTree={categoryTree}
+            selectedKeys={selectedKeys}
+            onSelectionChange={setSelectedKeys}
+            priceRange={priceRange}
+            minPrice={priceBounds.min}
+            maxPrice={priceBounds.max}
+            onPriceRangeChange={(nextRange) => {
+              hasUserPriceSelectionRef.current = true;
+              setPriceRange(nextRange);
             }}
-            onPageChange={(event) =>
-              setPager({ first: event.first, rows: event.rows })
-            }
           />
-        </div>
+
+          <div className="category-results flex-1 space-y-6">
+            <div className="category-controls flex flex-col gap-3 md:flex-row md:items-center">
+              <div className="category-control-item flex-1">
+                <CategorySearchBar
+                  isLoading={isTreeLoading}
+                  searchText={searchText}
+                  onSearchChange={setSearchText}
+                />
+              </div>
+              <div className="category-control-item w-full md:w-64">
+                <Dropdown
+                  value={sortKey || null}
+                  options={sortOptions}
+                  onChange={(e) => handleSortChange(e.value)}
+                  placeholder="Sort by"
+                  className={`category-sort-dropdown w-full ${
+                    darkMode ? "category-sort-dropdown-dark" : ""
+                  }`}
+                  panelClassName="category-sort-panel"
+                />
+              </div>
+            </div>
+            <SelectedFilters
+              isLoading={isProductsLoading}
+              categoryTags={categoryTags}
+              searchText={debouncedSearchText}
+              priceTag={priceTag}
+              onRemoveCategory={handleRemoveCategoryTag}
+              onClearSearch={() => setSearchText("")}
+              onClearPrice={handleClearPrice}
+            />
+            <ProductGrid
+              isLoading={isProductsLoading}
+              products={products}
+              onAddToCart={handleAddToCart}
+              paginator={{
+                enabled: true,
+                first: pager.first,
+                rows: pager.rows,
+                totalRecords: totalRecords,
+                rowsPerPageOptions: [8, 16, 24, 32],
+              }}
+              onPageChange={(event) =>
+                setPager({ first: event.first, rows: event.rows })
+              }
+            />
+          </div>
         </div>
       </div>
     </div>

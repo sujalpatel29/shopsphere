@@ -45,12 +45,7 @@ const dropdownPt = {
   },
 };
 
-function OrdersToolbar({
-  onSearch,
-  filters,
-  onFilterChange,
-  stats,
-}) {
+function OrdersToolbar({ onSearch, filters, onFilterChange, stats }) {
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -67,7 +62,7 @@ function OrdersToolbar({
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => onSearch(value), 300);
     },
-    [onSearch]
+    [onSearch],
   );
 
   const totalOrders = Number(stats?.totalOrders) || 0;
@@ -81,16 +76,28 @@ function OrdersToolbar({
         {/* Stats */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Total</span>
-            <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{totalOrders}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Total
+            </span>
+            <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
+              {totalOrders}
+            </span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40">
-            <span className="text-xs text-amber-600 dark:text-amber-400">Pending</span>
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">{totalPending}</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/40">
+            <span className="text-xs text-yellow-600 dark:text-yellow-400">
+              Pending
+            </span>
+            <span className="text-xs font-bold text-yellow-700 dark:text-yellow-300">
+              {totalPending}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40">
-            <span className="text-xs text-green-600 dark:text-green-400">Delivered</span>
-            <span className="text-xs font-bold text-green-700 dark:text-green-300">{totalDelivered}</span>
+            <span className="text-xs text-green-600 dark:text-green-400">
+              Delivered
+            </span>
+            <span className="text-xs font-bold text-green-700 dark:text-green-300">
+              {totalDelivered}
+            </span>
           </div>
         </div>
 

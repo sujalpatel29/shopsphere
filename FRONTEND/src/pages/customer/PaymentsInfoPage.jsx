@@ -46,8 +46,8 @@ function PaymentsInfoPage() {
               key={m.title}
               className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-5 dark:border-[#1f2933] dark:bg-[#151e22]"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20">
-                <Icon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e6f7f5] dark:bg-[#1A9E8E]/20">
+                <Icon className="h-5 w-5 text-[#1A9E8E] dark:text-[#26c9b4]" />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-slate-100">

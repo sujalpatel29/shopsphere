@@ -61,7 +61,10 @@ function AdminSellersTab() {
       showToast(
         "error",
         "Error",
-        getApiErrorMessage(error, "We could not load seller applications right now."),
+        getApiErrorMessage(
+          error,
+          "We could not load seller applications right now.",
+        ),
       );
     } finally {
       setLoading(false);
@@ -133,7 +136,10 @@ function AdminSellersTab() {
       showToast(
         "error",
         "Error",
-        getApiErrorMessage(error, "Failed to update seller verification status."),
+        getApiErrorMessage(
+          error,
+          "Failed to update seller verification status.",
+        ),
       );
     } finally {
       setSubmitting(false);
@@ -236,7 +242,7 @@ function AdminSellersTab() {
     {
       label: "Pending Review",
       count: sellerStats.pending,
-      icon: <Clock3 size={22} className="text-amber-500" />,
+      icon: <Clock3 size={22} className="text-[#1A9E8E]" />,
     },
     {
       label: "Approved",
@@ -266,8 +272,10 @@ function AdminSellersTab() {
         ))}
       </div>
 
-      <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
-        Seller profiles are reviewed here. Admin can approve or reject applications, but seller business details remain seller-managed once approved.
+      <div className="mb-4 rounded-2xl border border-[#1A9E8E]/30 bg-[#e6f7f5] px-4 py-3 text-sm text-[#117a6e] dark:border-[#1A9E8E]/20 dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
+        Seller profiles are reviewed here. Admin can approve or reject
+        applications, but seller business details remain seller-managed once
+        approved.
       </div>
 
       <div className="admin-products-card flex-1 flex flex-col min-h-0">
@@ -344,45 +352,69 @@ function AdminSellersTab() {
               header="Business"
               field="business_name"
               sortable
-              body={loading ? () => <Skeleton width="9rem" height="1.2rem" /> : businessTemplate}
+              body={
+                loading
+                  ? () => <Skeleton width="9rem" height="1.2rem" />
+                  : businessTemplate
+              }
               style={{ minWidth: "14rem" }}
             />
             <Column
               header="Owner"
               field="name"
               sortable
-              body={loading ? () => <Skeleton width="10rem" height="1.2rem" /> : ownerTemplate}
+              body={
+                loading
+                  ? () => <Skeleton width="10rem" height="1.2rem" />
+                  : ownerTemplate
+              }
               style={{ minWidth: "14rem" }}
             />
             <Column
               header="Phone"
               field="phone"
-              body={loading ? () => <Skeleton width="7rem" height="1.2rem" /> : null}
+              body={
+                loading ? () => <Skeleton width="7rem" height="1.2rem" /> : null
+              }
               style={{ minWidth: "9rem" }}
             />
             <Column
               header="GST"
               field="gst_number"
-              body={loading ? () => <Skeleton width="7rem" height="1.2rem" /> : null}
+              body={
+                loading ? () => <Skeleton width="7rem" height="1.2rem" /> : null
+              }
               style={{ minWidth: "10rem" }}
             />
             <Column
               header="Status"
               field="verification_status"
               sortable
-              body={loading ? () => <Skeleton width="6rem" height="1.8rem" /> : statusTemplate}
+              body={
+                loading
+                  ? () => <Skeleton width="6rem" height="1.8rem" />
+                  : statusTemplate
+              }
               style={{ minWidth: "8rem" }}
             />
             <Column
               header="Applied On"
               field="created_at"
               sortable
-              body={loading ? () => <Skeleton width="7rem" height="1.2rem" /> : dateTemplate}
+              body={
+                loading
+                  ? () => <Skeleton width="7rem" height="1.2rem" />
+                  : dateTemplate
+              }
               style={{ minWidth: "9rem" }}
             />
             <Column
               header="Actions"
-              body={loading ? () => <Skeleton width="6rem" height="2rem" /> : actionsTemplate}
+              body={
+                loading
+                  ? () => <Skeleton width="6rem" height="2rem" />
+                  : actionsTemplate
+              }
               style={{ minWidth: "9rem" }}
             />
           </DataTable>
@@ -409,7 +441,7 @@ function AdminSellersTab() {
         {selectedSeller ? (
           <div className="space-y-5">
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#f1f5f4] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Business
                 </p>
@@ -417,7 +449,7 @@ function AdminSellersTab() {
                   {selectedSeller.business_name}
                 </p>
               </div>
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#f1f5f4] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Status
                 </p>
@@ -425,13 +457,14 @@ function AdminSellersTab() {
                   <Tag
                     value={selectedSeller.verification_status}
                     severity={
-                      statusTone[selectedSeller.verification_status] || "secondary"
+                      statusTone[selectedSeller.verification_status] ||
+                      "secondary"
                     }
                     className="capitalize"
                   />
                 </div>
               </div>
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#f1f5f4] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Applicant
                 </p>
@@ -450,7 +483,8 @@ function AdminSellersTab() {
                   Business Description
                 </p>
                 <p className="mt-3 text-sm text-gray-700 dark:text-slate-200">
-                  {selectedSeller.business_description || "No business description provided."}
+                  {selectedSeller.business_description ||
+                    "No business description provided."}
                 </p>
               </div>
               <div className="rounded-2xl border border-gray-200 p-4 dark:border-gray-700">
@@ -458,7 +492,8 @@ function AdminSellersTab() {
                   Business Address
                 </p>
                 <p className="mt-3 text-sm text-gray-700 dark:text-slate-200">
-                  {selectedSeller.business_address || "No business address provided."}
+                  {selectedSeller.business_address ||
+                    "No business address provided."}
                 </p>
               </div>
             </div>
@@ -509,7 +544,9 @@ function AdminSellersTab() {
       <Dialog
         visible={verifyDialogVisible}
         onHide={() => setVerifyDialogVisible(false)}
-        header={verifyAction === "approved" ? "Approve Seller" : "Reject Seller"}
+        header={
+          verifyAction === "approved" ? "Approve Seller" : "Reject Seller"
+        }
         style={{ width: "440px", maxWidth: "94vw" }}
         modal
         pt={{

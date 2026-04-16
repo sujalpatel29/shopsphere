@@ -102,7 +102,7 @@ function OfferViewDialog({ visible, onHide, offer }) {
               "Offer Type",
               <Tag
                 value={String(offer.offer_type || "").replaceAll("_", " ")}
-                className="!font-medium !text-xs !px-2 !py-1 !rounded-full !bg-amber-100 !text-amber-800 dark:!bg-amber-900/40 dark:!text-amber-200"
+                className="!font-medium !text-xs !px-2 !py-1 !rounded-full !bg-[#e6f7f5] !text-[#117a6e] dark:!bg-[#1A9E8E]/20 dark:!text-[#26c9b4]"
               />,
             )}
             {infoItem("Offer Name", offer.offer_name || "-")}

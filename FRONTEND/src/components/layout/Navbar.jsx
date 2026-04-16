@@ -61,8 +61,20 @@ function Navbar() {
 
   useEffect(() => {
     fetchCartCount();
-    window.addEventListener("cart:updated", fetchCartCount);
-    return () => window.removeEventListener("cart:updated", fetchCartCount);
+
+    const handleCartUpdate = (e) => {
+      const detail = e.detail;
+      if (detail && typeof detail.totalItems === "number") {
+        setItemCount(detail.totalItems);
+      } else if (detail && typeof detail.delta === "number") {
+        setItemCount((prev) => Math.max(0, prev + detail.delta));
+      } else {
+        fetchCartCount();
+      }
+    };
+
+    window.addEventListener("cart:updated", handleCartUpdate);
+    return () => window.removeEventListener("cart:updated", handleCartUpdate);
   }, [fetchCartCount]);
 
   useEffect(() => {
@@ -174,11 +186,7 @@ function Navbar() {
     (event) => {
       event.preventDefault();
       const query = searchText.trim();
-      navigate(
-        query
-          ? `/shop?search=${encodeURIComponent(query)}`
-          : "/shop",
-      );
+      navigate(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
       setMenuOpen(false);
     },
     [navigate, searchText],
@@ -195,10 +203,10 @@ function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-40 border-b shadow-[0_10px_26px_-22px_rgba(15,23,42,0.6)] backdrop-blur ${
+        className={`sticky top-0 z-40 border-b bg-white shadow-[0_2px_6px_rgba(0,0,0,0.05)] backdrop-blur ${
           darkMode
-            ? "border-[#1f2933] bg-[#151e22]/95"
-            : "border-amber-200/70 bg-[#fff8ee]/95"
+            ? "border-[#2a3f38] bg-[#132420]/95"
+            : "border-[#E8E3DA] bg-white/95"
         }`}
       >
         <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-4 py-4 md:gap-6 md:px-8 lg:px-12">
@@ -207,8 +215,8 @@ function Navbar() {
             onClick={() => setMenuOpen(true)}
             className={`!inline-flex !items-center !gap-2 !rounded-lg !border !bg-transparent !px-3 !py-2 !text-sm !font-medium !shadow-none ${
               darkMode
-                ? "!border-[#1f2933] !text-slate-200 hover:!border-amber-400 hover:!bg-[#1a2327] hover:!text-amber-300"
-                : "!border-gray-200 !text-gray-700 hover:!border-amber-200 hover:!bg-amber-50 hover:!text-amber-700"
+                ? "!border-[#2a3f38] !text-[#F6F3EE] hover:!border-[#1A9E8E] hover:!bg-[#1a2e28] hover:!text-[#1A9E8E]"
+                : "!border-[#DDD8CF] !text-[#111111] hover:!border-[#1A9E8E] hover:!bg-[#F0EBE3] hover:!text-[#1A9E8E]"
             }`}
           >
             <Menu className="h-4 w-4" />
@@ -225,7 +233,7 @@ function Navbar() {
 
           <form
             onSubmit={handleSearchSubmit}
-            className={`hidden flex-1 items-center rounded-lg border px-3 py-2 md:flex ${darkMode ? "border-[#1f2933] bg-[#151e22]" : "border-amber-200/80 bg-[#fff8ee]"}`}
+            className={`hidden flex-1 items-center rounded-lg border px-3 py-2 md:flex ${darkMode ? "border-[#2a3f38] bg-[#1a2e28]" : "border-[#DDD8CF] bg-[#F6F3EE]"}`}
           >
             <Search
               className={`h-4 w-4 ${darkMode ? "text-slate-400" : "text-gray-500"}`}
@@ -244,8 +252,8 @@ function Navbar() {
               onClick={toggleDarkMode}
               className={`!inline-flex !items-center !justify-center !rounded-lg !border !bg-transparent !px-2.5 !py-2 !text-xs !font-semibold !shadow-none ${
                 darkMode
-                  ? "!border-[#1f2933] !text-amber-300 hover:!border-amber-400 hover:!bg-[#1a2327]"
-                  : "!border-amber-200 !text-amber-700 hover:!bg-amber-50"
+                  ? "!border-[#2a3f38] !text-[#1A9E8E] hover:!border-[#1A9E8E] hover:!bg-[#1a2e28]"
+                  : "!border-[#DDD8CF] !text-[#1A9E8E] hover:!bg-[#F0EBE3]"
               }`}
               aria-label="Toggle dark mode"
             >
@@ -258,19 +266,19 @@ function Navbar() {
 
             <Link
               to="/shop"
-              className={`hidden transition md:inline-flex ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
+              className={`hidden transition md:inline-flex ${darkMode ? "text-[#F6F3EE] hover:text-[#1A9E8E]" : "text-[#5A5550] hover:text-[#1A9E8E]"}`}
             >
               Shop
             </Link>
             <Link
               to="/cart"
-              className={`relative transition ${darkMode ? "text-slate-200 hover:text-amber-300" : "text-gray-700 hover:text-amber-600"}`}
+              className={`relative transition ${darkMode ? "text-[#F6F3EE] hover:text-[#1A9E8E]" : "text-[#5A5550] hover:text-[#1A9E8E]"}`}
               aria-label="Cart"
               id="shopsphere-cart-link"
             >
               <ShoppingCart className="h-5 w-5" />
               {itemCount > 0 && (
-                <span className="absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-600 px-1 font-accent text-xs font-semibold text-white">
+                <span className="absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#1A9E8E] px-1 font-accent text-xs font-semibold text-white">
                   {itemCount}
                 </span>
               )}
@@ -282,8 +290,8 @@ function Navbar() {
                   to={dashboardPath}
                   className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-2 transition ${
                     darkMode
-                      ? "border-[#1f2933] text-slate-200 hover:border-amber-400 hover:bg-[#1a2327] hover:text-amber-300"
-                      : "border-gray-200 text-gray-600 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                      ? "border-[#2a3f38] text-[#F6F3EE] hover:border-[#1A9E8E] hover:bg-[#1a2e28] hover:text-[#1A9E8E]"
+                      : "border-[#DDD8CF] text-[#7C7670] hover:border-[#1A9E8E] hover:bg-[#F0EBE3] hover:text-[#1A9E8E]"
                   }`}
                   aria-label="Open profile dashboard"
                 >
@@ -294,7 +302,7 @@ function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-amber-600/20 transition-all hover:bg-amber-700 hover:shadow-lg"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#1A9E8E] px-4 py-2 text-sm font-medium text-white shadow-md shadow-[#1A9E8E]/20 transition-all hover:bg-[#168c7e] hover:shadow-lg"
               >
                 Login
               </Link>
@@ -305,19 +313,19 @@ function Navbar() {
         <div
           className={`hidden border-t md:block ${
             darkMode
-              ? "border-[#1f2933] bg-[#1a2327]"
-              : "border-amber-200/70 bg-[#f5ecde]"
+              ? "border-[#2a3f38] bg-[#1a2e28]"
+              : "border-[#E8E3DA] bg-[#F0EBE3]"
           }`}
         >
           <nav className="relative mx-auto flex w-full max-w-[1600px] items-center gap-2 overflow-hidden px-4 py-1.5 md:px-8 lg:px-12">
             <span
               className={`pointer-events-none absolute -left-12 top-1/2 h-14 w-14 -translate-y-1/2 rounded-full blur-2xl animate-pulse ${
-                darkMode ? "bg-amber-300/20" : "bg-amber-400/25"
+                darkMode ? "bg-[#1A9E8E]/20" : "bg-[#1A9E8E]/25"
               }`}
             />
             <span
               className={`pointer-events-none absolute right-10 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full blur-xl animate-pulse ${
-                darkMode ? "bg-teal-300/15" : "bg-orange-300/25"
+                darkMode ? "bg-[#1A9E8E]/15" : "bg-[#1A9E8E]/20"
               }`}
             />
             {topNavLinks.map((item) => (
@@ -326,8 +334,8 @@ function Navbar() {
                 to={item.href}
                 className={`relative z-10 rounded-md px-2 py-1 font-accent text-[13px] font-semibold transition ${
                   darkMode
-                    ? "text-slate-300 hover:text-amber-300"
-                    : "text-gray-700 hover:text-amber-700"
+                    ? "text-[#A8A39A] hover:text-[#1A9E8E]"
+                    : "text-[#5A5550] hover:text-[#1A9E8E]"
                 }`}
               >
                 {item.label}
@@ -337,20 +345,20 @@ function Navbar() {
         </div>
 
         <div
-          className={`border-t px-4 py-3 md:hidden ${darkMode ? "border-[#1f2933]" : "border-amber-200/70"}`}
+          className={`border-t px-4 py-3 md:hidden ${darkMode ? "border-[#2a3f38]" : "border-[#E8E3DA]"}`}
         >
           <form
             onSubmit={handleSearchSubmit}
-            className={`flex items-center rounded-lg border px-3 py-2 ${darkMode ? "border-[#1f2933] bg-[#151e22]" : "border-amber-200/80 bg-[#fff8ee]"}`}
+            className={`flex items-center rounded-lg border px-3 py-2 ${darkMode ? "border-[#2a3f38] bg-[#1a2e28]" : "border-[#DDD8CF] bg-[#F6F3EE]"}`}
           >
             <Search
-              className={`h-4 w-4 ${darkMode ? "text-slate-400" : "text-gray-500"}`}
+              className={`h-4 w-4 ${darkMode ? "text-[#A8A39A]" : "text-[#7C7670]"}`}
             />
             <InputText
               placeholder="Search"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className={`ml-2 w-full border-0 bg-transparent p-0 text-sm shadow-none focus:shadow-none ${darkMode ? "text-slate-100 placeholder:text-slate-400" : "text-gray-900 placeholder:text-gray-500"}`}
+              className={`ml-2 w-full border-0 bg-transparent p-0 text-sm shadow-none focus:shadow-none ${darkMode ? "text-[#F6F3EE] placeholder:text-[#A8A39A]" : "text-[#111111] placeholder:text-[#7C7670]"}`}
             />
           </form>
         </div>
@@ -362,23 +370,23 @@ function Navbar() {
         position="left"
         showCloseIcon={false}
         blockScroll
-        className={`shopsphere-sidebar ${darkMode ? "bg-[#151e22] text-slate-100" : "bg-[#fff8ee] text-gray-900"} !w-[86vw] !max-w-[380px]`}
+        className={`shopsphere-sidebar ${darkMode ? "bg-[#132420] text-[#F6F3EE]" : "bg-white text-[#111111]"} !w-[86vw] !max-w-[380px]`}
         pt={{
           content: { className: "flex h-full flex-col p-0" },
         }}
       >
-        <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2927] to-[#163b36] px-4 py-4 text-white">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(201,184,138,0.08),transparent_60%)]" />
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#132420] to-[#1a2e28] px-4 py-4 text-white">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(26,158,142,0.12),transparent_60%)]" />
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#c9b88a]/15 ring-1 ring-[#c9b88a]/20">
-                <UserCircle2 className="h-[18px] w-[18px] text-[#c9b88a]" />
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A9E8E]/20 ring-1 ring-[#1A9E8E]/30">
+                <UserCircle2 className="h-[18px] w-[18px] text-[#1A9E8E]" />
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold tracking-tight text-white/90">
                   {currentUser?.email?.split("@")[0] || "Guest"}
                 </p>
-                <p className="font-accent text-[9px] font-medium uppercase tracking-[0.15em] text-[#c9b88a]/50">
+                <p className="font-accent text-[9px] font-medium uppercase tracking-[0.15em] text-[#1A9E8E]/60">
                   My Account
                 </p>
               </div>
@@ -395,13 +403,13 @@ function Navbar() {
         <div className="flex-1" style={{ minHeight: 0 }}>
           <ScrollPanel
             style={{ width: "100%", height: "100%" }}
-            className={`sidebar-scrollpanel ${darkMode ? "bg-[#151e22]" : "bg-[#f5ecde]"}`}
+            className={`sidebar-scrollpanel ${darkMode ? "bg-[#132420]" : "bg-[#F6F3EE]"}`}
           >
             <section
-              className={`mx-4 mt-5 rounded-2xl border px-4 py-4 ${darkMode ? "border-[#1f2933] bg-[#1a2327]" : "border-gray-100/80 bg-white/70"}`}
+              className={`mx-4 mt-5 rounded-2xl border px-4 py-4 ${darkMode ? "border-[#2a3f38] bg-[#1a2e28]" : "border-[#DDD8CF] bg-white"}`}
             >
               <h3
-                className={`font-accent text-[10px] font-semibold uppercase tracking-[0.2em] ${darkMode ? "text-slate-400" : "text-gray-400"}`}
+                className={`font-accent text-[10px] font-semibold uppercase tracking-[0.2em] ${darkMode ? "text-[#A8A39A]" : "text-[#7C7670]"}`}
               >
                 Categories
               </h3>
@@ -414,7 +422,7 @@ function Navbar() {
                   return (
                     <div
                       key={parent.category_id}
-                      className={`rounded-xl border ${darkMode ? "border-[#1f2933] bg-[#0b1114]/40" : "border-gray-100 bg-[#fdf6ea]/60"}`}
+                      className={`rounded-xl border ${darkMode ? "border-[#2a3f38] bg-[#132420]/50" : "border-[#E8E3DA] bg-[#F0EBE3]"}`}
                     >
                       <Button
                         type="button"
@@ -423,7 +431,7 @@ function Navbar() {
                             ? toggleCategory(parent.category_id)
                             : handleCategoryNavigate(parent.category_id)
                         }
-                        className={`!flex !w-full !items-center !justify-between !rounded-xl !bg-transparent !px-3 !py-2.5 !text-left !text-sm !font-medium !shadow-none ${darkMode ? "!text-slate-200 hover:!bg-[#1a2327] hover:!text-amber-300" : "!text-gray-700 hover:!bg-amber-50 hover:!text-amber-700"}`}
+                        className={`!flex !w-full !items-center !justify-between !rounded-xl !bg-transparent !px-3 !py-2.5 !text-left !text-sm !font-medium !shadow-none ${darkMode ? "!text-[#F6F3EE] hover:!bg-[#1a2e28] hover:!text-[#1A9E8E]" : "!text-[#111111] hover:!bg-[#F0EBE3] hover:!text-[#1A9E8E]"}`}
                       >
                         <span>{parent.category_name}</span>
                         {hasChildren ? (
@@ -447,8 +455,8 @@ function Navbar() {
                                 }
                                 className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                                   darkMode
-                                    ? "text-slate-300 hover:bg-[#1a2327] hover:text-amber-300"
-                                    : "text-gray-600 hover:bg-amber-50 hover:text-amber-700"
+                                    ? "text-[#A8A39A] hover:bg-[#1a2e28] hover:text-[#1A9E8E]"
+                                    : "text-[#5A5550] hover:bg-[#F0EBE3] hover:text-[#1A9E8E]"
                                 }`}
                               >
                                 <span>{child.category_name}</span>
@@ -468,10 +476,10 @@ function Navbar() {
               {menuSections.map((section) => (
                 <section
                   key={section.title}
-                  className={`rounded-2xl border px-4 py-4 ${darkMode ? "border-[#1f2933] bg-[#1a2327]" : "border-gray-100/80 bg-white/70"}`}
+                  className={`rounded-2xl border px-4 py-4 ${darkMode ? "border-[#2a3f38] bg-[#1a2e28]" : "border-[#DDD8CF] bg-white"}`}
                 >
                   <h3
-                    className={`font-accent text-[10px] font-semibold uppercase tracking-[0.2em] ${darkMode ? "text-slate-400" : "text-gray-400"}`}
+                    className={`font-accent text-[10px] font-semibold uppercase tracking-[0.2em] ${darkMode ? "text-[#A8A39A]" : "text-[#7C7670]"}`}
                   >
                     {section.title}
                   </h3>
@@ -483,11 +491,11 @@ function Navbar() {
                           item.href === "/dashboard" ? dashboardPath : item.href
                         }
                         onClick={() => setMenuOpen(false)}
-                        className={`flex items-center justify-between rounded-lg px-2 py-2.5 text-sm font-medium transition ${darkMode ? "text-slate-200 hover:bg-[#1a2327] hover:text-amber-300" : "text-gray-700 hover:bg-amber-50/80 hover:text-amber-700"}`}
+                        className={`flex items-center justify-between rounded-lg px-2 py-2.5 text-sm font-medium transition ${darkMode ? "text-[#F6F3EE] hover:bg-[#1a2e28] hover:text-[#1A9E8E]" : "text-[#111111] hover:bg-[#F0EBE3] hover:text-[#1A9E8E]"}`}
                       >
                         <span>{item.label}</span>
                         <ChevronRight
-                          className={`h-4 w-4 ${darkMode ? "text-slate-500" : "text-gray-300"}`}
+                          className={`h-4 w-4 ${darkMode ? "text-[#7C7670]" : "text-[#A8A39A]"}`}
                         />
                       </Link>
                     ))}
@@ -500,7 +508,7 @@ function Navbar() {
 
         {currentUser && (
           <div
-            className={`border-t px-4 py-4 ${darkMode ? "border-[#1f2933] bg-[#10171b]" : "border-amber-200/70 bg-[#fff3df]"}`}
+            className={`border-t px-4 py-4 ${darkMode ? "border-[#2a3f38] bg-[#132420]" : "border-[#E8E3DA] bg-[#F0EBE3]"}`}
           >
             <Button
               type="button"
@@ -509,8 +517,8 @@ function Navbar() {
               label="Logout"
               className={`!w-full !justify-center !rounded-xl !border !px-4 !py-3 !text-sm !font-semibold !shadow-none transition-all ${
                 darkMode
-                  ? "!border-[#c9b88a]/45 !bg-gradient-to-r !from-[#1f2a2f] !to-[#26333a] !text-amber-300 hover:!from-[#26333a] hover:!to-[#30424a] hover:!shadow-[0_10px_25px_-12px_rgba(201,184,138,0.7)]"
-                  : "!border-amber-300/80 !bg-gradient-to-r !from-amber-50 !to-[#fff1dc] !text-amber-800 hover:!from-amber-100 hover:!to-[#ffe7bf] hover:!shadow-[0_10px_20px_-12px_rgba(217,119,6,0.6)]"
+                  ? "!border-[#1A9E8E]/40 !bg-gradient-to-r !from-[#1a2e28] !to-[#132420] !text-[#1A9E8E] hover:!from-[#132420] hover:!to-[#0d1f1c] hover:!shadow-[0_10px_25px_-12px_rgba(26,158,142,0.4)]"
+                  : "!border-[#1A9E8E]/30 !bg-gradient-to-r !from-[#e6f7f5] !to-[#b3ebe4] !text-[#168c7e] hover:!from-[#b3ebe4] hover:!to-[#80dfd3] hover:!shadow-[0_10px_20px_-12px_rgba(26,158,142,0.3)]"
               }`}
             />
           </div>

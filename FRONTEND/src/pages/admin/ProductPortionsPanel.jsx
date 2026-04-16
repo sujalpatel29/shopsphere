@@ -441,7 +441,7 @@ function ProductPortionsPanel({ product, onCountChange, onMutate }) {
             remainingStock < 0
               ? "text-red-600 dark:text-red-400"
               : remainingStock === 0
-                ? "text-amber-600 dark:text-amber-400"
+                ? "text-yellow-600 dark:text-yellow-400"
                 : "text-green-600 dark:text-green-400"
           }
         >

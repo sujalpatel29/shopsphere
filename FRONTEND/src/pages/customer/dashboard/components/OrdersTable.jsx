@@ -9,7 +9,11 @@ import { formatCurrency, formatDate, orderSeverity } from "../utils";
 const normalizeStatus = (status) => String(status || "").toLowerCase();
 
 const buildFallbackImage = (name = "Product") => {
-  const letter = String(name || "P").trim().charAt(0).toUpperCase() || "P";
+  const letter =
+    String(name || "P")
+      .trim()
+      .charAt(0)
+      .toUpperCase() || "P";
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" fill="none">
       <defs>
@@ -74,14 +78,14 @@ const getStatusMeta = (order) => {
     return {
       title: "Return request submitted",
       subtitle: "We are processing your return request.",
-      dotClassName: "bg-amber-500",
+      dotClassName: "bg-[#1A9E8E]",
     };
   }
 
   return {
     title: "Order is being processed",
     subtitle: "Track full updates inside order details.",
-    dotClassName: "bg-amber-500",
+    dotClassName: "bg-[#1A9E8E]",
   };
 };
 
@@ -108,7 +112,9 @@ function OrderCard({
   onReturnOrder,
   order,
 }) {
-  const summaryItems = Array.isArray(order?.summaryItems) ? order.summaryItems : [];
+  const summaryItems = Array.isArray(order?.summaryItems)
+    ? order.summaryItems
+    : [];
   const firstItem = summaryItems[0];
   const itemCount = summaryItems.length;
   const statusMeta = getStatusMeta(order);
@@ -135,7 +141,8 @@ function OrderCard({
 
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {firstItem?.product_name || `Order ${order?.order_number || `#${order?.order_id}`}`}
+            {firstItem?.product_name ||
+              `Order ${order?.order_number || `#${order?.order_id}`}`}
           </p>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
             {firstItem?.portion_value || "Default variant"}
@@ -163,7 +170,9 @@ function OrderCard({
             {formatCurrency(order?.total_amount)}
           </p>
           <div className="flex items-center gap-1 sm:justify-end">
-            <span className={`inline-block h-2 w-2 rounded-full ${statusMeta.dotClassName}`} />
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${statusMeta.dotClassName}`}
+            />
             <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
               {statusMeta.title}
             </p>
@@ -183,7 +192,7 @@ function OrderCard({
           size="small"
           icon="pi pi-eye"
           label="View Details"
-          className="!rounded-lg !border !border-slate-300 !bg-white !px-3 !py-2 !text-xs !font-semibold !text-slate-700 hover:!border-amber-400 hover:!text-slate-900 dark:!border-slate-600 dark:!bg-slate-900 dark:!text-slate-200"
+          className="!rounded-lg !border !border-slate-300 !bg-white !px-3 !py-2 !text-xs !font-semibold !text-slate-700 hover:!border-[#1A9E8E] hover:!text-slate-900 dark:!border-slate-600 dark:!bg-slate-900 dark:!text-slate-200"
           onClick={() => onOpenOrder(order)}
         />
         <Button
@@ -261,11 +270,18 @@ function OrdersTable({
 
       {loading ? (
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-          <ProgressSpinner style={{ width: "18px", height: "18px" }} strokeWidth="5" />
+          <ProgressSpinner
+            style={{ width: "18px", height: "18px" }}
+            strokeWidth="5"
+          />
           Loading orders...
         </div>
       ) : orders.length === 0 ? (
-        <Message severity="info" text="No matching orders found." className="mt-4 w-full" />
+        <Message
+          severity="info"
+          text="No matching orders found."
+          className="mt-4 w-full"
+        />
       ) : (
         <div className="mt-4 grid gap-3">
           {orders.map((order) => (

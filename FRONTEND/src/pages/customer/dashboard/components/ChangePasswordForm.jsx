@@ -62,7 +62,7 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
   return (
     <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_18px_34px_-30px_rgba(15,23,42,0.85)] dark:border-[#1f2933] dark:bg-[#151e22]">
       <div className="flex items-center gap-2">
-        <i className="pi pi-lock text-amber-600 dark:text-amber-300" />
+        <i className="pi pi-lock text-[#1A9E8E] dark:text-[#26c9b4]" />
         <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
           Change Password
         </h3>
@@ -82,7 +82,9 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
           <Password
             inputId="current_password"
             value={form.currentPassword}
-            onChange={(event) => handleChange("currentPassword", event.target.value)}
+            onChange={(event) =>
+              handleChange("currentPassword", event.target.value)
+            }
             toggleMask
             feedback={false}
             pt={{
@@ -91,7 +93,7 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
                 name: "current_password",
               },
             }}
-            className="w-full [&_.p-inputtext]:!w-full [&_.p-inputtext]:!rounded-xl [&_.p-inputtext]:!border-slate-300 [&_.p-inputtext]:!bg-slate-100 [&_.p-inputtext]:!px-3 [&_.p-inputtext]:!py-2.5 [&_.p-inputtext]:!text-slate-900 [&_.p-inputtext]:placeholder:!text-slate-500 [&_.p-inputtext]:focus:!border-amber-500 [&_.p-inputtext]:focus:!shadow-none dark:[&_.p-inputtext]:!border-slate-600 dark:[&_.p-inputtext]:!bg-slate-800 dark:[&_.p-inputtext]:!text-slate-100 dark:[&_.p-inputtext]:placeholder:!text-slate-400"
+            className="w-full [&_.p-inputtext]:!w-full [&_.p-inputtext]:!rounded-xl [&_.p-inputtext]:!border-[#DDD8CF] [&_.p-inputtext]:!bg-[#F6F3EE] [&_.p-inputtext]:!px-3 [&_.p-inputtext]:!py-2.5 [&_.p-inputtext]:!text-[#111111] [&_.p-inputtext]:placeholder:!text-[#7C7670] [&_.p-inputtext]:focus:!border-[#1A9E8E] [&_.p-inputtext]:focus:!shadow-none dark:[&_.p-inputtext]:!border-[#2a3f38] dark:[&_.p-inputtext]:!bg-[#1a2e28] dark:[&_.p-inputtext]:!text-[#F6F3EE] dark:[&_.p-inputtext]:placeholder:!text-[#A8A39A]"
           />
         </div>
 
@@ -105,7 +107,9 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
           <Password
             inputId="new_password"
             value={form.newPassword}
-            onChange={(event) => handleChange("newPassword", event.target.value)}
+            onChange={(event) =>
+              handleChange("newPassword", event.target.value)
+            }
             toggleMask
             feedback={false}
             pt={{
@@ -114,7 +118,7 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
                 name: "new_password",
               },
             }}
-            className="w-full [&_.p-inputtext]:!w-full [&_.p-inputtext]:!rounded-xl [&_.p-inputtext]:!border-slate-300 [&_.p-inputtext]:!bg-slate-100 [&_.p-inputtext]:!px-3 [&_.p-inputtext]:!py-2.5 [&_.p-inputtext]:!text-slate-900 [&_.p-inputtext]:placeholder:!text-slate-500 [&_.p-inputtext]:focus:!border-amber-500 [&_.p-inputtext]:focus:!shadow-none dark:[&_.p-inputtext]:!border-slate-600 dark:[&_.p-inputtext]:!bg-slate-800 dark:[&_.p-inputtext]:!text-slate-100 dark:[&_.p-inputtext]:placeholder:!text-slate-400"
+            className="w-full [&_.p-inputtext]:!w-full [&_.p-inputtext]:!rounded-xl [&_.p-inputtext]:!border-[#DDD8CF] [&_.p-inputtext]:!bg-[#F6F3EE] [&_.p-inputtext]:!px-3 [&_.p-inputtext]:!py-2.5 [&_.p-inputtext]:!text-[#111111] [&_.p-inputtext]:placeholder:!text-[#7C7670] [&_.p-inputtext]:focus:!border-[#1A9E8E] [&_.p-inputtext]:focus:!shadow-none dark:[&_.p-inputtext]:!border-[#2a3f38] dark:[&_.p-inputtext]:!bg-[#1a2e28] dark:[&_.p-inputtext]:!text-[#F6F3EE] dark:[&_.p-inputtext]:placeholder:!text-[#A8A39A]"
           />
         </div>
 
@@ -128,7 +132,9 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
           <Password
             inputId="confirm_password"
             value={form.confirmPassword}
-            onChange={(event) => handleChange("confirmPassword", event.target.value)}
+            onChange={(event) =>
+              handleChange("confirmPassword", event.target.value)
+            }
             toggleMask
             feedback={false}
             pt={{
@@ -137,7 +143,7 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
                 name: "confirm_password",
               },
             }}
-            className="w-full [&_.p-inputtext]:!w-full [&_.p-inputtext]:!rounded-xl [&_.p-inputtext]:!border-slate-300 [&_.p-inputtext]:!bg-slate-100 [&_.p-inputtext]:!px-3 [&_.p-inputtext]:!py-2.5 [&_.p-inputtext]:!text-slate-900 [&_.p-inputtext]:placeholder:!text-slate-500 [&_.p-inputtext]:focus:!border-amber-500 [&_.p-inputtext]:focus:!shadow-none dark:[&_.p-inputtext]:!border-slate-600 dark:[&_.p-inputtext]:!bg-slate-800 dark:[&_.p-inputtext]:!text-slate-100 dark:[&_.p-inputtext]:placeholder:!text-slate-400"
+            className="w-full [&_.p-inputtext]:!w-full [&_.p-inputtext]:!rounded-xl [&_.p-inputtext]:!border-[#DDD8CF] [&_.p-inputtext]:!bg-[#F6F3EE] [&_.p-inputtext]:!px-3 [&_.p-inputtext]:!py-2.5 [&_.p-inputtext]:!text-[#111111] [&_.p-inputtext]:placeholder:!text-[#7C7670] [&_.p-inputtext]:focus:!border-[#1A9E8E] [&_.p-inputtext]:focus:!shadow-none dark:[&_.p-inputtext]:!border-[#2a3f38] dark:[&_.p-inputtext]:!bg-[#1a2e28] dark:[&_.p-inputtext]:!text-[#F6F3EE] dark:[&_.p-inputtext]:placeholder:!text-[#A8A39A]"
           />
         </div>
         <Button
@@ -146,7 +152,7 @@ function ChangePasswordForm({ loading, onSubmit, onValidationError }) {
           icon="pi pi-key"
           disabled={loading}
           loading={loading}
-          className="!w-full !rounded-xl !bg-amber-500 !px-4 !py-2 !text-sm !font-semibold !text-[#132a29] hover:!bg-amber-400 sm:!w-auto"
+          className="!w-full !rounded-xl !bg-[#1A9E8E] !px-4 !py-2 !text-sm !font-semibold !text-white hover:!bg-[#168c7e] sm:!w-auto"
         />
       </form>
     </Card>

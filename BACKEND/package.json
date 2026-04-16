@@ -7,10 +7,11 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seeders/seed.js",
+    "seed": "node database/seed-comprehensive.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "seed:sales-history": "node scripts/seed_sales_history.js"
-
+    "seed:sales-history": "node scripts/seed_sales_history.js",
+    "seed:comprehensive": "node database/seed-comprehensive.js",
+    "seed:orders-offers": "node scripts/seed_orders_and_offers.js"
   },
   "author": "Team Accrete",
   "license": "ISC",
@@ -34,7 +35,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "nodemon": "^1.0.2"
+    "nodemon": "^3.1.9"
   },
   "keywords": []
 }

@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { findOrderItems, updateOrderStatusLocally } from "../../../../redux/slices/orderSlice";
+import {
+  findOrderItems,
+  updateOrderStatusLocally,
+} from "../../../../redux/slices/orderSlice";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -65,7 +68,9 @@ export default function OrderDetailComponents({
   const { id } = useParams();
 
   const data = location.state?.data;
-  const { loading, orderItems, itemPagination, orders } = useSelector((state) => state.order || {});
+  const { loading, orderItems, itemPagination, orders } = useSelector(
+    (state) => state.order || {},
+  );
   const { currentUser } = useSelector((state) => state.auth || {});
 
   const resolvedOrderId = orderIdProp || id;
@@ -130,7 +135,12 @@ export default function OrderDetailComponents({
 
   const handleStatusChange = async (event) => {
     const nextStatus = event.target.value;
-    if (!resolvedOrderId || !nextStatus || nextStatus === orderData?.order_status) return;
+    if (
+      !resolvedOrderId ||
+      !nextStatus ||
+      nextStatus === orderData?.order_status
+    )
+      return;
 
     setStatusSaving(true);
     setStatusError("");
@@ -165,8 +175,9 @@ export default function OrderDetailComponents({
     setCurrentOrderData((prev) => ({
       ...(prev || {}),
       cancel_request_status: "pending",
-      cancel_request_reason: updatedData?.request?.reason || prev?.cancel_request_reason,
-      cancel_request_created_at: new Date().toISOString()
+      cancel_request_reason:
+        updatedData?.request?.reason || prev?.cancel_request_reason,
+      cancel_request_created_at: new Date().toISOString(),
     }));
     if (onRefresh) {
       onRefresh();
@@ -199,7 +210,11 @@ export default function OrderDetailComponents({
       if (onRefresh) {
         onRefresh();
       }
-      showToast?.("success", "Success", "Return request submitted successfully.");
+      showToast?.(
+        "success",
+        "Success",
+        "Return request submitted successfully.",
+      );
     } catch (err) {
       setStatusError(
         err?.response?.data?.message || "Unable to return this order.",
@@ -242,18 +257,24 @@ export default function OrderDetailComponents({
       }
     >
       <section className={`${isDialog ? "mb-4" : "order-flow-hero mb-6"}`}>
-        <div className={isDialog ? "flex flex-wrap items-start justify-between gap-3" : "order-flow-hero-content flex flex-wrap items-start justify-between gap-4"}>
+        <div
+          className={
+            isDialog
+              ? "flex flex-wrap items-start justify-between gap-3"
+              : "order-flow-hero-content flex flex-wrap items-start justify-between gap-4"
+          }
+        >
           <div>
             <p className="order-flow-eyebrow">Order Details</p>
             <h2 className="order-flow-title">
-            Order #{orderData?.order_number || resolvedOrderId}
+              Order #{orderData?.order_number || resolvedOrderId}
             </h2>
             <p className="order-flow-text">
-              Review item-level pricing, tax, and the final order summary in the same
-              style used across the rest of the storefront.
+              Review item-level pricing, tax, and the final order summary in the
+              same style used across the rest of the storefront.
             </p>
             {hasPendingCancelRequest && (
-              <p className="mt-2 text-sm font-medium text-amber-600 dark:text-amber-300">
+              <p className="mt-2 text-sm font-medium text-[#1A9E8E] dark:text-[#26c9b4]">
                 Cancellation request pending admin approval.
               </p>
             )}
@@ -271,9 +292,7 @@ export default function OrderDetailComponents({
             )}
             {canCancelOrder && (
               <Button
-                label={
-                  statusSaving ? "Submitting..." : "Request Cancellation"
-                }
+                label={statusSaving ? "Submitting..." : "Request Cancellation"}
                 icon="pi pi-times"
                 outlined
                 onClick={() => setReasonDialogVisible(true)}
@@ -288,7 +307,7 @@ export default function OrderDetailComponents({
                 outlined
                 onClick={handleReturnOrder}
                 disabled={statusSaving}
-                className="order-flow-secondary-button !border-amber-300 !text-amber-700 hover:!bg-amber-50 dark:!border-amber-500/40 dark:!text-amber-300 dark:hover:!bg-amber-500/10"
+                className="order-flow-secondary-button !border-[#1A9E8E]/60 !text-[#1A9E8E] hover:!bg-[#e6f7f5] dark:!border-[#1A9E8E]/50 dark:!text-[#26c9b4] dark:hover:!bg-[#1A9E8E]/10"
               />
             )}
             {!isDialog && (
@@ -305,35 +324,44 @@ export default function OrderDetailComponents({
       </section>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <CalendarDays className="h-5 w-5" />
             </span>
             <div>
               <p className="order-flow-stat-label">Order Date</p>
               <p className="order-flow-stat-value text-xl">
-              {formatDate(orderData?.created_at)}
+                {formatDate(orderData?.created_at)}
               </p>
             </div>
           </div>
         </Card>
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <ReceiptIndianRupee className="h-5 w-5" />
             </span>
             <div>
               <p className="order-flow-stat-label">Order Total</p>
               <p className="order-flow-stat-value text-xl">
-              {formatINR(orderData?.total_amount)}
+                {formatINR(orderData?.total_amount)}
               </p>
             </div>
           </div>
         </Card>
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <PackageCheck className="h-5 w-5" />
             </span>
             <div>
@@ -354,7 +382,9 @@ export default function OrderDetailComponents({
           >
             <div className="mb-2 flex items-center justify-between gap-3 p-5 pb-0">
               <div>
-                <h3 className="order-flow-section-title text-[1.45rem]">Order Items</h3>
+                <h3 className="order-flow-section-title text-[1.45rem]">
+                  Order Items
+                </h3>
                 <p className="order-flow-section-copy mt-1">
                   Item-level totals, taxes, and quantity for this order.
                 </p>
@@ -369,7 +399,7 @@ export default function OrderDetailComponents({
                       value={orderData?.order_status || "pending"}
                       onChange={handleStatusChange}
                       disabled={statusSaving}
-                      className="min-w-[180px] rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 outline-none transition-all focus:border-amber-500 dark:border-[#334155] dark:bg-[#10171b] dark:text-slate-100"
+                      className="min-w-[180px] rounded-xl border border-[#1A9E8E]/40 bg-white px-3 py-2 text-sm font-medium text-gray-800 outline-none transition-all focus:border-[#1A9E8E] dark:border-[#334155] dark:bg-[#10171b] dark:text-slate-100"
                     >
                       {ADMIN_ORDER_STATUSES.map((status) => (
                         <option key={status} value={status}>
@@ -380,7 +410,8 @@ export default function OrderDetailComponents({
                   </label>
                 )}
                 <span className="order-flow-badge">
-                  {itemPagination?.totalItems || orderItems?.length || 0} item(s)
+                  {itemPagination?.totalItems || orderItems?.length || 0}{" "}
+                  item(s)
                 </span>
               </div>
             </div>
@@ -388,15 +419,25 @@ export default function OrderDetailComponents({
 
             {isDialog ? (
               <div className="px-5 pb-5">
-                <div className="order-items-scrollbox max-h-[320px] overflow-y-auto rounded-2xl border border-[rgba(214,192,144,0.22)]">
+                <div className="order-items-scrollbox max-h-[320px] overflow-y-auto rounded-2xl border border-[rgba(26,158,142,0.12)]">
                   <table className="w-full border-collapse">
-                    <thead className="bg-[#f5f0e8] dark:bg-[#1a2528]">
+                    <thead className="bg-[#f1f5f4] dark:bg-[#1a2528]">
                       <tr>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Product</th>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Qty</th>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Price</th>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Tax</th>
-                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">Total</th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Product
+                        </th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Qty
+                        </th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Price
+                        </th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Tax
+                        </th>
+                        <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Total
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -474,7 +515,9 @@ export default function OrderDetailComponents({
                     field="price"
                     header="Price"
                     body={(row) => (
-                      <span className="font-medium">{formatINR(row.price)}</span>
+                      <span className="font-medium">
+                        {formatINR(row.price)}
+                      </span>
                     )}
                   />
                   <Column
@@ -497,15 +540,23 @@ export default function OrderDetailComponents({
           </Card>
         </div>
 
-        <div className={isDialog ? "lg:sticky lg:top-0 self-start space-y-4" : "space-y-4"}>
+        <div
+          className={
+            isDialog ? "lg:sticky lg:top-0 self-start space-y-4" : "space-y-4"
+          }
+        >
           <OrderSummaryComponent title="Order Summary" orderData={orderData} />
-          
-          {(orderData?.cancel_request_status || orderData?.order_status === 'cancelled') && (
-            <Card className="order-flow-card !bg-slate-50/50 dark:!bg-slate-900/30" pt={{ body: { className: "p-4" }, content: { className: "p-0" } }}>
+
+          {(orderData?.cancel_request_status ||
+            orderData?.order_status === "cancelled") && (
+            <Card
+              className="order-flow-card !bg-slate-50/50 dark:!bg-slate-900/30"
+              pt={{ body: { className: "p-4" }, content: { className: "p-0" } }}
+            >
               <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100 mb-4 px-1">
                 Cancellation Status
               </h4>
-              
+
               <div className="relative space-y-6 pl-4 border-l-2 border-slate-200 dark:border-slate-800 ml-2">
                 {/* Step 1: Requested */}
                 <div className="relative">
@@ -513,8 +564,15 @@ export default function OrderDetailComponents({
                     <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Cancellation Requested</p>
-                    <p className="text-xs text-slate-500">{formatDate(orderData?.cancel_request_created_at || orderData?.updated_at)}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Cancellation Requested
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {formatDate(
+                        orderData?.cancel_request_created_at ||
+                          orderData?.updated_at,
+                      )}
+                    </p>
                     {orderData?.cancel_request_reason && (
                       <div className="mt-2 rounded-lg bg-white dark:bg-slate-800 p-2 text-xs border border-slate-100 dark:border-slate-700 italic text-slate-600 dark:text-slate-400">
                         "{orderData.cancel_request_reason}"
@@ -524,33 +582,54 @@ export default function OrderDetailComponents({
                 </div>
 
                 {/* Step 2: Review (Pending or Reviewed) */}
-                {orderData?.cancel_request_status === 'pending' ? (
+                {orderData?.cancel_request_status === "pending" ? (
                   <div className="relative">
-                    <span className="absolute -left-[25px] top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 animate-pulse">
-                    </span>
+                    <span className="absolute -left-[25px] top-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-400 animate-pulse"></span>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Awaiting Admin Review</p>
-                      <p className="text-xs text-slate-500 uppercase tracking-tighter">In Progress</p>
-                    </div>
-                  </div>
-                ) : (orderData?.cancel_request_status === 'approved' || orderData?.cancel_request_status === 'rejected' || orderData?.order_status === 'cancelled') && (
-                  <div className="relative">
-                    <span className={`absolute -left-[25px] top-1 flex h-4 w-4 items-center justify-center rounded-full ${orderData?.cancel_request_status === 'rejected' ? 'bg-rose-500' : 'bg-emerald-500'} ring-4 ring-white dark:ring-slate-950`}>
-                      <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
-                    </span>
-                    <div>
-                      <p className={`text-sm font-semibold ${orderData?.cancel_request_status === 'rejected' ? 'text-rose-600' : 'text-emerald-600'}`}>
-                        {orderData?.cancel_request_status === 'rejected' ? 'Request Rejected' : 'Cancellation Approved'}
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        Awaiting Admin Review
                       </p>
-                      <p className="text-xs text-slate-500">{formatDate(orderData?.cancel_request_reviewed_at || orderData?.updated_at)}</p>
-                      {orderData?.cancel_request_status === 'rejected' && orderData?.cancel_request_admin_note && (
-                        <div className="mt-2 rounded-lg bg-rose-50 dark:bg-rose-900/10 p-2 text-xs border border-rose-100 dark:border-rose-900/30 text-rose-700 dark:text-rose-300">
-                          <p className="font-semibold mb-1">Reason for Rejection:</p>
-                          {orderData.cancel_request_admin_note}
-                        </div>
-                      )}
+                      <p className="text-xs text-slate-500 uppercase tracking-tighter">
+                        In Progress
+                      </p>
                     </div>
                   </div>
+                ) : (
+                  (orderData?.cancel_request_status === "approved" ||
+                    orderData?.cancel_request_status === "rejected" ||
+                    orderData?.order_status === "cancelled") && (
+                    <div className="relative">
+                      <span
+                        className={`absolute -left-[25px] top-1 flex h-4 w-4 items-center justify-center rounded-full ${orderData?.cancel_request_status === "rejected" ? "bg-rose-500" : "bg-emerald-500"} ring-4 ring-white dark:ring-slate-950`}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
+                      </span>
+                      <div>
+                        <p
+                          className={`text-sm font-semibold ${orderData?.cancel_request_status === "rejected" ? "text-rose-600" : "text-emerald-600"}`}
+                        >
+                          {orderData?.cancel_request_status === "rejected"
+                            ? "Request Rejected"
+                            : "Cancellation Approved"}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatDate(
+                            orderData?.cancel_request_reviewed_at ||
+                              orderData?.updated_at,
+                          )}
+                        </p>
+                        {orderData?.cancel_request_status === "rejected" &&
+                          orderData?.cancel_request_admin_note && (
+                            <div className="mt-2 rounded-lg bg-rose-50 dark:bg-rose-900/10 p-2 text-xs border border-rose-100 dark:border-rose-900/30 text-rose-700 dark:text-rose-300">
+                              <p className="font-semibold mb-1">
+                                Reason for Rejection:
+                              </p>
+                              {orderData.cancel_request_admin_note}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  )
                 )}
               </div>
             </Card>
@@ -558,7 +637,7 @@ export default function OrderDetailComponents({
         </div>
       </div>
 
-      <CancelReasonDialog 
+      <CancelReasonDialog
         visible={reasonDialogVisible}
         onHide={() => setReasonDialogVisible(false)}
         orderId={resolvedOrderId}

@@ -13,7 +13,8 @@ const extractData = (response) => response?.data?.data ?? null;
 
 const extractErrorMessage = (apiError, fallback) => {
   const responseData = apiError?.response?.data;
-  if (typeof responseData === "string" && responseData.trim()) return responseData;
+  if (typeof responseData === "string" && responseData.trim())
+    return responseData;
   if (responseData?.message) return responseData.message;
   if (apiError?.message) return apiError.message;
   return fallback;
@@ -25,7 +26,10 @@ const extractSuccessMessage = (response, fallback) =>
 const normalizeProfilePayload = (payload) =>
   Array.isArray(payload) ? payload[0] : payload;
 
-const normalizeName = (value) => String(value || "").trim().toLowerCase();
+const normalizeName = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
 
 function UserReviewsPage({ showToast }) {
   const { currentUser } = useSelector((state) => state.auth);
@@ -99,14 +103,18 @@ function UserReviewsPage({ showToast }) {
       ]);
 
       const profile = normalizeProfilePayload(extractData(profileRes));
-      const userNameNormalized = normalizeName(profile?.name || currentUser?.name);
+      const userNameNormalized = normalizeName(
+        profile?.name || currentUser?.name,
+      );
       const userId = Number(currentUser?.user_id) || null;
 
       const orders = toArray(ordersRes);
       const itemGroups = await Promise.all(
         orders.map(async (order) => {
           try {
-            const response = await api.get(`/order-item/${order.order_id}/items`);
+            const response = await api.get(
+              `/order-item/${order.order_id}/items`,
+            );
             return toArray(extractData(response));
           } catch {
             return [];
@@ -137,9 +145,12 @@ function UserReviewsPage({ showToast }) {
       const productReviews = await Promise.all(
         products.map(async (product) => {
           try {
-            const response = await api.get(`/review/product/${product.product_id}`, {
-              params: { page: 1, limit: 100, sort: "newest" },
-            });
+            const response = await api.get(
+              `/review/product/${product.product_id}`,
+              {
+                params: { page: 1, limit: 100, sort: "newest" },
+              },
+            );
             return {
               product,
               items: toArray(extractData(response)?.items),
@@ -288,7 +299,9 @@ function UserReviewsPage({ showToast }) {
     setSuccessMessage("");
     try {
       const response = await api.delete(`/review/deleteReview/${reviewId}`);
-      setSuccessMessage(extractSuccessMessage(response, "Review deleted successfully."));
+      setSuccessMessage(
+        extractSuccessMessage(response, "Review deleted successfully."),
+      );
       setReviews((prev) =>
         prev.filter((item) => Number(item.review_id) !== Number(reviewId)),
       );
@@ -301,7 +314,8 @@ function UserReviewsPage({ showToast }) {
           ...prev,
           {
             product_id: Number(review.product_id),
-            product_name: review.product_name || `Product #${review.product_id}`,
+            product_name:
+              review.product_name || `Product #${review.product_id}`,
           },
         ];
       });
@@ -354,8 +368,13 @@ function UserReviewsPage({ showToast }) {
     return (
       <Card className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_34px_-28px_rgba(15,23,42,0.8)] dark:border-[#1f2933] dark:bg-[#151e22]">
         <div className="flex items-center gap-3">
-          <ProgressSpinner style={{ width: "24px", height: "24px" }} strokeWidth="4" />
-          <p className="text-sm text-gray-600 dark:text-slate-300">Loading reviews...</p>
+          <ProgressSpinner
+            style={{ width: "24px", height: "24px" }}
+            strokeWidth="4"
+          />
+          <p className="text-sm text-gray-600 dark:text-slate-300">
+            Loading reviews...
+          </p>
         </div>
       </Card>
     );
@@ -379,7 +398,7 @@ function UserReviewsPage({ showToast }) {
             label="Write Review"
             disabled={reviewableProducts.length === 0}
             onClick={openCreateModal}
-            className="!w-full !rounded-xl !bg-amber-500 !px-4 !py-2 !text-sm !font-semibold !text-[#132a29] hover:!bg-amber-400 sm:!w-auto"
+            className="!w-full !rounded-xl !bg-[#1A9E8E] !px-4 !py-2 !text-sm !font-semibold !text-white hover:!bg-[#168c7e] sm:!w-auto"
           />
         </div>
       </Card>
