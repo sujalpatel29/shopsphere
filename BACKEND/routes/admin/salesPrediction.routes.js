@@ -2,10 +2,15 @@ import express from "express";
 import pool from "../../configs/db.js";
 import {
   badRequest,
+  forbidden,
   notFound,
   ok,
   serverError,
 } from "../../utils/apiResponse.js";
+import {
+  adminOrVerifiedSeller,
+  getAuthenticatedUserId,
+} from "../../middlewares/seller.middleware.js";
 
 const router = express.Router();
 
@@ -114,6 +119,17 @@ router.get("/predict/:productId", async (req, res) => {
     return badRequest(res, "A valid productId is required.");
   }
 
+  // Permission check for sellers
+  if (req.user?.role === "seller") {
+    const [rows] = await pool.query(
+      "SELECT seller_id FROM product_master WHERE product_id = ?",
+      [productId],
+    );
+    if (!rows.length || rows[0].seller_id !== getAuthenticatedUserId(req)) {
+      return forbidden(res, "You are not authorized to predict for this product.");
+    }
+  }
+
   try {
     const prediction = await callPredictionService(`/predict/${productId}`, 30000);
     try {
@@ -151,6 +167,10 @@ router.get("/predict/:productId", async (req, res) => {
 });
 
 router.get("/predict-all", async (req, res) => {
+  if (req.user?.role !== "admin") {
+    return forbidden(res, "Bulk prediction is an admin-only feature.");
+  }
+
   try {
     const payload = await callPredictionService("/predict-all", 120000);
     const predictions = Array.isArray(payload?.predictions)
@@ -186,6 +206,17 @@ router.get("/predict-all", async (req, res) => {
 
 router.get("/cached", async (req, res) => {
   try {
+    const sellerId =
+      req.user?.role === "seller" ? getAuthenticatedUserId(req) : null;
+
+    let whereClause = "WHERE pm.is_deleted = 0";
+    const queryParams = [];
+
+    if (sellerId) {
+      whereClause += " AND pm.seller_id = ?";
+      queryParams.push(sellerId);
+    }
+
     const [rows] = await pool.execute(
       `
       SELECT
@@ -203,12 +234,13 @@ router.get("/cached", async (req, res) => {
       FROM sales_predictions sp
       INNER JOIN product_master pm
         ON pm.product_id = sp.product_id
-       AND pm.is_deleted = 0
       LEFT JOIN category_master cm
         ON cm.category_id = pm.category_id
        AND cm.is_deleted = 0
+      ${whereClause}
       ORDER BY sp.predicted_revenue DESC, sp.generated_at DESC
       `,
+      queryParams,
     );
 
     return ok(res, "Cached predictions fetched successfully", {
@@ -225,6 +257,17 @@ router.get("/history/:productId", async (req, res) => {
   const productId = parsePositiveInt(req.params.productId);
   if (!productId) {
     return badRequest(res, "A valid productId is required.");
+  }
+
+  // Permission check for sellers
+  if (req.user?.role === "seller") {
+    const [rows] = await pool.query(
+      "SELECT seller_id FROM product_master WHERE product_id = ?",
+      [productId],
+    );
+    if (!rows.length || rows[0].seller_id !== getAuthenticatedUserId(req)) {
+      return forbidden(res, "You are not authorized to view history for this product.");
+    }
   }
 
   try {

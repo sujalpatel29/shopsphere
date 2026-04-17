@@ -20,6 +20,7 @@ import sellerRoutes from "./routes/seller.route.js";
 
 import salesPredictionRoutes from "./routes/admin/salesPrediction.routes.js";
 import { auth, adminOnly } from "./middlewares/auth.middleware.js";
+import { adminOrVerifiedSeller } from "./middlewares/seller.middleware.js";
 
 
 // Load environment variables
@@ -102,7 +103,7 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/sellers", sellerRoutes);
 
 //sales prediction route for admin
-app.use("/api/admin/sales", auth, adminOnly, salesPredictionRoutes);
+app.use("/api/admin/sales", auth, adminOrVerifiedSeller, salesPredictionRoutes);
 
 
 // ============================================================================

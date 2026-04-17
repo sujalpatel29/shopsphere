@@ -20,6 +20,7 @@ import {
   toggleHelpful,
   updateReview,
 } from "../models/review.model.js";
+import Product from "../models/product.model.js";
 
 // Normalize user id from JWT payload formats.
 const resolveAuthUserId = (req) => {
@@ -294,10 +295,18 @@ export const reviewController = {
         return notFound(res, "Review not found");
       }
 
-      // Step 3 - Authorize customer/admin.
+      // Step 3 - Authorize customer/admin/seller.
       if (req.user?.role === "customer") {
         if (Number(reviewMeta.user_id) !== authUserId) {
           return forbidden(res, "You can delete only your own review");
+        }
+      } else if (req.user?.role === "seller") {
+        const product = await Product.findSellerProductById(
+          reviewMeta.product_id,
+          authUserId,
+        );
+        if (!product) {
+          return forbidden(res, "You are not authorized to delete this review");
         }
       } else if (req.user?.role !== "admin") {
         return forbidden(res, "You are not authorized to delete this review");
@@ -310,6 +319,40 @@ export const reviewController = {
       return success(res, "Review deleted successfully");
     } catch (error) {
       console.error("Delete review error:", error);
+      return serverError(res, "Internal server error");
+    }
+  },
+
+  // GET /api/review/seller (seller only)
+  getSellerReviews: async (req, res) => {
+    try {
+      const authUserId = resolveAuthUserId(req);
+      if (!authUserId) {
+        return badRequest(res, "Invalid token payload: user_id is missing");
+      }
+
+      const {
+        page = 1,
+        limit = 10,
+        search = "",
+        rating,
+        sortField = "created_at",
+        sortOrder = "desc",
+      } = req.query;
+
+      const data = await getAllReviewsAdmin({
+        page,
+        limit,
+        search,
+        rating: rating ? Number(rating) : null,
+        sortField,
+        sortOrder,
+        seller_id: authUserId,
+      });
+
+      return success(res, "Seller reviews fetched successfully", data);
+    } catch (error) {
+      console.error("Get seller reviews error:", error);
       return serverError(res, "Internal server error");
     }
   },

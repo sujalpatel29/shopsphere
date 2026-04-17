@@ -13,6 +13,8 @@ import {
   PanelLeft,
   PanelLeftClose,
   ShoppingCart,
+  Sparkles,
+  Star,
   Store,
   Sun,
   User,
@@ -26,6 +28,8 @@ const sellerNav = [
   { label: "Overview", to: "/seller/dashboard", icon: BarChart3 },
   { label: "Products", to: "/seller/products", icon: Package },
   { label: "Orders", to: "/seller/orders", icon: ShoppingCart },
+  { label: "Reviews", to: "/seller/reviews", icon: Star },
+  { label: "Sales Prediction", to: "/seller/sales-prediction", icon: Sparkles },
   { label: "Profile", to: "/seller/profile", icon: User },
 ];
 

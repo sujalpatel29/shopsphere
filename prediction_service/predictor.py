@@ -133,7 +133,7 @@ def run_prediction(rows: list[dict], price: float) -> dict:
     except Exception:
         output = predict_with_regression(frame, price)
         output["model_used"] = "linear_regression_fallback"
-
+    
     output["historical"] = _historical_payload(frame)
     output["error"] = None
     return output

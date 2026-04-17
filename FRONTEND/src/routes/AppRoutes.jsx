@@ -15,6 +15,8 @@ import SellerDashboardPage from "../pages/seller/SellerDashboardPage";
 import SellerProductsTab from "../pages/seller/SellerProductsTab";
 import SellerOrdersTab from "../pages/seller/SellerOrdersTab";
 import SellerProfileTab from "../pages/seller/SellerProfileTab";
+import SellerReviewsTab from "../pages/seller/SellerReviewsTab";
+import SellerSalesPredictionTab from "../pages/seller/SellerSalesPredictionTab";
 import CategoryPage from "../pages/customer/categoryPage";
 import ProductDetailsPlaceholder from "../pages/customer/ProductDetailsPage";
 import ItemsPage from "../pages/customer/ItemsPage";
@@ -154,6 +156,8 @@ function AppRoutes() {
             <Route path="/seller/dashboard" element={<SellerDashboardPage />} />
             <Route path="/seller/products" element={<SellerProductsTab />} />
             <Route path="/seller/orders" element={<SellerOrdersTab />} />
+            <Route path="/seller/reviews" element={<SellerReviewsTab />} />
+            <Route path="/seller/sales-prediction" element={<SellerSalesPredictionTab />} />
             <Route path="/seller/profile" element={<SellerProfileTab />} />
           </Route>
         </Route>

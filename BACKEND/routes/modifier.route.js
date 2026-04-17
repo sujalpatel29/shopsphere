@@ -32,6 +32,7 @@ import {
 
 // Import middlewares
 import { auth, adminOnly } from "../middlewares/auth.middleware.js";
+import { adminOrVerifiedSeller, verifyProductOwnership } from "../middlewares/seller.middleware.js";
 
 const modifierRouter = express.Router();
 
@@ -73,7 +74,7 @@ modifierRouter.patch("/:id/toggle", auth, adminOnly, toggleModifierController);
 // modifierRouter.patch(
 //   "/:id",
 //   auth,
-//   adminOnly,
+//   adminOrVerifiedSeller,
 //   validate(patchModifierSchema),
 //   patchModifierController,
 // );
@@ -86,7 +87,7 @@ modifierRouter.patch("/:id/toggle", auth, adminOnly, toggleModifierController);
 modifierRouter.get(
   "/:modifier_id/portions",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   getAllModifierPortionsController,
 );
 
@@ -94,7 +95,7 @@ modifierRouter.get(
 modifierRouter.post(
   "/portions",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validate(createModifierPortionSchema),
   createModifierPortionController,
 );
@@ -115,7 +116,7 @@ modifierRouter.get(
 modifierRouter.put(
   "/portions/:id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validate(updateModifierPortionSchema),
   updateModifierPortionController,
 );
@@ -124,7 +125,7 @@ modifierRouter.put(
 modifierRouter.delete(
   "/portions/:id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   deleteModifierPortionController,
 );
 
@@ -132,7 +133,7 @@ modifierRouter.delete(
 modifierRouter.patch(
   "/portions/:id/toggle",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   toggleModifierPortionController,
 );
 
@@ -140,7 +141,7 @@ modifierRouter.patch(
 // modifierRouter.patch(
 //   "/portions/:id",
 //   auth,
-//   adminOnly,
+//   adminOrVerifiedSeller,
 //   validate(patchModifierPortionSchema),
 //   patchModifierPortionController,
 // );
@@ -177,7 +178,7 @@ modifierRouter.get("/combinations/:id", getCombinationByIdController);
 modifierRouter.post(
   "/combinations",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   createCombinationController,
 );
 
@@ -185,7 +186,7 @@ modifierRouter.post(
 modifierRouter.put(
   "/combinations/:id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   updateCombinationController,
 );
 
@@ -193,7 +194,8 @@ modifierRouter.put(
 modifierRouter.delete(
   "/combinations/:id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
+  verifyProductOwnership,
   deleteCombinationController,
 );
 

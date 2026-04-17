@@ -1,5 +1,6 @@
 import express from "express";
-import { auth, adminOnly } from "../middlewares/auth.middleware.js";
+import { auth } from "../middlewares/auth.middleware.js";
+import { adminOrVerifiedSeller, verifyProductOwnership } from "../middlewares/seller.middleware.js";
 import { validate } from "../middlewares/Validations.middleware.js";
 import { uploadSingleImage } from "../middlewares/upload.middleware.js";
 import {
@@ -24,7 +25,8 @@ const productImageRouter = express.Router();
 productImageRouter.post(
   "/upload",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
+  verifyProductOwnership,
   uploadSingleImage("image"),
   validate(uploadProductImageSchema),
   uploadProductImageController,
@@ -38,7 +40,7 @@ productImageRouter.get(
   getVariantImageController,
 );
 
-// Get all non-deleted images for a product.
+// Fetch all images for a product.
 productImageRouter.get(
   "/:product_id",
   validate(productIdParamSchema, "params"),
@@ -49,7 +51,8 @@ productImageRouter.get(
 productImageRouter.patch(
   "/:image_id/primary",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
+  verifyProductOwnership,
   validate(imageIdParamSchema, "params"),
   setPrimaryProductImageController,
 );
@@ -58,7 +61,7 @@ productImageRouter.patch(
 productImageRouter.patch(
   "/update/:image_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   uploadSingleImage("image"),
   validate(imageIdParamSchema, "params"),
   validate(updateProductImageSchema),
@@ -69,9 +72,10 @@ productImageRouter.patch(
 productImageRouter.delete(
   "/delete/:image_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validate(imageIdParamSchema, "params"),
   deleteProductImageController,
 );
 
 export default productImageRouter;
+

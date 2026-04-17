@@ -28,7 +28,8 @@ import {
   validateBody,
   validateParams,
 } from "../validations/portion.validator.js";
-import {auth, adminOnly} from '../middlewares/auth.middleware.js'; // Uncomment when you have auth
+import { auth, adminOnly } from '../middlewares/auth.middleware.js';
+import { adminOrVerifiedSeller, verifyProductOwnership } from '../middlewares/seller.middleware.js';
 
 const portionRouter = express.Router();
 
@@ -45,13 +46,13 @@ portionRouter.post(
 
 // Retrieve all portions
 portionRouter.get("/getAllPortion",  auth,
-  adminOnly, getAllPortionController); 
+  adminOrVerifiedSeller, getAllPortionController); 
 
 // Get portion by ID
 portionRouter.get(
   "/getPortionById/:portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   getPortionByIdController,
 ); 
@@ -93,14 +94,14 @@ portionRouter.delete(
 portionRouter.post(
   "/createProductPortion",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateBody(productPortionCreateSchema),
   createProductPortionController,
 );
 
 // Get all product portions (admin)
 portionRouter.get("/getAllProductPortions", auth,
-  adminOnly, getAllProductPortionsController);
+  adminOrVerifiedSeller, getAllProductPortionsController);
 
 // Get all portions of a specific product
 portionRouter.get(
@@ -120,7 +121,7 @@ portionRouter.get(
 portionRouter.put(
   "/updateProductPortion/:product_portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(productPortionIdParamSchema),
   validateBody(productPortionUpdateSchema),
   updateProductPortionController,
@@ -130,7 +131,7 @@ portionRouter.put(
 portionRouter.patch(
   "/toggleActiveProductPortion/:product_portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(productPortionIdParamSchema),
   toggleActiveProductPortionController,
 );
@@ -139,7 +140,8 @@ portionRouter.patch(
 portionRouter.delete(
   "/deleteProductPortion/:product_portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
+  verifyProductOwnership,
   validateParams(productPortionIdParamSchema),
   deleteProductPortionController,
 );

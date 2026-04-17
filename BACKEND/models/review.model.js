@@ -608,6 +608,7 @@ export const getAllReviewsAdmin = async ({
   rating = null,
   sortField = "created_at",
   sortOrder = "desc",
+  seller_id = null,
 } = {}) => {
   const offset = (Number(page) - 1) * Number(limit);
   const allowedSort = {
@@ -629,6 +630,11 @@ export const getAllReviewsAdmin = async ({
   if (rating) {
     whereClauses.push("pr.rating = ?");
     params.push(Number(rating));
+  }
+
+  if (seller_id) {
+    whereClauses.push("pm.seller_id = ?");
+    params.push(seller_id);
   }
 
   const where = `WHERE ${whereClauses.join(" AND ")}`;

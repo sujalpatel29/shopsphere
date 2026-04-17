@@ -3,6 +3,7 @@ import {
   auth as authMiddleware,
   adminOnly,
 } from "../middlewares/auth.middleware.js";
+import { adminOrVerifiedSeller } from "../middlewares/seller.middleware.js";
 import { reviewController } from "../controllers/review.controller.js";
 import {
   createReviewSchema,
@@ -50,6 +51,14 @@ router.get(
 
 // Admin: Get all reviews with filters/pagination (admin only).
 router.get("/admin", authMiddleware, adminOnly, reviewController.getAllAdmin);
+
+// Seller: Get all reviews for seller's products (seller only).
+router.get(
+  "/seller",
+  authMiddleware,
+  adminOrVerifiedSeller,
+  reviewController.getSellerReviews,
+);
 
 // Single review details (public).
 router.get(
