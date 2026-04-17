@@ -62,7 +62,7 @@ const PAYMENT_STATUSES = [
 
 const STATUS_STYLES = {
   pending:
-    "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
   processing:
     "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
   shipped:
@@ -146,7 +146,8 @@ function OrderDetailModal({ visible, onHide, orderId, onMutate }) {
       refunded: [],
       returned: [],
     };
-    const currentStatus = normalizeStatus(currentOrder.order_status) || "pending";
+    const currentStatus =
+      normalizeStatus(currentOrder.order_status) || "pending";
     const paymentMethod = getPrimaryPaymentMethod(currentOrder);
 
     return ORDER_STATUSES.filter((opt) => {
@@ -407,7 +408,9 @@ function OrderDetailModal({ visible, onHide, orderId, onMutate }) {
                       options={getAvailablePaymentStatuses(order)}
                       optionLabel="label"
                       optionValue="value"
-                      disabled={updatingPayment || isStripeManagedPayment(order)}
+                      disabled={
+                        updatingPayment || isStripeManagedPayment(order)
+                      }
                       className="admin-filter-dropdown w-36"
                       tooltip={
                         isStripeManagedPayment(order)
@@ -542,7 +545,11 @@ function OrderDetailModal({ visible, onHide, orderId, onMutate }) {
                                   <span>{mod.modifier_value}</span>
                                   {Number(mod.additional_price) > 0 && (
                                     <span className="text-gray-400 text-xs">
-                                      (+{formatPrice(Number(mod.additional_price))})
+                                      (+
+                                      {formatPrice(
+                                        Number(mod.additional_price),
+                                      )}
+                                      )
                                     </span>
                                   )}
                                 </li>
@@ -592,7 +599,7 @@ function OrderDetailModal({ visible, onHide, orderId, onMutate }) {
                     <div className="flex items-center gap-3 flex-1">
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                         {p.payment_method === "cash_on_delivery" ? (
-                          <Banknote className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                          <Banknote className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                         ) : (
                           <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         )}
@@ -646,18 +653,18 @@ function OrderDetailModal({ visible, onHide, orderId, onMutate }) {
                       {p.status === "completed" &&
                         !p.is_refunded &&
                         p.payment_method !== "stripe" && (
-                        <Button
-                          type="button"
-                          size="small"
-                          severity="danger"
-                          outlined
-                          className="!px-3 !py-1.5 !text-xs !rounded-lg"
-                          loading={actionLoading === p.payment_id}
-                          onClick={() => handleRefund(p.payment_id)}
-                        >
-                          Refund
-                        </Button>
-                      )}
+                          <Button
+                            type="button"
+                            size="small"
+                            severity="danger"
+                            outlined
+                            className="!px-3 !py-1.5 !text-xs !rounded-lg"
+                            loading={actionLoading === p.payment_id}
+                            onClick={() => handleRefund(p.payment_id)}
+                          >
+                            Refund
+                          </Button>
+                        )}
                     </div>
                   </div>
                 ))}

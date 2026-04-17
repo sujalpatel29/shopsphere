@@ -148,7 +148,7 @@ export const getAllProducts = async (req, res) => {
 
     // Pagination parsing
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, parseInt(req.query.limit) || 10);
+    const limit = Math.min(1000, parseInt(req.query.limit) || 10);
     const offset = (page - 1) * limit;
 
     // Sorting
@@ -158,7 +158,7 @@ export const getAllProducts = async (req, res) => {
 
     const { total, data, totalAll, totalActive } = await Product.findAll(
       filters,
-      { limit, offset, sortField, sortOrder, sort }
+      { limit, offset, sortField, sortOrder, sort },
     );
 
     return res.status(200).json({

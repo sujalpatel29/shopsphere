@@ -129,7 +129,7 @@ const SidebarContent = ({
             ShopSphere
           </span>
         </div>
-        <p className="font-serif text-xs font-medium tracking-[0.2em] text-[#c9b88a]">
+        <p className="font-serif text-xs font-medium tracking-[0.2em] text-[#1A9E8E]">
           ADMIN PANEL
         </p>
         <h1
@@ -156,7 +156,7 @@ const SidebarContent = ({
                 setActiveTab(item.key);
                 onNavClick?.();
               }}
-              className={`!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none ${isActive ? "!bg-amber-600 !text-white !shadow-lg !shadow-amber-600/20" : "!bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"}`}
+              className={`!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none ${isActive ? "!bg-[#1A9E8E] !text-white !shadow-lg !shadow-[#1A9E8E]/20" : "!bg-transparent !text-gray-700 hover:!bg-[#e6f7f5] hover:!text-[#1A9E8E] dark:!text-slate-300 dark:hover:!bg-[#1a2e28] dark:hover:!text-[#26c9b4]"}`}
             >
               <Icon className="h-4 w-4" />
               {item.label}
@@ -173,7 +173,7 @@ const SidebarContent = ({
             <Button
               type="button"
               onClick={() => setProductsOpen((prev) => !prev)}
-              className={`!flex !w-full !items-center !justify-between !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none ${childActive ? "!bg-amber-600 !text-white !shadow-lg !shadow-amber-600/20" : "!bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"}`}
+              className={`!flex !w-full !items-center !justify-between !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none ${childActive ? "!bg-[#1A9E8E] !text-white !shadow-lg !shadow-[#1A9E8E]/20" : "!bg-transparent !text-gray-700 hover:!bg-[#e6f7f5] hover:!text-[#1A9E8E] dark:!text-slate-300 dark:hover:!bg-[#1a2e28] dark:hover:!text-[#26c9b4]"}`}
             >
               <span className="inline-flex items-center gap-3">
                 <Icon className="h-4 w-4" />
@@ -194,7 +194,7 @@ const SidebarContent = ({
                       setActiveTab(child.key);
                       onNavClick?.();
                     }}
-                    className={`!flex !w-full !items-center !rounded-lg !px-3 !py-2 !text-left !text-sm !font-medium !shadow-none ${activeTab === child.key ? "!bg-amber-100 !text-amber-800 dark:!bg-amber-500/20 dark:!text-amber-200" : "!bg-transparent !text-gray-600 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-400 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"}`}
+                    className={`!flex !w-full !items-center !rounded-lg !px-3 !py-2 !text-left !text-sm !font-medium !shadow-none ${activeTab === child.key ? "!bg-[#e6f7f5] !text-[#1A9E8E] dark:!bg-[#1A9E8E]/20 dark:!text-[#26c9b4]" : "!bg-transparent !text-gray-600 hover:!bg-[#e6f7f5] hover:!text-[#1A9E8E] dark:!text-slate-400 dark:hover:!bg-[#1a2e28] dark:hover:!text-[#26c9b4]"}`}
                   >
                     {child.label}
                   </Button>
@@ -210,7 +210,7 @@ const SidebarContent = ({
       <Button
         type="button"
         onClick={toggleDarkMode}
-        className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"
+        className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-gray-700 hover:!bg-[#e6f7f5] hover:!text-[#1A9E8E] dark:!text-slate-300 dark:hover:!bg-[#1a2e28] dark:hover:!text-[#26c9b4]"
       >
         {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         {darkMode ? "Light Mode" : "Dark Mode"}

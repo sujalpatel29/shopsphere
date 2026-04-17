@@ -29,7 +29,7 @@ function ProductGrid({
       products
         .map((product) => product.product_id || product.id)
         .filter(Boolean),
-    [products]
+    [products],
   );
 
   const extractList = (res) => {
@@ -154,7 +154,7 @@ function ProductGrid({
 
     const fetchRatings = async () => {
       const pending = productIds.filter(
-        (id) => id && !fetchedRatingsRef.current.has(id)
+        (id) => id && !fetchedRatingsRef.current.has(id),
       );
 
       if (!pending.length) return;
@@ -249,20 +249,56 @@ function ProductGrid({
   }
 
   if (!products.length) {
-    return <p className="text-sm text-gray-500">No products found.</p>;
+    return (
+      <div
+        className={`flex flex-col items-center justify-center rounded-2xl border py-16 ${darkMode ? "border-[#1f2933] bg-[#151e22]/50" : "border-[#DDD8CF]/50 bg-white/50"}`}
+      >
+        <div
+          className={`mb-4 rounded-full p-4 ${darkMode ? "bg-[#1A9E8E]/20" : "bg-[#e6f7f5]"}`}
+        >
+          <svg
+            className={`h-10 w-10 ${darkMode ? "text-[#26c9b4]" : "text-[#1A9E8E]"}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            />
+          </svg>
+        </div>
+        <h3
+          className={`font-serif text-lg font-semibold ${darkMode ? "text-slate-100" : "text-gray-900"}`}
+        >
+          No products found
+        </h3>
+        <p
+          className={`mt-1 max-w-sm text-center text-sm ${darkMode ? "text-slate-400" : "text-gray-500"}`}
+        >
+          We couldn't find any products matching your criteria. Try adjusting
+          your filters or search terms.
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="category-product-grid space-y-6">
       <div className="category-product-grid-list grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4">
         {products.map((product) => {
-          const rawId = product?.product_id ?? product?.id ?? product?.productId;
+          const rawId =
+            product?.product_id ?? product?.id ?? product?.productId;
           const id = Number.parseInt(rawId, 10);
           const isRecentlyAdded = Boolean(
             recentlyAddedProductId && id === Number(recentlyAddedProductId),
           );
           const isAdding = Boolean(addingProductId && id === addingProductId);
-          const isError = Boolean(addErrorProductId && id === addErrorProductId);
+          const isError = Boolean(
+            addErrorProductId && id === addErrorProductId,
+          );
           const effective = id ? effectivePriceMap[id] : null;
           const discount = effective?.discount ?? getDiscountDetails(product);
 
@@ -276,8 +312,8 @@ function ProductGrid({
               <Card
                 className={`category-product-card trace-card-inner product-card !h-full !rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 ${
                   darkMode
-                    ? "bg-red-900 border border-red-800 text-[#ffecec]"
-                    : "bg-red-100 border border-red-200 text-red-900"
+                    ? "bg-slate-800 border border-slate-700 text-slate-100"
+                    : "bg-white border border-slate-200 text-gray-900"
                 }`}
                 onClick={() => {
                   const id = Number.parseInt(
@@ -288,177 +324,186 @@ function ProductGrid({
                   navigate(`/products/${id}`);
                 }}
               >
-              <div className="flex h-full min-h-[280px] flex-col">
-                <div
-                  className={`category-product-media product-image-wrap relative h-32 w-full overflow-hidden ${
-                    darkMode ? "bg-[#1b242b]" : "bg-gray-100"
-                  }`}
-                >
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.display_name || product.name || "Product"}
-                      className="product-image-el h-full w-full object-cover transition-transform duration-300 hover:scale-110"
-                    />
-                  ) : null}
-                  {discount ? (
-                    <span className="absolute left-2 top-2 rounded-md bg-red-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-                      {discount.percent}% OFF
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="product-card-content">
-                  <h4
-                    className={`h-10 overflow-hidden text-sm font-semibold leading-5 ${
-                      darkMode ? "text-[#f2f5f7]" : "text-gray-800"
+                <div className="flex h-full min-h-[320px] flex-col">
+                  <div
+                    className={`category-product-media product-image-wrap relative h-48 w-full overflow-hidden rounded-t-2xl ${
+                      darkMode ? "bg-slate-700" : "bg-slate-100"
                     }`}
                   >
-                    {product.display_name || product.name || "Product"}
-                  </h4>
-                  <p
-                    className={`mt-1 line-clamp-1 text-[11px] font-medium uppercase tracking-[0.12em] ${
-                      darkMode ? "text-[#9fb2bf]" : "text-gray-500"
-                    }`}
-                  >
-                    {product.seller_business_name || product.seller_name
-                      ? `Sold by ${product.seller_business_name || product.seller_name}`
-                      : "Sold by ShopSphere"}
-                  </p>
-
-                  {(() => {
-                    const rating = getRatingDetails(product);
-                    const averageRating = Number(rating?.average_rating ?? 0);
-                    const totalRatings = Number(rating?.total_ratings ?? 0);
-                    const filledCount = Math.round(averageRating);
-
-                    return (
-                      <div className="mt-1 flex items-center gap-1 text-xs">
-                        {Array.from({ length: 5 }).map((_, index) => (
-                          <i
-                            key={index}
-                            className={`pi ${
-                              index < filledCount
-                                ? "pi-star-fill"
-                                : "pi-star"
-                            } text-yellow-400`}
-                          />
-                        ))}
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.display_name || product.name || "Product"}
+                        loading="lazy"
+                        className="product-image-el h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                      />
+                    ) : (
+                      <div
+                        className={`flex h-full w-full items-center justify-center ${darkMode ? "bg-slate-700" : "bg-slate-100"}`}
+                      >
                         <span
-                          className={`ml-1 ${
-                            darkMode ? "text-[#9fb2bf]" : "text-gray-500"
-                          }`}
+                          className={`text-xs ${darkMode ? "text-slate-500" : "text-gray-400"}`}
                         >
-                          ({totalRatings})
+                          No image
                         </span>
                       </div>
-                    );
-                  })()}
+                    )}
+                    {discount ? (
+                      <span className="absolute left-2 top-2 rounded-md bg-red-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        {discount.percent}% OFF
+                      </span>
+                    ) : null}
+                  </div>
 
-                  {/* UPDATED PRICE SECTION (old logic preserved) */}
-                  <div className="mt-1 min-h-[32px]">
+                  <div className="product-card-content">
+                    <h4
+                      className={`h-10 overflow-hidden text-sm font-semibold leading-5 ${
+                        darkMode ? "text-slate-100" : "text-gray-800"
+                      }`}
+                    >
+                      {product.display_name || product.name || "Product"}
+                    </h4>
+                    <p
+                      className={`mt-1 line-clamp-1 text-[11px] font-medium uppercase tracking-[0.12em] ${
+                        darkMode ? "text-slate-400" : "text-gray-500"
+                      }`}
+                    >
+                      {product.seller_business_name || product.seller_name
+                        ? `Sold by ${product.seller_business_name || product.seller_name}`
+                        : "Sold by ShopSphere"}
+                    </p>
+
                     {(() => {
-                      const effectiveOriginal = Number(
-                        effective?.original ?? product.price ?? 0,
-                      );
-                      const effectiveDiscounted = Number(
-                        effective?.discounted ??
-                          product.discounted_price ??
-                          effectiveOriginal,
-                      );
-
-                      if (!discount) {
-                        return (
-                          <p className="font-bold text-amber-600">
-                            {"\u20B9"}
-                            {effectiveDiscounted.toLocaleString("en-IN")}
-                          </p>
-                        );
-                      }
+                      const rating = getRatingDetails(product);
+                      const averageRating = Number(rating?.average_rating ?? 0);
+                      const totalRatings = Number(rating?.total_ratings ?? 0);
+                      const filledCount = Math.round(averageRating);
 
                       return (
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-amber-600">
-                            {"\u20B9"}
-                            {effectiveDiscounted.toLocaleString("en-IN")}
-                          </p>
-
-                          <p
-                            className={`text-xs line-through ${
-                              darkMode ? "text-[#94a6b1]" : "text-gray-400"
+                        <div className="mt-1 flex items-center gap-1 text-xs">
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <i
+                              key={index}
+                              className={`pi ${
+                                index < filledCount ? "pi-star-fill" : "pi-star"
+                              } text-yellow-400`}
+                            />
+                          ))}
+                          <span
+                            className={`ml-1 ${
+                              darkMode ? "text-slate-400" : "text-gray-500"
                             }`}
                           >
-                            {"\u20B9"}
-                            {effectiveOriginal.toLocaleString("en-IN")}
-                          </p>
-
-                          <span className="text-xs font-semibold text-green-600">
-                            {discount.percent}% OFF
+                            ({totalRatings})
                           </span>
                         </div>
                       );
                     })()}
-                  </div>
 
-                  <div className="mt-auto pt-2">
-                    <button
-                      type="button"
-                      className="cart-button w-full"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const btn = e.currentTarget;
-                        if (btn?.classList.contains("is-locked")) {
-                          return;
+                    {/* UPDATED PRICE SECTION (old logic preserved) */}
+                    <div className="mt-1 min-h-[32px]">
+                      {(() => {
+                        const effectiveOriginal = Number(
+                          effective?.original ?? product.price ?? 0,
+                        );
+                        const effectiveDiscounted = Number(
+                          effective?.discounted ??
+                            product.discounted_price ??
+                            effectiveOriginal,
+                        );
+
+                        if (!discount) {
+                          return (
+                            <p className="font-bold text-[#1A9E8E]">
+                              {"\u20B9"}
+                              {effectiveDiscounted.toLocaleString("en-IN")}
+                            </p>
+                          );
                         }
-                        if (btn) {
-                          btn.classList.remove("clicked");
-                          btn.classList.remove("pulse-success");
-                          btn.classList.add("is-locked");
-                          void btn.offsetWidth;
-                          btn.classList.add("clicked");
-                          setTimeout(() => {
-                            btn.classList.remove("clicked");
-                            btn.classList.add("pulse-success");
-                            setTimeout(() => {
-                              btn.classList.remove("pulse-success");
-                              btn.classList.remove("is-locked");
-                            }, 420);
-                          }, 1500);
-                        }
-                        const id = product.product_id || product.id;
-                        if (!id) return;
-                        if (onAddToCart) {
-                          try {
-                            window.dispatchEvent(
-                              new CustomEvent("shopsphere:addToCartClick", {
-                                detail: {
-                                  target: e.currentTarget,
-                                },
-                              }),
-                            );
-                          } catch {
-                            // ignore
+
+                        return (
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-[#1A9E8E]">
+                              {"\u20B9"}
+                              {effectiveDiscounted.toLocaleString("en-IN")}
+                            </p>
+
+                            <p
+                              className={`text-xs line-through ${
+                                darkMode ? "text-slate-400" : "text-gray-400"
+                              }`}
+                            >
+                              {"\u20B9"}
+                              {effectiveOriginal.toLocaleString("en-IN")}
+                            </p>
+
+                            <span className="text-xs font-semibold text-[#1A9E8E]">
+                              {discount.percent}% OFF
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="mt-auto pt-2">
+                      <button
+                        type="button"
+                        className="cart-button w-full"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const btn = e.currentTarget;
+                          if (btn?.classList.contains("is-locked")) {
+                            return;
                           }
-                          onAddToCart(product);
-                        } else {
-                          navigate(`/items/${id}`);
-                        }
-                      }}
-                    >
-                      <span className="add-to-cart">Add to Cart</span>
-                      <span className="added">Added</span>
-                      <i className="pi pi-shopping-cart" />
-                      <i className="pi pi-box" />
-                    </button>
+                          if (btn) {
+                            btn.classList.remove("clicked");
+                            btn.classList.remove("pulse-success");
+                            btn.classList.add("is-locked");
+                            void btn.offsetWidth;
+                            btn.classList.add("clicked");
+                            setTimeout(() => {
+                              btn.classList.remove("clicked");
+                              btn.classList.add("pulse-success");
+                              setTimeout(() => {
+                                btn.classList.remove("pulse-success");
+                                btn.classList.remove("is-locked");
+                              }, 420);
+                            }, 1500);
+                          }
+                          const id = product.product_id || product.id;
+                          if (!id) return;
+                          if (onAddToCart) {
+                            try {
+                              window.dispatchEvent(
+                                new CustomEvent("shopsphere:addToCartClick", {
+                                  detail: {
+                                    target: e.currentTarget,
+                                  },
+                                }),
+                              );
+                            } catch {
+                              // ignore
+                            }
+                            onAddToCart(product);
+                          } else {
+                            navigate(`/items/${id}`);
+                          }
+                        }}
+                      >
+                        <span className="add-to-cart">Add to Cart</span>
+                        <span className="added">Added</span>
+                        <i className="pi pi-shopping-cart" />
+                        <i className="pi pi-box" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          </div>
-        );
+              </Card>
+            </div>
+          );
         })}
       </div>
 

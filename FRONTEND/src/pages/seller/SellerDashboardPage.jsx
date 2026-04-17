@@ -56,7 +56,7 @@ function SellerDashboardPage() {
       {
         label: "Revenue",
         value: currencyFormatter.format(analytics?.orders?.total_revenue || 0),
-        accent: "bg-amber-500",
+        accent: "bg-[#1A9E8E]",
         icon: Wallet,
       },
     ],
@@ -80,19 +80,24 @@ function SellerDashboardPage() {
     <div className="animate-fade-in space-y-6">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-[#b08d57]">
+          <p className="text-sm uppercase tracking-[0.24em] text-[#1A9E8E]">
             Seller Overview
           </p>
           <h1 className="mt-1 font-serif text-3xl text-gray-900 dark:text-slate-100">
             Welcome back, {currentUser?.name || "Seller"}
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">
-            Keep an eye on listing health, order momentum, and store readiness from one place.
+            Keep an eye on listing health, order momentum, and store readiness
+            from one place.
           </p>
         </div>
         <Tag
           value={`${analytics?.verification_status || "pending"} account`}
-          severity={analytics?.verification_status === "approved" ? "success" : "warning"}
+          severity={
+            analytics?.verification_status === "approved"
+              ? "success"
+              : "warning"
+          }
           className="capitalize"
         />
       </div>
@@ -102,10 +107,15 @@ function SellerDashboardPage() {
           const Icon = item.icon;
 
           return (
-            <Card key={item.label} className="rounded-2xl border border-gray-100 shadow-sm dark:border-[#1f2933] dark:bg-[#151e22]">
+            <Card
+              key={item.label}
+              className="rounded-2xl border border-gray-100 shadow-sm dark:border-[#1f2933] dark:bg-[#151e22]"
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-slate-400">{item.label}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">
+                    {item.label}
+                  </p>
                   <p className="mt-3 text-3xl font-semibold text-gray-900 dark:text-slate-100">
                     {item.value}
                   </p>
@@ -123,7 +133,7 @@ function SellerDashboardPage() {
         <Card className="rounded-2xl border border-gray-100 shadow-sm dark:border-[#1f2933] dark:bg-[#151e22]">
           <div className="space-y-5">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-[#b08d57]">
+              <p className="text-sm uppercase tracking-[0.24em] text-[#1A9E8E]">
                 Store Pulse
               </p>
               <h2 className="mt-1 text-xl font-semibold text-gray-900 dark:text-slate-100">
@@ -132,7 +142,7 @@ function SellerDashboardPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#e6f7f5] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Items Sold
                 </p>
@@ -140,7 +150,7 @@ function SellerDashboardPage() {
                   {analytics?.orders?.total_items_sold || 0}
                 </p>
               </div>
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#e6f7f5] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Pending Orders
                 </p>
@@ -148,7 +158,7 @@ function SellerDashboardPage() {
                   {analytics?.pending_orders || 0}
                 </p>
               </div>
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#e6f7f5] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Catalog Readiness
                 </p>
@@ -169,7 +179,7 @@ function SellerDashboardPage() {
         <Card className="rounded-2xl border border-gray-100 shadow-sm dark:border-[#1f2933] dark:bg-[#151e22]">
           <div className="space-y-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-[#b08d57]">
+              <p className="text-sm uppercase tracking-[0.24em] text-[#1A9E8E]">
                 Checklist
               </p>
               <h2 className="mt-1 text-xl font-semibold text-gray-900 dark:text-slate-100">
@@ -178,13 +188,16 @@ function SellerDashboardPage() {
             </div>
             <div className="space-y-3 text-sm text-gray-600 dark:text-slate-300">
               <div className="rounded-2xl border border-gray-200 px-4 py-3 dark:border-gray-700">
-                Keep inactive products low so customers only see ready-to-ship inventory.
+                Keep inactive products low so customers only see ready-to-ship
+                inventory.
               </div>
               <div className="rounded-2xl border border-gray-200 px-4 py-3 dark:border-gray-700">
-                Review pending orders quickly to keep fulfillment moving smoothly.
+                Review pending orders quickly to keep fulfillment moving
+                smoothly.
               </div>
               <div className="rounded-2xl border border-gray-200 px-4 py-3 dark:border-gray-700">
-                Make sure business and banking details stay current for verification and payouts.
+                Make sure business and banking details stay current for
+                verification and payouts.
               </div>
             </div>
           </div>

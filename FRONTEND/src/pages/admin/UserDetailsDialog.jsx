@@ -26,8 +26,12 @@ function UserDetailsDialog({ visible, onHide, user, profileLoading }) {
 
   const detailRow = (label, value) => (
     <div className="grid grid-cols-[120px_1fr] gap-3 py-2.5 border-b border-gray-100/80 dark:border-gray-800/70">
-      <span className="text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</span>
-      <span className="text-sm font-medium text-gray-800 dark:text-gray-100 break-all">{value || "-"}</span>
+      <span className="text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        {label}
+      </span>
+      <span className="text-sm font-medium text-gray-800 dark:text-gray-100 break-all">
+        {value || "-"}
+      </span>
     </div>
   );
 
@@ -42,7 +46,9 @@ function UserDetailsDialog({ visible, onHide, user, profileLoading }) {
             <p className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
               {user?.name || "Unnamed User"}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || "-"}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {user?.email || "-"}
+            </p>
           </div>
           <div className="ml-auto flex items-center gap-2 pr-3">
             <Tag
@@ -53,7 +59,7 @@ function UserDetailsDialog({ visible, onHide, user, profileLoading }) {
               value={isBlocked ? "Blocked" : "Active"}
               className={
                 isBlocked
-                  ? "text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/40 transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-amber-200/60 dark:hover:shadow-amber-900/40"
+                  ? "text-xs px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800/40 transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-red-200/60 dark:hover:shadow-red-900/40"
                   : "text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800/40 transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-emerald-200/60 dark:hover:shadow-emerald-900/40"
               }
             />
@@ -66,9 +72,18 @@ function UserDetailsDialog({ visible, onHide, user, profileLoading }) {
       onHide={onHide}
       dismissableMask
       pt={{
-        root: { className: "border-0 shadow-2xl rounded-2xl overflow-hidden admin-dialog" },
-        header: { className: "admin-dialog-header px-6 py-4 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur" },
-        content: { className: "p-6 bg-gradient-to-b from-white to-gray-50/60 dark:from-gray-950 dark:to-gray-900/60" },
+        root: {
+          className:
+            "border-0 shadow-2xl rounded-2xl overflow-hidden admin-dialog",
+        },
+        header: {
+          className:
+            "admin-dialog-header px-6 py-4 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur",
+        },
+        content: {
+          className:
+            "p-6 bg-gradient-to-b from-white to-gray-50/60 dark:from-gray-950 dark:to-gray-900/60",
+        },
       }}
     >
       {profileLoading ? (

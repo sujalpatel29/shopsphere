@@ -41,7 +41,7 @@ function AddressesSection({
       onClick={onToggleAddForm}
       icon="pi pi-plus"
       label="Add New Address"
-      className="!w-full !rounded-xl !bg-amber-500 !px-4 !py-2 !text-sm !font-semibold !text-[#132a29] hover:!bg-amber-400 sm:!w-auto"
+      className="!w-full !rounded-xl !bg-[#1A9E8E] !px-4 !py-2 !text-sm !font-semibold !text-white hover:!bg-[#168c7e] sm:!w-auto"
     />
   );
 

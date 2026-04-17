@@ -7,7 +7,7 @@ import {
   updatePortionController,
   deletePortionController,
   toggleActivePortionController,
-//   this is for product_portion
+  //   this is for product_portion
   createProductPortionController,
   getProductPortionsController,
   getProductPortionByIdController,
@@ -39,10 +39,10 @@ const portionRouter = express.Router();
 portionRouter.post(
   "/createPortion",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateBody(portionCreateSchema),
   createPortionController.createPortion,
-); 
+);
 
 // Retrieve all portions
 portionRouter.get("/getAllPortion",  auth,
@@ -53,47 +53,46 @@ portionRouter.get(
   "/getPortionById/:portion_id",
   auth,
   adminOrVerifiedSeller,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   getPortionByIdController,
-); 
+);
 
 // Update portion details
 portionRouter.put(
   "/updatePortion/:portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   validateBody(portionUpdateSchema),
   updatePortionController,
-); 
+);
 
 //  Toggle portion active status
 portionRouter.patch(
   "/toggleActivePortion/:portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   toggleActivePortionController,
-); 
+);
 
 // Soft delete portion
 portionRouter.delete(
   "/deletePortion/:portion_id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validateParams(portionIdParamSchema),
   deletePortionController,
-); 
-
-
+);
 
 // Product-Portion Association Routes
-
 
 // Create product portion
 portionRouter.post(
   "/createProductPortion",
   auth,
+  adminOrVerifiedSeller,
   adminOrVerifiedSeller,
   validateBody(productPortionCreateSchema),
   createProductPortionController,

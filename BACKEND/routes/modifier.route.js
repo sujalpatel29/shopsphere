@@ -50,7 +50,7 @@ modifierRouter.get("/:id", getModifierByIdController);
 modifierRouter.post(
   "/",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validate(createModifierSchema),
   createModifierController,
 );
@@ -59,16 +59,26 @@ modifierRouter.post(
 modifierRouter.put(
   "/:id",
   auth,
-  adminOnly,
+  adminOrVerifiedSeller,
   validate(updateModifierSchema),
   updateModifierController,
 );
 
 // DELETE /api/modifiers/:id - Delete modifier
-modifierRouter.delete("/:id", auth, adminOnly, deleteModifierController);
+modifierRouter.delete(
+  "/:id",
+  auth,
+  adminOrVerifiedSeller,
+  deleteModifierController,
+);
 
 // PATCH /api/modifiers/:id/toggle - Toggle active status (Admin only)
-modifierRouter.patch("/:id/toggle", auth, adminOnly, toggleModifierController);
+modifierRouter.patch(
+  "/:id/toggle",
+  auth,
+  adminOrVerifiedSeller,
+  toggleModifierController,
+);
 
 // // PATCH /api/modifiers/:id - Partial update modifier (Admin only)
 // modifierRouter.patch(
@@ -88,6 +98,7 @@ modifierRouter.get(
   "/:modifier_id/portions",
   auth,
   adminOrVerifiedSeller,
+  adminOrVerifiedSeller,
   getAllModifierPortionsController,
 );
 
@@ -95,6 +106,7 @@ modifierRouter.get(
 modifierRouter.post(
   "/portions",
   auth,
+  adminOrVerifiedSeller,
   adminOrVerifiedSeller,
   validate(createModifierPortionSchema),
   createModifierPortionController,
@@ -107,15 +119,13 @@ modifierRouter.get(
 );
 
 // GET /api/modifiers/by-product/:product_id - Get modifiers linked directly to a product (no portion)
-modifierRouter.get(
-  "/by-product/:product_id",
-  getModifiersByProductController,
-);
+modifierRouter.get("/by-product/:product_id", getModifiersByProductController);
 
 // PUT /api/modifiers/portions/:id - Update modifier portion
 modifierRouter.put(
   "/portions/:id",
   auth,
+  adminOrVerifiedSeller,
   adminOrVerifiedSeller,
   validate(updateModifierPortionSchema),
   updateModifierPortionController,
@@ -126,6 +136,7 @@ modifierRouter.delete(
   "/portions/:id",
   auth,
   adminOrVerifiedSeller,
+  adminOrVerifiedSeller,
   deleteModifierPortionController,
 );
 
@@ -133,6 +144,7 @@ modifierRouter.delete(
 modifierRouter.patch(
   "/portions/:id/toggle",
   auth,
+  adminOrVerifiedSeller,
   adminOrVerifiedSeller,
   toggleModifierPortionController,
 );
@@ -179,6 +191,7 @@ modifierRouter.post(
   "/combinations",
   auth,
   adminOrVerifiedSeller,
+  adminOrVerifiedSeller,
   createCombinationController,
 );
 
@@ -186,6 +199,7 @@ modifierRouter.post(
 modifierRouter.put(
   "/combinations/:id",
   auth,
+  adminOrVerifiedSeller,
   adminOrVerifiedSeller,
   updateCombinationController,
 );

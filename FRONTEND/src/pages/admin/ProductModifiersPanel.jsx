@@ -9,7 +9,11 @@ import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 
 const currencyFormat = (val) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(val) || 0);
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(val) || 0);
 
 const getApiErrorMessage = (err) =>
   err?.response?.data?.message || err?.message || "Something went wrong";
@@ -52,7 +56,7 @@ export default function ProductModifiersPanel({ product, onMutate }) {
   const [adding, setAdding] = useState(false);
 
   /* ── Inline edit state ── */
-  const [editingRows, setEditingRows] = useState({});  // { [combination_id]: { additional_price, stock } }
+  const [editingRows, setEditingRows] = useState({}); // { [combination_id]: { additional_price, stock } }
   const [savingRows, setSavingRows] = useState({});
   const [deletingRows, setDeletingRows] = useState({});
 
@@ -91,17 +95,20 @@ export default function ProductModifiersPanel({ product, onMutate }) {
     }
   }, [product.product_id, showToast]);
 
-  const loadCombinationsForPortion = useCallback(async (ppId) => {
-    setLoadingCombos(true);
-    try {
-      const data = await fetchCombinationsByPortion(ppId);
-      setCombinations(data);
-    } catch (err) {
-      showToast("error", "Error", getApiErrorMessage(err));
-    } finally {
-      setLoadingCombos(false);
-    }
-  }, [showToast]);
+  const loadCombinationsForPortion = useCallback(
+    async (ppId) => {
+      setLoadingCombos(true);
+      try {
+        const data = await fetchCombinationsByPortion(ppId);
+        setCombinations(data);
+      } catch (err) {
+        showToast("error", "Error", getApiErrorMessage(err));
+      } finally {
+        setLoadingCombos(false);
+      }
+    },
+    [showToast],
+  );
 
   // Reload when portion changes
   useEffect(() => {
@@ -127,11 +134,11 @@ export default function ProductModifiersPanel({ product, onMutate }) {
 
     setBuilderSelections((prev) => {
       const next = { ...prev };
-      
+
       // 1. Identify groups already in use by existing combinations
       const usedGroups = new Set();
-      combinations.forEach(c => {
-        (c.modifiers || []).forEach(m => usedGroups.add(m.modifier_type));
+      combinations.forEach((c) => {
+        (c.modifiers || []).forEach((m) => usedGroups.add(m.modifier_type));
       });
 
       // 2. Refresh selections
@@ -141,7 +148,7 @@ export default function ProductModifiersPanel({ product, onMutate }) {
           if (next[type] == null) {
             next[type] = mods[0]?.modifier_id ?? null;
           }
-        } 
+        }
         // If no combinations exist yet, just turn on the first available group
         else if (combinations.length === 0 && Object.keys(next).length === 0) {
           next[type] = mods[0]?.modifier_id ?? null;
@@ -162,7 +169,9 @@ export default function ProductModifiersPanel({ product, onMutate }) {
 
   // ── Add Combination ──
   const handleAddCombination = async () => {
-    const selectedEntries = Object.entries(builderSelections).filter(([, id]) => id != null);
+    const selectedEntries = Object.entries(builderSelections).filter(
+      ([, id]) => id != null,
+    );
     if (selectedEntries.length === 0) {
       showToast("warn", "Warning", "Select at least one modifier option");
       return;
@@ -175,7 +184,9 @@ export default function ProductModifiersPanel({ product, onMutate }) {
     setAdding(true);
     try {
       const modifierIds = selectedEntries.map(([, id]) => id);
-      const selectedPortion = productPortions.find((p) => p.product_portion_id === selectedPPId);
+      const selectedPortion = productPortions.find(
+        (p) => p.product_portion_id === selectedPPId,
+      );
 
       await createCombination({
         product_id: product.product_id,
@@ -264,14 +275,17 @@ export default function ProductModifiersPanel({ product, onMutate }) {
   // ── Column Templates ──
   const nameBodyTemplate = (row) => (
     <div>
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{row.name}</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        {row.name}
+      </p>
       <div className="flex flex-wrap gap-1 mt-1">
         {(row.modifiers || []).map((m) => (
           <span
             key={m.modifier_id}
-            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30"
+            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-[#e6f7f5] dark:bg-[#1A9E8E]/10 text-[#117a6e] dark:text-[#26c9b4] border border-[#1A9E8E]/30 dark:border-[#1A9E8E]/30"
           >
-            <span className="opacity-60">{m.modifier_type}:</span> {m.modifier_value}
+            <span className="opacity-60">{m.modifier_type}:</span>{" "}
+            {m.modifier_value}
           </span>
         ))}
       </div>
@@ -285,18 +299,30 @@ export default function ProductModifiersPanel({ product, onMutate }) {
       return (
         <InputNumber
           value={edited.additional_price}
-          onValueChange={(e) => updateField(id, "additional_price", e.value ?? 0)}
+          onValueChange={(e) =>
+            updateField(id, "additional_price", e.value ?? 0)
+          }
           mode="currency"
           currency="INR"
           locale="en-IN"
           className="admin-inputnumber-wrap"
-          pt={{ input: { className: "admin-input rounded-lg h-8 px-2 text-sm w-28" } }}
+          pt={{
+            input: {
+              className: "admin-input rounded-lg h-8 px-2 text-sm w-28",
+            },
+          }}
         />
       );
     }
     const price = Number(row.additional_price);
     return (
-      <span className={price > 0 ? "text-green-600 dark:text-green-400 font-medium" : "text-gray-400"}>
+      <span
+        className={
+          price > 0
+            ? "text-green-600 dark:text-green-400 font-medium"
+            : "text-gray-400"
+        }
+      >
         {price > 0 ? `+${currencyFormat(price)}` : "—"}
       </span>
     );
@@ -312,13 +338,23 @@ export default function ProductModifiersPanel({ product, onMutate }) {
           onValueChange={(e) => updateField(id, "stock", e.value ?? 0)}
           min={0}
           className="admin-inputnumber-wrap"
-          pt={{ input: { className: "admin-input rounded-lg h-8 px-2 text-sm w-24" } }}
+          pt={{
+            input: {
+              className: "admin-input rounded-lg h-8 px-2 text-sm w-24",
+            },
+          }}
         />
       );
     }
     const stock = Number(row.stock);
     return (
-      <span className={stock > 0 ? "text-gray-800 dark:text-gray-200 font-medium" : "text-red-500 font-medium"}>
+      <span
+        className={
+          stock > 0
+            ? "text-gray-800 dark:text-gray-200 font-medium"
+            : "text-red-500 font-medium"
+        }
+      >
         {stock > 0 ? stock : "Out"}
       </span>
     );
@@ -335,15 +371,25 @@ export default function ProductModifiersPanel({ product, onMutate }) {
         <div className="flex gap-1.5">
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); handleRowSave(row); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRowSave(row);
+            }}
             disabled={isSaving}
             className="p-1.5 rounded-lg bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 hover:bg-green-200 transition"
           >
-            {isSaving ? <span className="text-[10px]">…</span> : <Check className="h-3.5 w-3.5" />}
+            {isSaving ? (
+              <span className="text-[10px]">…</span>
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )}
           </button>
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); cancelEdit(id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              cancelEdit(id);
+            }}
             className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition"
           >
             <X className="h-3.5 w-3.5" />
@@ -356,7 +402,10 @@ export default function ProductModifiersPanel({ product, onMutate }) {
       <div className="flex gap-1.5">
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); startEdit(row); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            startEdit(row);
+          }}
           disabled={isDeleting}
           className="p-1.5 rounded-lg bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-200 transition"
         >
@@ -364,11 +413,18 @@ export default function ProductModifiersPanel({ product, onMutate }) {
         </button>
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); handleRowDelete(row); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRowDelete(row);
+          }}
           disabled={isDeleting}
           className="p-1.5 rounded-lg bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 hover:bg-red-200 transition"
         >
-          {isDeleting ? <span className="text-[10px]">…</span> : <Trash2 className="h-3.5 w-3.5" />}
+          {isDeleting ? (
+            <span className="text-[10px]">…</span>
+          ) : (
+            <Trash2 className="h-3.5 w-3.5" />
+          )}
         </button>
       </div>
     );
@@ -392,10 +448,15 @@ export default function ProductModifiersPanel({ product, onMutate }) {
             loading={loading}
             className="admin-dropdown w-full max-w-md"
             pt={{
-              root: { className: "admin-dropdown-root rounded-lg h-10 flex items-center shadow-none" },
+              root: {
+                className:
+                  "admin-dropdown-root rounded-lg h-10 flex items-center shadow-none",
+              },
               input: { className: "px-3 text-sm" },
               trigger: { className: "w-10" },
-              panel: { className: "admin-dropdown-panel rounded-lg shadow-xl mt-1" },
+              panel: {
+                className: "admin-dropdown-panel rounded-lg shadow-xl mt-1",
+              },
             }}
           />
         </div>
@@ -410,20 +471,27 @@ export default function ProductModifiersPanel({ product, onMutate }) {
             </p>
 
             {Object.keys(modifiersByGroup).length === 0 ? (
-              <p className="text-sm text-gray-400 italic">No modifiers found. Add modifiers first.</p>
+              <p className="text-sm text-gray-400 italic">
+                No modifiers found. Add modifiers first.
+              </p>
             ) : (
               <div className="space-y-3">
                 {/* One row per modifier type group */}
                 {Object.entries(modifiersByGroup).map(([type, mods]) => (
                   <div key={type} className="flex items-center gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400 w-24 shrink-0">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[#1A9E8E] dark:text-[#26c9b4] w-24 shrink-0">
                       {type}
                     </span>
-                    <div className={`flex-1 transition-opacity ${builderSelections[type] == null ? "opacity-40 grayscale" : "opacity-100"}`}>
+                    <div
+                      className={`flex-1 transition-opacity ${builderSelections[type] == null ? "opacity-40 grayscale" : "opacity-100"}`}
+                    >
                       <Dropdown
                         value={builderSelections[type] ?? null}
                         onChange={(e) =>
-                          setBuilderSelections((prev) => ({ ...prev, [type]: e.value }))
+                          setBuilderSelections((prev) => ({
+                            ...prev,
+                            [type]: e.value,
+                          }))
                         }
                         options={mods.map((m) => ({
                           label: `${m.modifier_value}${Number(m.additional_price) > 0 ? ` (+₹${Number(m.additional_price).toLocaleString("en-IN")})` : ""}`,
@@ -433,10 +501,16 @@ export default function ProductModifiersPanel({ product, onMutate }) {
                         disabled={builderSelections[type] == null}
                         className="admin-dropdown w-full"
                         pt={{
-                          root: { className: "admin-dropdown-root rounded-lg h-9 flex items-center shadow-none" },
+                          root: {
+                            className:
+                              "admin-dropdown-root rounded-lg h-9 flex items-center shadow-none",
+                          },
                           input: { className: "px-3 text-sm" },
                           trigger: { className: "w-9" },
-                          panel: { className: "admin-dropdown-panel rounded-lg shadow-xl mt-1" },
+                          panel: {
+                            className:
+                              "admin-dropdown-panel rounded-lg shadow-xl mt-1",
+                          },
                         }}
                       />
                     </div>
@@ -453,7 +527,7 @@ export default function ProductModifiersPanel({ product, onMutate }) {
                       }
                       className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition uppercase tracking-tighter shrink-0 ${
                         builderSelections[type] != null
-                          ? "border-amber-400 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10"
+                          ? "border-[#1A9E8E] text-[#1A9E8E] dark:text-[#26c9b4] bg-[#e6f7f5] dark:bg-[#1A9E8E]/10"
                           : "border-gray-300 text-gray-400 bg-white dark:bg-gray-700"
                       }`}
                     >
@@ -465,7 +539,9 @@ export default function ProductModifiersPanel({ product, onMutate }) {
                 {/* Price + Stock + Add */}
                 <div className="flex items-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Add. Price</label>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                      Add. Price
+                    </label>
                     <InputNumber
                       value={builderPrice}
                       onValueChange={(e) => setBuilderPrice(e.value)}
@@ -474,19 +550,31 @@ export default function ProductModifiersPanel({ product, onMutate }) {
                       locale="en-IN"
                       placeholder="0"
                       className="admin-inputnumber-wrap"
-                      pt={{ input: { className: "admin-input rounded-lg h-9 px-3 text-sm w-32" } }}
+                      pt={{
+                        input: {
+                          className:
+                            "admin-input rounded-lg h-9 px-3 text-sm w-32",
+                        },
+                      }}
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Stock</label>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                      Stock
+                    </label>
                     <InputNumber
                       value={builderStock}
                       onValueChange={(e) => setBuilderStock(e.value)}
                       min={0}
                       placeholder="0"
                       className="admin-inputnumber-wrap"
-                      pt={{ input: { className: "admin-input rounded-lg h-9 px-3 text-sm w-24" } }}
+                      pt={{
+                        input: {
+                          className:
+                            "admin-input rounded-lg h-9 px-3 text-sm w-24",
+                        },
+                      }}
                     />
                   </div>
 
@@ -495,9 +583,14 @@ export default function ProductModifiersPanel({ product, onMutate }) {
                     {Object.entries(builderSelections)
                       .filter(([, id]) => id != null)
                       .map(([type, id]) => {
-                        const m = modifiersByGroup[type]?.find((x) => x.modifier_id === id);
+                        const m = modifiersByGroup[type]?.find(
+                          (x) => x.modifier_id === id,
+                        );
                         return m ? (
-                          <span key={type} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                          <span
+                            key={type}
+                            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#e6f7f5] dark:bg-[#1A9E8E]/15 text-[#117a6e] dark:text-[#26c9b4]"
+                          >
                             {m.modifier_value}
                           </span>
                         ) : null;
@@ -508,7 +601,10 @@ export default function ProductModifiersPanel({ product, onMutate }) {
                     type="button"
                     className="admin-btn-primary flex items-center gap-1.5 px-4 h-9 rounded-lg text-sm font-medium shadow-sm shrink-0"
                     onClick={handleAddCombination}
-                    disabled={adding || Object.values(builderSelections).every((v) => v == null)}
+                    disabled={
+                      adding ||
+                      Object.values(builderSelections).every((v) => v == null)
+                    }
                   >
                     <Plus className="h-4 w-4" />
                     <span>{adding ? "Adding…" : "Add Combination"}</span>

@@ -23,7 +23,7 @@ export const fetchOrders = createAsyncThunk(
 export const postOrders = createAsyncThunk(
   "order/makeOrder",
   async (payload = {}) => {
-    const res = await api.post("order/make-order", payload);
+    const res = await api.post("/order/make-order", payload);
     return res.data.data;
   },
 );

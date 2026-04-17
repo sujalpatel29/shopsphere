@@ -24,11 +24,21 @@ function UserDashboardHome({ showToast }) {
       setError("");
 
       try {
-        const [ordersRes, addressesRes, offersRes] = await Promise.all([
+        // Fetch orders and addresses
+        const [ordersRes, addressesRes] = await Promise.all([
           fetchAllUserOrders(api),
           api.get("/users/show-addresses"),
-          api.get("/offer/active"),
         ]);
+
+        // Fetch offers separately to handle empty state gracefully
+        let offersData = [];
+        try {
+          const offersRes = await api.get("/offer/active");
+          offersData = toArray(extractData(offersRes));
+        } catch (offersError) {
+          // If offers API fails or returns empty, just set to 0 - don't treat as error
+          offersData = [];
+        }
 
         if (!active) {
           return;
@@ -44,7 +54,7 @@ function UserDashboardHome({ showToast }) {
 
         setOrders(sortedOrders);
         setAddressesCount(toArray(extractData(addressesRes)).length);
-        setOffersCount(toArray(extractData(offersRes)).length);
+        setOffersCount(offersData.length);
       } catch (apiError) {
         if (!active) {
           return;
@@ -75,7 +85,13 @@ function UserDashboardHome({ showToast }) {
       return;
     }
 
-    showToast?.("error", "Error", error);
+    // Only show toast for actual errors, not empty states
+    const isEmptyStateError =
+      error.toLowerCase().includes("no offers") ||
+      error.toLowerCase().includes("not found");
+    if (!isEmptyStateError) {
+      showToast?.("error", "Error", error);
+    }
   }, [error, showToast]);
 
   const summary = useMemo(

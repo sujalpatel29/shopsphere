@@ -33,7 +33,9 @@ function OrdersTableSection({ clickable = false, onOrderClick, rows, title }) {
   return (
     <Card className={panelCardClassName} pt={cardPt}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-serif text-2xl text-gray-900 dark:text-slate-100">{title}</h2>
+        <h2 className="font-serif text-2xl text-gray-900 dark:text-slate-100">
+          {title}
+        </h2>
         <Chip
           label={`${rows?.length || 0} orders`}
           className="!bg-slate-200 !text-xs !font-semibold !uppercase !tracking-[0.08em] !text-slate-700 dark:!bg-slate-700 dark:!text-slate-200"
@@ -53,14 +55,22 @@ function OrdersTableSection({ clickable = false, onOrderClick, rows, title }) {
         onRowClick={clickable ? (event) => onOrderClick(event.data) : undefined}
         rowClassName={
           clickable
-            ? () => "cursor-pointer hover:bg-amber-50 dark:hover:bg-[#1a2327]"
+            ? () => "cursor-pointer hover:bg-[#e6f7f5] dark:hover:bg-[#1a2327]"
             : undefined
         }
       >
         <Column field="order_number" header="Order" body={orderIdTemplate} />
-        <Column field="item_count" header="Items" body={(row) => row.item_count ?? 0} />
+        <Column
+          field="item_count"
+          header="Items"
+          body={(row) => row.item_count ?? 0}
+        />
         <Column field="total_amount" header="Amount" body={amountTemplate} />
-        <Column field="order_status" header="Order Status" body={statusTemplate} />
+        <Column
+          field="order_status"
+          header="Order Status"
+          body={statusTemplate}
+        />
         <Column
           field="payment_status"
           header="Payment"

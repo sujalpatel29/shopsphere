@@ -65,7 +65,11 @@ function SellerOrdersTab() {
     } catch (error) {
       setOrders([]);
       setTotalRecords(0);
-      showToast("error", "Error", getApiErrorMessage(error, "Failed to load orders."));
+      showToast(
+        "error",
+        "Error",
+        getApiErrorMessage(error, "Failed to load orders."),
+      );
     } finally {
       setLoading(false);
     }
@@ -84,7 +88,11 @@ function SellerOrdersTab() {
         setSelectedOrder(response.data?.data || null);
       } catch (error) {
         setDetailsVisible(false);
-        showToast("error", "Error", getApiErrorMessage(error, "Failed to load order details."));
+        showToast(
+          "error",
+          "Error",
+          getApiErrorMessage(error, "Failed to load order details."),
+        );
       } finally {
         setDetailsLoading(false);
       }
@@ -128,7 +136,9 @@ function SellerOrdersTab() {
     <div className="admin-products-container animate-fade-in flex-1 flex flex-col min-h-0">
       <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-[#b08d57]">Orders</p>
+          <p className="text-sm uppercase tracking-[0.24em] text-[#b08d57]">
+            Orders
+          </p>
           <h2 className="mt-1 text-2xl font-semibold text-gray-900 dark:text-slate-100">
             Customer orders for your catalog
           </h2>
@@ -173,7 +183,10 @@ function SellerOrdersTab() {
             </p>
             <p className="mt-3 text-3xl font-semibold text-gray-900 dark:text-slate-100">
               {currencyFormatter.format(
-                orders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0),
+                orders.reduce(
+                  (sum, order) => sum + Number(order.total_amount || 0),
+                  0,
+                ),
               )}
             </p>
           </div>
@@ -182,7 +195,13 @@ function SellerOrdersTab() {
 
       <div className="admin-products-card flex-1 flex flex-col min-h-0">
         <DataTable
-          value={loading ? Array.from({ length: lazyParams.rows }, (_, i) => ({ order_id: `skeleton-${i}` })) : orders}
+          value={
+            loading
+              ? Array.from({ length: lazyParams.rows }, (_, i) => ({
+                  order_id: `skeleton-${i}`,
+                }))
+              : orders
+          }
           lazy
           paginator
           first={lazyParams.first}
@@ -214,7 +233,9 @@ function SellerOrdersTab() {
                   <p className="font-mono text-xs font-semibold">
                     {rowData.order_number || `#${rowData.order_id}`}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400">#{rowData.order_id}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    #{rowData.order_id}
+                  </p>
                 </div>
               )
             }
@@ -242,25 +263,49 @@ function SellerOrdersTab() {
           <Column
             field="created_at"
             header="Date"
-            body={(rowData) => (loading ? <Skeleton width="6rem" height="1.1rem" /> : dateTemplate(rowData))}
+            body={(rowData) =>
+              loading ? (
+                <Skeleton width="6rem" height="1.1rem" />
+              ) : (
+                dateTemplate(rowData)
+              )
+            }
             style={{ minWidth: "8rem" }}
           />
           <Column
             field="item_count"
             header="Items"
-            body={(rowData) => (loading ? <Skeleton width="2rem" height="1.1rem" /> : rowData.item_count || 0)}
+            body={(rowData) =>
+              loading ? (
+                <Skeleton width="2rem" height="1.1rem" />
+              ) : (
+                rowData.item_count || 0
+              )
+            }
             style={{ minWidth: "6rem" }}
           />
           <Column
             field="total_amount"
             header="Amount"
-            body={(rowData) => (loading ? <Skeleton width="6rem" height="1.1rem" /> : amountTemplate(rowData))}
+            body={(rowData) =>
+              loading ? (
+                <Skeleton width="6rem" height="1.1rem" />
+              ) : (
+                amountTemplate(rowData)
+              )
+            }
             style={{ minWidth: "8rem" }}
           />
           <Column
             field="status"
             header="Status"
-            body={(rowData) => (loading ? <Skeleton width="6rem" height="2rem" /> : statusTemplate(rowData))}
+            body={(rowData) =>
+              loading ? (
+                <Skeleton width="6rem" height="2rem" />
+              ) : (
+                statusTemplate(rowData)
+              )
+            }
             style={{ minWidth: "9rem" }}
           />
           <Column
@@ -307,7 +352,7 @@ function SellerOrdersTab() {
         ) : selectedOrder ? (
           <div className="space-y-5">
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#f1f5f4] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Customer
                 </p>
@@ -318,13 +363,13 @@ function SellerOrdersTab() {
                   {selectedOrder.customer_email || "No email"}
                 </p>
               </div>
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#f1f5f4] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Status
                 </p>
                 <div className="mt-3">{statusTemplate(selectedOrder)}</div>
               </div>
-              <div className="rounded-2xl bg-[#f5f0e8] p-4 dark:bg-[#10181d]">
+              <div className="rounded-2xl bg-[#f1f5f4] p-4 dark:bg-[#10181d]">
                 <p className="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Total
                 </p>
@@ -357,13 +402,17 @@ function SellerOrdersTab() {
                       {item.product_name}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-slate-400">
-                      {[item.portion_value, item.modifier_value].filter(Boolean).join(" | ") || "Standard option"}
+                      {[item.portion_value, item.modifier_value]
+                        .filter(Boolean)
+                        .join(" | ") || "Standard option"}
                     </p>
                   </div>
                   <div className="text-sm text-gray-700 dark:text-slate-200 md:text-right">
                     <p>Qty: {item.quantity}</p>
                     <p className="font-semibold">
-                      {currencyFormatter.format(item.total || item.price * item.quantity || 0)}
+                      {currencyFormatter.format(
+                        item.total || item.price * item.quantity || 0,
+                      )}
                     </p>
                   </div>
                 </div>

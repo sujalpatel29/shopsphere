@@ -15,7 +15,10 @@ const formatINR = (value) => {
 
 const toNumber = (value) => Number(value) || 0;
 
-export default function OrderSummaryComponent({ orderData, title = "Order Summary" }) {
+export default function OrderSummaryComponent({
+  orderData,
+  title = "Order Summary",
+}) {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -102,7 +105,7 @@ export default function OrderSummaryComponent({ orderData, title = "Order Summar
 
       <Divider />
 
-      <div className="flex items-center justify-between rounded-2xl bg-amber-50 px-4 py-3 dark:bg-[#151e22]">
+      <div className="flex items-center justify-between rounded-2xl bg-[#e6f7f5] px-4 py-3 dark:bg-[#151e22]">
         <span className="font-accent text-sm font-semibold uppercase tracking-[0.14em] text-gray-700 dark:text-slate-300">
           Total
         </span>

@@ -4,7 +4,6 @@ import { getAdminOrder } from "../../redux/slices/orderSlice";
 import { useEffect, useState } from "react";
 import OrderDetailComponents from "../OrderDetailComponents";
 
-
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { InputText } from "primereact/inputtext";
@@ -27,7 +26,7 @@ const formatINR = (value) =>
   }).format(Number(value) || 0);
 
 // component name should be capitalized so React treats it as a component
-export default function AdminOrderComponent () {
+export default function AdminOrderComponent() {
   const dispatch = useDispatch();
   // the reducer is registered under "order" in the store, not "orders".
   // provide a default object to avoid destructure errors when state is undefined.
@@ -40,7 +39,7 @@ export default function AdminOrderComponent () {
     payment_status: { value: null, matchMode: FilterMatchMode.CONTAINS },
     created_at: { value: null, matchMode: FilterMatchMode.CONTAINS },
   });
-  const { adminOrders, loading, error, adminPagination  } = useSelector(
+  const { adminOrders, loading, error, adminPagination } = useSelector(
     (state) => state.order || {},
   );
   const [first, setFirst] = useState(0);
@@ -48,16 +47,16 @@ export default function AdminOrderComponent () {
   const [sortOrder, setSortOrder] = useState(DEFAULT_ORDER_SORT_ORDER);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
-useEffect(() => {
-  dispatch(
-    getAdminOrder({
-      page: DEFAULT_ORDER_PAGE,
-      limit: DEFAULT_ORDER_ROWS,
-      sortField,
-      sortOrder,
-    }),
-  );
-}, [dispatch, sortField, sortOrder]);
+  useEffect(() => {
+    dispatch(
+      getAdminOrder({
+        page: DEFAULT_ORDER_PAGE,
+        limit: DEFAULT_ORDER_ROWS,
+        sortField,
+        sortOrder,
+      }),
+    );
+  }, [dispatch, sortField, sortOrder]);
 
   useEffect(() => {
     const currentPage = adminPagination?.currentPage || 1;
@@ -73,14 +72,14 @@ useEffect(() => {
     dispatch(getAdminOrder({ page, limit, sortField, sortOrder }));
   };
 
-const onSort = (event) => {
-  const nextSortField = event.sortField || DEFAULT_ORDER_SORT_FIELD;
-  const nextSortOrder = event.sortOrder || DEFAULT_ORDER_SORT_ORDER;
+  const onSort = (event) => {
+    const nextSortField = event.sortField || DEFAULT_ORDER_SORT_FIELD;
+    const nextSortOrder = event.sortOrder || DEFAULT_ORDER_SORT_ORDER;
 
-  setSortField(nextSortField);
-  setSortOrder(nextSortOrder);
-  setFirst(0);
-};
+    setSortField(nextSortField);
+    setSortOrder(nextSortOrder);
+    setFirst(0);
+  };
 
   const handleAdminOrderStatusChange = (nextStatus) => {
     setSelectedOrder((prev) =>
@@ -96,13 +95,10 @@ const onSort = (event) => {
     );
   };
 
-
-
   const handleOrderDialogClose = () => {
     setShowOrderDialog(false);
     setSelectedOrder(null);
   };
-
 
   const onGlobalFilterChange = (e) => {
     const value = e.target.value;
@@ -112,8 +108,6 @@ const onSort = (event) => {
     setFilters(_filters);
     setGlobalValue(value);
   };
-
-  
 
   if (loading && !adminOrders.length) {
     return <div className="order-flow-empty">Loading your orders...</div>;
@@ -162,7 +156,7 @@ const onSort = (event) => {
   const header = (
     <div className="orders-header-flex">
       <div className="flex items-center gap-3">
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+        <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
           <Package className="h-6 w-6" />
         </span>
         <div className="orders-title-text">Orders Overview</div>

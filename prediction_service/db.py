@@ -62,7 +62,6 @@ def fetch_all_active_product_ids() -> list[int]:
         SELECT product_id
         FROM product_master
         WHERE is_deleted = 0
-          AND is_active = 1
         ORDER BY product_id ASC
     """
 

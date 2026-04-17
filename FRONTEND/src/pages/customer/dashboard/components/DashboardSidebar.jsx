@@ -23,10 +23,10 @@ function DashboardSidebar({
 
   return (
     <aside
-      className={`rounded-3xl border border-gray-100 bg-white p-4 dark:border-[#1f2933] dark:bg-[#151e22] overflow-hidden flex flex-col transition-all duration-300 lg:max-h-[calc(100vh-7rem)] lg:sticky lg:top-28 ${sidebarOpen ? "opacity-100" : "lg:hidden"}`}
+      className={`rounded-3xl border border-[#E8E3DA] bg-white p-4 dark:border-[#2a3f38] dark:bg-[#132420] overflow-hidden flex flex-col transition-all duration-300 lg:max-h-[calc(100vh-7rem)] lg:sticky lg:top-28 ${sidebarOpen ? "opacity-100" : "lg:hidden"}`}
     >
-      <div className="relative overflow-hidden rounded-2xl bg-[#163332] px-6 py-8 text-white">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.06),transparent_70%)]" />
+      <div className="relative overflow-hidden rounded-2xl bg-[#132420] px-6 py-8 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(26,158,142,0.15),transparent_70%)]" />
         <div className="relative z-10 flex flex-col items-center text-center">
           <div className="mb-3 flex items-center gap-2">
             <img src="/logo.svg" alt="ShopSphere" className="h-10 w-10" />
@@ -34,7 +34,7 @@ function DashboardSidebar({
               ShopSphere
             </span>
           </div>
-          <p className="font-serif text-xs font-medium tracking-[0.2em] text-[#c9b88a]">
+          <p className="font-serif text-xs font-medium tracking-[0.2em] text-[#1A9E8E]">
             CUSTOMER PANEL
           </p>
           <h1
@@ -58,8 +58,8 @@ function DashboardSidebar({
               onClick={() => onTabChange(item.key)}
               className={`!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none ${
                 isActive
-                  ? "!bg-amber-600 !text-white !shadow-lg !shadow-amber-600/20"
-                  : "!bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"
+                  ? "!bg-[#1A9E8E] !text-white !shadow-lg !shadow-[#1A9E8E]/20"
+                  : "!bg-transparent !text-gray-700 hover:!bg-[#e6f7f5] hover:!text-[#1A9E8E] dark:!text-slate-300 dark:hover:!bg-[#1a2e28] dark:hover:!text-[#26c9b4]"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -73,9 +73,13 @@ function DashboardSidebar({
         <Button
           type="button"
           onClick={toggleDarkMode}
-          className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-gray-700 hover:!bg-amber-50 hover:!text-amber-700 dark:!text-slate-300 dark:hover:!bg-slate-800 dark:hover:!text-amber-300"
+          className="!flex !w-full !items-center !gap-3 !rounded-xl !px-3 !py-3 !text-left !text-sm !font-medium !shadow-none !bg-transparent !text-gray-700 hover:!bg-[#e6f7f5] hover:!text-[#1A9E8E] dark:!text-slate-300 dark:hover:!bg-[#1a2e28] dark:hover:!text-[#26c9b4]"
         >
-          {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {darkMode ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
           {darkMode ? "Light Mode" : "Dark Mode"}
         </Button>
         <Button

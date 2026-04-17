@@ -10,19 +10,47 @@ import SmartImage from "../components/common/SmartImage";
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
   const navigate = useNavigate();
 
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
+  const validateForm = () => {
+    const errors = {};
+
+    if (!email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    if (!password) {
+      errors.password = "Password is required";
+    } else if (password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!validateForm()) return;
 
     const resultAction = await dispatch(loginUser({ email, password }));
 
     if (loginUser.fulfilled.match(resultAction)) {
-      const role = resultAction.payload?.role;
-      navigate(role === "admin" ? "/admin/dashboard" : "/");
+      const role = resultAction.payload?.user?.role;
+      navigate(
+        role === "admin"
+          ? "/admin/dashboard"
+          : role === "seller"
+            ? "/seller/dashboard"
+            : "/",
+      );
     }
   };
 
@@ -39,7 +67,7 @@ function LoginPage() {
             fetchPriority="high"
             sizes="(min-width: 768px) 50vw, 100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/65 via-transparent to-amber-600/25" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/65 via-transparent to-[#1A9E8E]/25" />
           <div className="absolute bottom-10 left-10 max-w-sm text-white">
             <h1 className="font-serif text-4xl leading-tight">
               &ldquo;Small choices build a beautiful life.&rdquo;
@@ -49,7 +77,7 @@ function LoginPage() {
             </p>
             <Link
               to="/"
-              className="mt-8 inline-flex items-center justify-center rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 shadow-2xl shadow-slate-950/30 transition hover:-translate-y-0.5 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-white/70"
+              className="mt-8 inline-flex items-center justify-center rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 shadow-2xl shadow-slate-950/30 transition hover:-translate-y-0.5 hover:bg-[#e6f7f5] focus:outline-none focus:ring-2 focus:ring-white/70"
             >
               Explore Shop
             </Link>
@@ -69,38 +97,90 @@ function LoginPage() {
             </p>
 
             <div className="mt-8 space-y-4">
-              <InputText
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:shadow-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-                placeholder="Email"
-                required
-              />
+              <div className="space-y-1">
+                <InputText
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    if (validationErrors.email) {
+                      setValidationErrors((prev) => ({
+                        ...prev,
+                        email: undefined,
+                      }));
+                    }
+                  }}
+                  className={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:ring-2 focus:shadow-none dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 ${
+                    validationErrors.email
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                      : "border-gray-200 focus:border-[#1A9E8E] focus:ring-[#1A9E8E]/20 dark:border-slate-700"
+                  }`}
+                  placeholder="Email"
+                  type="email"
+                  aria-invalid={!!validationErrors.email}
+                  aria-describedby={
+                    validationErrors.email ? "email-error" : undefined
+                  }
+                />
+                {validationErrors.email && (
+                  <p
+                    id="email-error"
+                    className="text-sm text-red-500 dark:text-red-400"
+                  >
+                    {validationErrors.email}
+                  </p>
+                )}
+              </div>
 
-              <div className="w-full">
+              <div className="space-y-1">
                 <Password
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    if (validationErrors.password) {
+                      setValidationErrors((prev) => ({
+                        ...prev,
+                        password: undefined,
+                      }));
+                    }
+                  }}
                   feedback={false}
                   toggleMask
                   className="w-full"
-                  inputClassName="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:shadow-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+                  inputClassName={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 shadow-none outline-none transition focus:ring-2 focus:shadow-none dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 ${
+                    validationErrors.password
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                      : "border-gray-200 focus:border-[#1A9E8E] focus:ring-[#1A9E8E]/20 dark:border-slate-700"
+                  }`}
                   placeholder="Password"
-                  required
+                  aria-invalid={!!validationErrors.password}
+                  aria-describedby={
+                    validationErrors.password ? "password-error" : undefined
+                  }
                 />
+                {validationErrors.password && (
+                  <p
+                    id="password-error"
+                    className="text-sm text-red-500 dark:text-red-400"
+                  >
+                    {validationErrors.password}
+                  </p>
+                )}
               </div>
 
               {error && (
-                <p className="text-sm text-red-500 dark:text-red-400">
-                  {error}
-                </p>
+                <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {error}
+                  </p>
+                </div>
               )}
 
               <Button
                 type="submit"
                 label={loading ? "Signing In..." : "Sign In"}
                 disabled={loading}
-                className="w-full !rounded-lg !bg-amber-600 !px-6 !py-3 !font-medium !text-white !shadow-lg !shadow-amber-600/20 transition-all hover:!bg-amber-700"
+                loading={loading}
+                className="w-full !rounded-lg !bg-[#1A9E8E] !px-6 !py-3 !font-medium !text-white !shadow-lg !shadow-[#1A9E8E]/20 transition-all hover:!bg-[#168c7e] disabled:opacity-70"
               />
             </div>
 
@@ -108,7 +188,7 @@ function LoginPage() {
               Don&apos;t have an account?{" "}
               <Link
                 to="/register"
-                className="font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                className="font-medium text-[#1A9E8E] hover:text-[#168c7e] dark:text-[#26c9b4] dark:hover:text-[#4dd3c2]"
               >
                 Register
               </Link>
@@ -118,7 +198,7 @@ function LoginPage() {
               Forgot password?{" "}
               <Link
                 to="/forgot-password"
-                className="font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                className="font-medium text-[#1A9E8E] hover:text-[#168c7e] dark:text-[#26c9b4] dark:hover:text-[#4dd3c2]"
               >
                 Reset here
               </Link>

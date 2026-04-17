@@ -10,6 +10,7 @@ import {
   getOfferItem,
   getProducts,
   getRootCategoryId,
+  getTaxPercentByCategory,
   getModifierValue,
   getOfferOnId,
   getOfferDetails,
@@ -144,6 +145,7 @@ const calculateOrderValues = async (user_id) => {
 
   const portionIds = cart.map((item) => item.product_portion_id);
 
+  const quantities = cart.map((item) => Number(item.quantity) || 1);
   let price = [];
 
   for (let i = 0; i < portionIds.length; i++) {
@@ -156,27 +158,26 @@ const calculateOrderValues = async (user_id) => {
     price.push(Number(portionPrice[0].price));
   }
 
-  const totalPrice = price.reduce((sum, val) => sum + val, 0);
+  const totalPrice = price.reduce(
+    (sum, val, i) => sum + val * quantities[i],
+    0,
+  );
 
   /* TAX CALCULATION */
 
-  const rootCategoryEntries = await Promise.all(
-    products.map(async (t) => {
-      const rootId = await findRootCategory(t.category_id);
-      return [t.product_id, rootId];
+  const taxAmountArray = await Promise.all(
+    cart.map(async (item, index) => {
+      const taxPercent = await getTaxPercentByCategory(
+        products[index].category_id,
+      );
+      return (price[index] * taxPercent) / 100;
     }),
   );
 
-  const rootCategoryMap = Object.fromEntries(rootCategoryEntries);
-
-  const taxAmountArray = cart.map((item, index) => {
-    const categoryId = rootCategoryMap[item.product_id];
-    const taxPercent = getTaxPercent(categoryId);
-
-    return (price[index] * taxPercent) / 100;
-  });
-
-  const totalTax = taxAmountArray.reduce((sum, value) => sum + value, 0);
+  const totalTax = taxAmountArray.reduce(
+    (sum, value, i) => sum + value * quantities[i],
+    0,
+  );
 
   /* DISCOUNT */
 
@@ -283,7 +284,7 @@ export const postOrderItems = async (
   // Fetch primary category for each product
   const productCategories = await getCompareProductCategory(productIds);
   const categoryIds = productCategories.map((item) => item.category_id);
-  
+
   // Collect all modifier IDs across all cart items
   const allModifierIds = [];
   cart.forEach((item) => {
@@ -295,15 +296,18 @@ export const postOrderItems = async (
 
   const portionIds = cart.map((item) => item.product_portion_id);
   const portionRows = await getPortionValue(portionIds);
-  const modifierRows = uniqueModifierIds.length > 0 ? await getModifierValue(uniqueModifierIds) : [];
+  const modifierRows =
+    uniqueModifierIds.length > 0
+      ? await getModifierValue(uniqueModifierIds)
+      : [];
   const quantities = cart.map((item) => item.quantity);
   const portionMap = Object.fromEntries(
     portionRows.map((p) => [p.portion_id, p.portion_value]),
   );
 
   const modifierMap = {};
-  modifierRows.forEach(m => {
-     modifierMap[m.modifier_id] = m;
+  modifierRows.forEach((m) => {
+    modifierMap[m.modifier_id] = m;
   });
 
   // Fetch product names
@@ -332,9 +336,17 @@ export const postOrderItems = async (
     const finalTotal = p + t - d;
 
     const itemModifiers = cart[i].modifier_ids || [];
-    const itemModifierObjects = itemModifiers.map(id => modifierMap[id]).filter(Boolean);
-    const primaryModifierId = itemModifierObjects.length > 0 ? itemModifierObjects[0].modifier_id : null;
-    const primaryModifierValue = itemModifierObjects.length > 0 ? itemModifierObjects[0].modifier_value : null;
+    const itemModifierObjects = itemModifiers
+      .map((id) => modifierMap[id])
+      .filter(Boolean);
+    const primaryModifierId =
+      itemModifierObjects.length > 0
+        ? itemModifierObjects[0].modifier_id
+        : null;
+    const primaryModifierValue =
+      itemModifierObjects.length > 0
+        ? itemModifierObjects[0].modifier_value
+        : null;
 
     modifiersMapping.push(itemModifierObjects);
 
@@ -361,20 +373,6 @@ export const postOrderItems = async (
   await insertQuery(values, cart_id, orderId, modifiersMapping);
 };
 
-// Find root category ID for tax calculation
-const findRootCategory = async (categoryId) => {
-  const rows = await getRootCategoryId(categoryId);
-  return rows[0]?.category_id;
-};
-
-// Get tax percentage based on root category
-const getTaxPercent = (rootCategoryId) => {
-  const TAX_RULES = {
-    1: 18,
-    27: 5,
-  };
-  return TAX_RULES[rootCategoryId] || 0;
-};
 export const changeOrderStatusByAdmin = async (req, res) => {
   try {
     const latestStatus = req.body.latestStatus;
@@ -557,12 +555,10 @@ export const requestCancelOrderByUser = async (req, res) => {
     }
 
     if (order.user_id !== req.user.id) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "You do not have permission to request cancellation for this order.",
-        });
+      return res.status(403).json({
+        message:
+          "You do not have permission to request cancellation for this order.",
+      });
     }
 
     if (!USER_CANCELABLE_STATUSES.has(order.order_status)) {

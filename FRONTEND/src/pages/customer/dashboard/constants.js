@@ -14,16 +14,16 @@ export const cardPt = {
 };
 
 export const panelCardClassName =
-  "rounded-2xl border border-[#ddcfb7] bg-[#f8f3ea] p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
+  "rounded-2xl border border-[#1A9E8E]/12 bg-[#f5faf9] p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const metricCardClassName =
-  "rounded-2xl border border-[#ddcfb7] bg-[#f3ecdf] p-5 dark:border-[#1f2933] dark:bg-[#151e22]";
+  "rounded-2xl border border-[#1A9E8E]/12 bg-[#eef8f6] p-5 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const sidebarCardClassName =
-  "h-fit rounded-3xl border border-[#ddcfb7] bg-[#f8f3ea] p-4 dark:border-[#1f2933] dark:bg-[#151e22]";
+  "h-fit rounded-3xl border border-[#1A9E8E]/12 bg-[#f5faf9] p-4 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const pageHeaderCardClassName =
-  "rounded-3xl border border-[#ddcfb7] bg-[#f8f3ea] p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
+  "rounded-3xl border border-[#1A9E8E]/12 bg-[#f5faf9] p-6 dark:border-[#1f2933] dark:bg-[#151e22]";
 
 export const profileNav = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },

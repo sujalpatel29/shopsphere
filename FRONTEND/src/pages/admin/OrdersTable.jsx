@@ -33,21 +33,31 @@ const relativeTime = (dateStr) => {
 };
 
 const ORDER_STATUS_STYLES = {
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  processing: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  shipped: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300",
-  delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+  pending:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  processing:
+    "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  shipped:
+    "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300",
+  delivered:
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  completed:
+    "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
   cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  refunded: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+  refunded:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
 };
 
 const PAYMENT_STATUS_STYLES = {
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  processing: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  pending:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  processing:
+    "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  completed:
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
   failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  refunded: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+  refunded:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
 };
 
 const METHOD_LABELS = {
@@ -61,7 +71,11 @@ const METHOD_LABELS = {
 
 const MethodIcon = ({ method }) => {
   const cls = "w-3 h-3";
-  if (method === "stripe" || method === "credit_card" || method === "debit_card")
+  if (
+    method === "stripe" ||
+    method === "credit_card" ||
+    method === "debit_card"
+  )
     return <CreditCard className={cls} />;
   if (method === "cash_on_delivery") return <Banknote className={cls} />;
   if (method === "bank_transfer") return <Landmark className={cls} />;
@@ -152,8 +166,12 @@ function OrdersTable({
   // Date
   const dateTemplate = (row) => (
     <div className="flex flex-col">
-      <span className="text-sm text-gray-800 dark:text-gray-200">{formatDate(row.created_at)}</span>
-      <span className="text-xs text-gray-400">{relativeTime(row.created_at)}</span>
+      <span className="text-sm text-gray-800 dark:text-gray-200">
+        {formatDate(row.created_at)}
+      </span>
+      <span className="text-xs text-gray-400">
+        {relativeTime(row.created_at)}
+      </span>
     </div>
   );
 
@@ -174,10 +192,18 @@ function OrdersTable({
   );
 
   // Skeleton helpers
-  const skeletonTemplate = () => <Skeleton height="1.25rem" className="w-[80%]" />;
-  const skeletonBadgeTemplate = () => <Skeleton width="5rem" height="1.5rem" borderRadius="9999px" />;
-  const skeletonCircleTemplate = () => <Skeleton shape="circle" size="1.75rem" />;
-  const skeletonActionTemplate = () => <Skeleton shape="circle" size="2.25rem" />;
+  const skeletonTemplate = () => (
+    <Skeleton height="1.25rem" className="w-[80%]" />
+  );
+  const skeletonBadgeTemplate = () => (
+    <Skeleton width="5rem" height="1.5rem" borderRadius="9999px" />
+  );
+  const skeletonCircleTemplate = () => (
+    <Skeleton shape="circle" size="1.75rem" />
+  );
+  const skeletonActionTemplate = () => (
+    <Skeleton shape="circle" size="2.25rem" />
+  );
 
   const skeletonData = Array.from({ length: lazyParams.rows || 5 }, (_, i) => ({
     order_id: `skeleton-${i}`,
@@ -223,14 +249,60 @@ function OrdersTable({
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
         tableStyle={{ minWidth: "60rem" }}
       >
-        <Column field="order_number" header="Order #" sortable body={loading ? skeletonTemplate : orderNumberTemplate} style={{ minWidth: "8rem" }} />
-        <Column field="customer_name" header="Customer" sortable body={loading ? skeletonTemplate : customerTemplate} style={{ minWidth: "12rem" }} />
-        <Column field="item_count" header="Items" body={loading ? skeletonCircleTemplate : itemCountTemplate} style={{ width: "5rem" }} />
-        <Column field="total_amount" header="Total" sortable body={loading ? skeletonTemplate : totalTemplate} style={{ minWidth: "8rem" }} />
-        <Column field="order_status" header="Order Status" sortable body={loading ? skeletonBadgeTemplate : orderStatusTemplate} style={{ minWidth: "8rem" }} />
-        <Column field="payment_status" header="Payment" sortable body={loading ? skeletonBadgeTemplate : paymentTemplate} style={{ minWidth: "9rem" }} />
-        <Column field="created_at" header="Date" sortable body={loading ? skeletonTemplate : dateTemplate} style={{ minWidth: "8rem" }} />
-        <Column header="Actions" body={loading ? skeletonActionTemplate : actionTemplate} exportable={false} style={{ width: "5rem" }} />
+        <Column
+          field="order_number"
+          header="Order #"
+          sortable
+          body={loading ? skeletonTemplate : orderNumberTemplate}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="customer_name"
+          header="Customer"
+          sortable
+          body={loading ? skeletonTemplate : customerTemplate}
+          style={{ minWidth: "12rem" }}
+        />
+        <Column
+          field="item_count"
+          header="Items"
+          body={loading ? skeletonCircleTemplate : itemCountTemplate}
+          style={{ width: "5rem" }}
+        />
+        <Column
+          field="total_amount"
+          header="Total"
+          sortable
+          body={loading ? skeletonTemplate : totalTemplate}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="order_status"
+          header="Order Status"
+          sortable
+          body={loading ? skeletonBadgeTemplate : orderStatusTemplate}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="payment_status"
+          header="Payment"
+          sortable
+          body={loading ? skeletonBadgeTemplate : paymentTemplate}
+          style={{ minWidth: "9rem" }}
+        />
+        <Column
+          field="created_at"
+          header="Date"
+          sortable
+          body={loading ? skeletonTemplate : dateTemplate}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          header="Actions"
+          body={loading ? skeletonActionTemplate : actionTemplate}
+          exportable={false}
+          style={{ width: "5rem" }}
+        />
       </DataTable>
     </div>
   );

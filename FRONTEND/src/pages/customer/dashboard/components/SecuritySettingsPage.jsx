@@ -25,9 +25,7 @@ const extractErrorMessage = (error, fallback) => {
 
   const errors = responseData?.errors;
   if (Array.isArray(errors) && errors.length > 0) {
-    return errors
-      .map((entry) => entry?.message || "Invalid value")
-      .join(" | ");
+    return errors.map((entry) => entry?.message || "Invalid value").join(" | ");
   }
 
   return error?.message || fallback;
@@ -65,7 +63,11 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
       const payload = extractData(response);
       const normalized = Array.isArray(payload) ? payload[0] : payload;
       const profileEmail = normalized?.email || currentUser?.email || "";
-      setCurrentEmail(String(profileEmail || "").trim().toLowerCase());
+      setCurrentEmail(
+        String(profileEmail || "")
+          .trim()
+          .toLowerCase(),
+      );
     } catch (error) {
       setErrorMessage(
         extractErrorMessage(error, "Failed to load security details."),
@@ -169,7 +171,10 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
       setOtpToken("");
       setOtpRequestedEmail("");
       setInfoMessage(
-        extractMessage(response, "Email changed successfully. Please login again."),
+        extractMessage(
+          response,
+          "Email changed successfully. Please login again.",
+        ),
       );
 
       await onProfileRefresh?.();
@@ -197,7 +202,10 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
     try {
       const response = await api.patch("/users/update-password", payload);
       setInfoMessage(
-        extractMessage(response, "Password changed successfully. Please login again."),
+        extractMessage(
+          response,
+          "Password changed successfully. Please login again.",
+        ),
       );
 
       setTimeout(() => {
@@ -253,7 +261,10 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
       setDeleteOtpRequestedEmail(normalized);
       setDeleteOtp("");
       setInfoMessage(
-        extractMessage(response, "OTP sent to your email for account deletion."),
+        extractMessage(
+          response,
+          "OTP sent to your email for account deletion.",
+        ),
       );
     } catch (error) {
       setErrorMessage(
@@ -296,7 +307,10 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
       }, 900);
     } catch (error) {
       setErrorMessage(
-        extractErrorMessage(error, "Failed to verify OTP for account deletion."),
+        extractErrorMessage(
+          error,
+          "Failed to verify OTP for account deletion.",
+        ),
       );
     } finally {
       setVerifyingDeleteOtp(false);
@@ -307,7 +321,10 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
     return (
       <Card className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_34px_-28px_rgba(15,23,42,0.8)] dark:border-[#1f2933] dark:bg-[#151e22]">
         <div className="flex items-center gap-3">
-          <ProgressSpinner style={{ width: "24px", height: "24px" }} strokeWidth="4" />
+          <ProgressSpinner
+            style={{ width: "24px", height: "24px" }}
+            strokeWidth="4"
+          />
           <p className="text-sm text-gray-600 dark:text-slate-300">
             Loading security settings...
           </p>
@@ -321,7 +338,7 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_18px_34px_-30px_rgba(15,23,42,0.85)] dark:border-[#1f2933] dark:bg-[#151e22]">
           <div className="flex items-center gap-2">
-            <i className="pi pi-envelope text-amber-600 dark:text-amber-300" />
+            <i className="pi pi-envelope text-[#1A9E8E] dark:text-[#26c9b4]" />
             <h3 className="font-serif text-xl text-slate-900 dark:text-slate-100">
               Change Email (OTP)
             </h3>
@@ -363,7 +380,7 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
                 spellCheck={false}
                 autoCapitalize="none"
                 placeholder="Enter new email"
-                className="w-full !rounded-xl !border-slate-300 !bg-slate-100 !px-3 !py-2.5 !text-slate-900 placeholder:!text-slate-500 focus:!border-amber-500 focus:!shadow-none dark:!border-slate-600 dark:!bg-slate-800 dark:!text-slate-100 dark:placeholder:!text-slate-400"
+                className="w-full !rounded-xl !border-[#DDD8CF] !bg-[#F6F3EE] !px-3 !py-2.5 !text-[#111111] placeholder:!text-[#7C7670] focus:!border-[#1A9E8E] focus:!shadow-none dark:!border-[#2a3f38] dark:!bg-[#1a2e28] dark:!text-[#F6F3EE] dark:placeholder:!text-[#A8A39A]"
               />
             </div>
 
@@ -374,13 +391,14 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
               loading={requestingOtp}
               disabled={requestingOtp || verifyingOtp}
               onClick={handleRequestEmailOtp}
-              className="!w-full !rounded-xl !bg-amber-500 !px-4 !py-2 !text-sm !font-semibold !text-[#132a29] hover:!bg-amber-400 sm:!w-auto"
+              className="!w-full !rounded-xl !bg-[#1A9E8E] !px-4 !py-2 !text-sm !font-semibold !text-white hover:!bg-[#168c7e] sm:!w-auto"
             />
 
             {otpToken ? (
               <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70">
                 <p className="text-xs text-slate-600 dark:text-slate-300">
-                  OTP sent to: <span className="font-semibold">{otpRequestedEmail}</span>
+                  OTP sent to:{" "}
+                  <span className="font-semibold">{otpRequestedEmail}</span>
                 </p>
                 <div className="space-y-1.5">
                   <label
@@ -394,15 +412,19 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
                     value={otp}
                     maxLength={6}
                     onChange={(event) =>
-                      setOtp(event.target.value.replace(/[^\d]/g, "").slice(0, 6))
+                      setOtp(
+                        event.target.value.replace(/[^\d]/g, "").slice(0, 6),
+                      )
                     }
                     placeholder="6-digit code"
-                    className="w-full !rounded-xl !border-slate-300 !bg-white !px-3 !py-2.5 !text-slate-900 placeholder:!text-slate-500 focus:!border-amber-500 focus:!shadow-none dark:!border-slate-600 dark:!bg-slate-900 dark:!text-slate-100 dark:placeholder:!text-slate-400"
+                    className="w-full !rounded-xl !border-[#DDD8CF] !bg-white !px-3 !py-2.5 !text-[#111111] placeholder:!text-[#7C7670] focus:!border-[#1A9E8E] focus:!shadow-none dark:!border-[#2a3f38] dark:!bg-[#132420] dark:!text-[#F6F3EE] dark:placeholder:!text-[#A8A39A]"
                   />
                 </div>
                 <Button
                   type="button"
-                  label={verifyingOtp ? "Verifying..." : "Verify OTP & Update Email"}
+                  label={
+                    verifyingOtp ? "Verifying..." : "Verify OTP & Update Email"
+                  }
                   icon="pi pi-check-circle"
                   loading={verifyingOtp}
                   disabled={requestingOtp || verifyingOtp}
@@ -423,12 +445,15 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
 
       <Card className="rounded-2xl border border-red-200/90 bg-red-50 p-6 shadow-[0_18px_34px_-30px_rgba(127,29,29,0.7)] dark:border-red-900 dark:bg-red-950/30">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="font-serif text-xl text-red-700 dark:text-red-300">Delete Account</h3>
+          <h3 className="font-serif text-xl text-red-700 dark:text-red-300">
+            Delete Account
+          </h3>
           <i className="pi pi-exclamation-triangle text-red-600 dark:text-red-300" />
         </div>
         <Divider className="!my-3" />
         <p className="text-sm text-red-700/90 dark:text-red-200">
-          To delete your account, enter your email and verify OTP sent to that email.
+          To delete your account, enter your email and verify OTP sent to that
+          email.
         </p>
 
         <div className="mt-4 space-y-3">
@@ -466,7 +491,8 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
           {deleteOtpToken ? (
             <div className="space-y-3 rounded-xl border border-red-200 bg-white p-3 dark:border-red-800 dark:bg-slate-900">
               <p className="text-xs text-red-700 dark:text-red-200">
-                OTP sent to: <span className="font-semibold">{deleteOtpRequestedEmail}</span>
+                OTP sent to:{" "}
+                <span className="font-semibold">{deleteOtpRequestedEmail}</span>
               </p>
               <div className="space-y-1.5">
                 <label
@@ -490,7 +516,11 @@ function SecuritySettingsPage({ currentUser, onProfileRefresh, showToast }) {
               </div>
               <Button
                 type="button"
-                label={verifyingDeleteOtp ? "Deleting..." : "Verify OTP & Delete Account"}
+                label={
+                  verifyingDeleteOtp
+                    ? "Deleting..."
+                    : "Verify OTP & Delete Account"
+                }
                 icon="pi pi-trash"
                 severity="danger"
                 loading={verifyingDeleteOtp}

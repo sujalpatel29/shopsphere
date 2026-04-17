@@ -62,6 +62,7 @@ productImageRouter.patch(
   "/update/:image_id",
   auth,
   adminOrVerifiedSeller,
+  adminOrVerifiedSeller,
   uploadSingleImage("image"),
   validate(imageIdParamSchema, "params"),
   validate(updateProductImageSchema),
@@ -72,6 +73,7 @@ productImageRouter.patch(
 productImageRouter.delete(
   "/delete/:image_id",
   auth,
+  adminOrVerifiedSeller,
   adminOrVerifiedSeller,
   validate(imageIdParamSchema, "params"),
   deleteProductImageController,

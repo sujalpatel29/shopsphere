@@ -40,7 +40,7 @@ const orderSeverity = (status) => {
 
 function RecentOrdersList({ loading, orders }) {
   return (
-    <Card className="rounded-2xl border border-[#ddcfb7] bg-[#f8f3ea] p-2 shadow-[0_20px_34px_-30px_rgba(15,23,42,0.8)] dark:border-[#1f2933] dark:bg-[#151e22]">
+    <Card className="rounded-2xl border border-[#1A9E8E]/12 bg-[#f5faf9] p-2 shadow-[0_20px_34px_-30px_rgba(15,23,42,0.8)] dark:border-[#1f2933] dark:bg-[#151e22]">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-2 pt-3 sm:px-5">
         <div>
           <h3 className="font-serif text-2xl text-slate-900 dark:text-slate-100">
@@ -50,7 +50,7 @@ function RecentOrdersList({ loading, orders }) {
             Latest purchases from your account activity.
           </p>
         </div>
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#ddcfb7] bg-[#f3ecdf] px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#1A9E8E]/12 bg-[#eef8f6] px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
           <i className="pi pi-clock text-[11px]" />
           Updated
         </span>
@@ -58,17 +58,24 @@ function RecentOrdersList({ loading, orders }) {
 
       <div className="space-y-3 px-3 pb-3 pt-1 md:hidden">
         {loading ? (
-          <div className="flex items-center gap-2 rounded-xl border border-[#ddcfb7] bg-[#f3ecdf] px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-            <ProgressSpinner style={{ width: "18px", height: "18px" }} strokeWidth="5" />
+          <div className="flex items-center gap-2 rounded-xl border border-[#1A9E8E]/12 bg-[#eef8f6] px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <ProgressSpinner
+              style={{ width: "18px", height: "18px" }}
+              strokeWidth="5"
+            />
             Loading recent orders...
           </div>
         ) : orders.length === 0 ? (
-          <Message severity="info" text="No recent orders found." className="w-full" />
+          <Message
+            severity="info"
+            text="No recent orders found."
+            className="w-full"
+          />
         ) : (
           orders.map((row) => (
             <div
               key={row.order_id}
-              className="rounded-xl border border-[#ddcfb7] bg-[#f3ecdf] p-3 dark:border-slate-700 dark:bg-slate-800"
+              className="rounded-xl border border-[#1A9E8E]/12 bg-[#eef8f6] p-3 dark:border-slate-700 dark:bg-slate-800"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -115,13 +122,14 @@ function RecentOrdersList({ loading, orders }) {
           pt={{
             wrapper: {
               className:
-                "rounded-xl border border-[#ddcfb7] bg-[#f8f3ea] dark:border-slate-700 dark:bg-[#151e22]",
+                "rounded-xl border border-[#1A9E8E]/12 bg-[#f5faf9] dark:border-slate-700 dark:bg-[#151e22]",
             },
             table: { className: "bg-transparent" },
-            thead: { className: "bg-[#efe7d8] dark:bg-slate-800" },
-            headerRow: { className: "bg-[#efe7d8] dark:bg-slate-800" },
+            thead: { className: "bg-[#e6f7f5]/60 dark:bg-slate-800" },
+            headerRow: { className: "bg-[#e6f7f5]/60 dark:bg-slate-800" },
             bodyRow: {
-              className: "bg-transparent odd:bg-[#f8f3ea] even:bg-[#f2eadc] dark:odd:bg-[#151e22] dark:even:bg-[#192328]",
+              className:
+                "bg-transparent odd:bg-[#f5faf9] even:bg-[#eef8f6] dark:odd:bg-[#151e22] dark:even:bg-[#192328]",
             },
           }}
         >

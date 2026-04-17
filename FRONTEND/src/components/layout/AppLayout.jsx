@@ -9,7 +9,7 @@ function AppLayout() {
 
   return (
     <div
-      className={`flex min-h-screen flex-col font-sans ${darkMode ? "bg-[#0b1114] text-slate-200" : "bg-gray-50 text-gray-900"}`}
+      className={`flex min-h-screen flex-col font-sans ${darkMode ? "bg-[#132420] text-[#F6F3EE]" : "bg-[#F6F3EE] text-[#111111]"}`}
     >
       <ScrollToTop />
       <Navbar />

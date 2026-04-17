@@ -58,7 +58,9 @@ export default function OrderDetailComponents({
   const { id } = useParams();
 
   const data = location.state?.data;
-  const { loading, error, orderItems, itemPagination, orders } = useSelector((state) => state.order || {});
+  const { loading, error, orderItems, itemPagination, orders } = useSelector(
+    (state) => state.order || {},
+  );
   const { currentUser } = useSelector((state) => state.auth || {});
 
   const resolvedOrderId = orderIdProp || id;
@@ -110,7 +112,12 @@ export default function OrderDetailComponents({
 
   const handleStatusChange = async (event) => {
     const nextStatus = event.target.value;
-    if (!resolvedOrderId || !nextStatus || nextStatus === orderData?.order_status) return;
+    if (
+      !resolvedOrderId ||
+      !nextStatus ||
+      nextStatus === orderData?.order_status
+    )
+      return;
 
     setStatusSaving(true);
     setStatusError("");
@@ -239,15 +246,21 @@ export default function OrderDetailComponents({
       )}
 
       <section className={`${isDialog ? "mb-4" : "order-flow-hero mb-6"}`}>
-        <div className={isDialog ? "flex flex-wrap items-start justify-between gap-3" : "order-flow-hero-content flex flex-wrap items-start justify-between gap-4"}>
+        <div
+          className={
+            isDialog
+              ? "flex flex-wrap items-start justify-between gap-3"
+              : "order-flow-hero-content flex flex-wrap items-start justify-between gap-4"
+          }
+        >
           <div>
             <p className="order-flow-eyebrow">Order Details</p>
             <h2 className="order-flow-title">
-            Order #{orderData?.order_number || resolvedOrderId}
+              Order #{orderData?.order_number || resolvedOrderId}
             </h2>
             <p className="order-flow-text">
-              Review item-level pricing, tax, and the final order summary in the same
-              style used across the rest of the storefront.
+              Review item-level pricing, tax, and the final order summary in the
+              same style used across the rest of the storefront.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -268,7 +281,7 @@ export default function OrderDetailComponents({
                 outlined
                 onClick={handleReturnOrder}
                 disabled={statusSaving}
-                className="order-flow-secondary-button !border-amber-300 !text-amber-700 hover:!bg-amber-50 dark:!border-amber-500/40 dark:!text-amber-300 dark:hover:!bg-amber-500/10"
+                className="order-flow-secondary-button !border-[#1A9E8E] !text-[#117a6e] hover:!bg-[#e6f7f5] dark:!border-[#1A9E8E]/40 dark:!text-[#26c9b4] dark:hover:!bg-[#1A9E8E]/10"
               />
             )}
             {!isDialog && (
@@ -285,35 +298,44 @@ export default function OrderDetailComponents({
       </section>
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <CalendarDays className="h-5 w-5" />
             </span>
             <div>
               <p className="order-flow-stat-label">Order Date</p>
               <p className="order-flow-stat-value text-xl">
-              {formatDate(orderData?.created_at)}
+                {formatDate(orderData?.created_at)}
               </p>
             </div>
           </div>
         </Card>
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <ReceiptIndianRupee className="h-5 w-5" />
             </span>
             <div>
               <p className="order-flow-stat-label">Order Total</p>
               <p className="order-flow-stat-value text-xl">
-              {formatINR(orderData?.total_amount)}
+                {formatINR(orderData?.total_amount)}
               </p>
             </div>
           </div>
         </Card>
-        <Card className="order-flow-stat" pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}>
+        <Card
+          className="order-flow-stat"
+          pt={{ body: { className: "p-0" }, content: { className: "p-0" } }}
+        >
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
               <PackageCheck className="h-5 w-5" />
             </span>
             <div>
@@ -334,7 +356,9 @@ export default function OrderDetailComponents({
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <div>
-                <h3 className="order-flow-section-title text-[1.45rem]">Order Items</h3>
+                <h3 className="order-flow-section-title text-[1.45rem]">
+                  Order Items
+                </h3>
                 <p className="order-flow-section-copy mt-1">
                   Item-level totals, taxes, and quantity for this order.
                 </p>
@@ -349,7 +373,7 @@ export default function OrderDetailComponents({
                       value={orderData?.order_status || "pending"}
                       onChange={handleStatusChange}
                       disabled={statusSaving}
-                      className="min-w-[180px] rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 outline-none transition-all focus:border-amber-500 dark:border-[#334155] dark:bg-[#10171b] dark:text-slate-100"
+                      className="min-w-[180px] rounded-xl border border-[#1A9E8E]/40 bg-white px-3 py-2 text-sm font-medium text-gray-800 outline-none transition-all focus:border-[#1A9E8E] dark:border-[#334155] dark:bg-[#10171b] dark:text-slate-100"
                     >
                       {ADMIN_ORDER_STATUSES.map((status) => (
                         <option key={status} value={status}>
@@ -360,7 +384,8 @@ export default function OrderDetailComponents({
                   </label>
                 )}
                 <span className="order-flow-badge">
-                  {itemPagination?.totalItems || orderItems?.length || 0} item(s)
+                  {itemPagination?.totalItems || orderItems?.length || 0}{" "}
+                  item(s)
                 </span>
               </div>
             </div>

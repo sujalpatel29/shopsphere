@@ -27,9 +27,9 @@ function AdminCategoriesTable({ categories, loading, onEdit, onDelete }) {
   const nameBodyTemplate = (rowData) => (
     <div className="flex items-center gap-2">
       {rowData.parent_id ? (
-        <Folder className="h-4 w-4 text-amber-500 flex-shrink-0" />
+        <Folder className="h-4 w-4 text-[#1A9E8E] flex-shrink-0" />
       ) : (
-        <FolderOpen className="h-4 w-4 text-amber-600 flex-shrink-0" />
+        <FolderOpen className="h-4 w-4 text-[#1A9E8E] flex-shrink-0" />
       )}
       <span className="font-medium text-gray-900 dark:text-gray-100">
         {rowData.category_name}

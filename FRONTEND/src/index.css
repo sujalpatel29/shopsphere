@@ -7,11 +7,16 @@
 /* ================================================= */
 
 :root {
-  --primary-color: #2f7a6f;
-  --primary-hover: #26635a;
-  --primary-light: rgba(47, 122, 111, 0.08);
-  --primary-light-hover: rgba(47, 122, 111, 0.06);
-  --primary-focus-ring: rgba(47, 122, 111, 0.2);
+  --primary-color: #1a9e8e;
+  --primary-hover: #168c7e;
+  --primary-light: rgba(26, 158, 142, 0.08);
+  --primary-light-hover: rgba(26, 158, 142, 0.06);
+  --primary-focus-ring: rgba(26, 158, 142, 0.2);
+  --background: #f6f3ee;
+  --card-border: #ddd8cf;
+  --text-primary: #111111;
+  --text-muted: #7c7670;
+  --table-header: #f0ebe3;
 }
 
 /* ================================================= */
@@ -20,7 +25,7 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(47, 122, 111, 0.5) transparent;
+  scrollbar-color: rgba(124, 118, 112, 0.4) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -33,26 +38,26 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(47, 122, 111, 0.5);
+  background: rgba(124, 118, 112, 0.4);
   border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(47, 122, 111, 0.8);
+  background: rgba(124, 118, 112, 0.6);
 }
 
 .dark *::-webkit-scrollbar-thumb,
 html.dark::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.5);
+  background: rgba(168, 163, 154, 0.3);
 }
 
 .dark *::-webkit-scrollbar-thumb:hover,
 html.dark::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.8);
+  background: rgba(168, 163, 154, 0.5);
 }
 
 .app-toast-offset.p-toast {
-  top: 6.25rem !important;
+  top: 8rem !important;
 }
 
 @media (max-width: 768px) {
@@ -66,7 +71,7 @@ html.dark::-webkit-scrollbar-thumb:hover {
 
 .dark *,
 html.dark {
-  scrollbar-color: rgba(100, 116, 139, 0.5) transparent;
+  scrollbar-color: rgba(71, 85, 105, 0.5) transparent;
 }
 
 /* ================================================= */
@@ -82,19 +87,41 @@ html.dark {
 
   body {
     @apply text-gray-900;
-    font-family: "Jost", sans-serif;
-    background-color: #f3ecdf;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    background-color: #f6f3ee;
+    color: #111111;
   }
 
   .dark body {
-    background-color: #0b1114;
-    @apply text-slate-200;
+    background-color: #132420;
+    color: #f6f3ee;
   }
 
-  /* Force Jost on all PrimeReact components */
+  /* Force Plus Jakarta Sans on all PrimeReact components */
   .p-component,
   .p-component * {
-    font-family: "Jost", sans-serif;
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+
+  /* Global focus styles for accessibility */
+  *:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Remove focus outline for mouse users, keep for keyboard */
+  *:focus:not(:focus-visible) {
+    outline: none;
   }
 
   html:not(.dark) .bg-white {
@@ -102,7 +129,7 @@ html.dark {
   }
 
   html:not(.dark) .bg-gray-50 {
-    background-color: #f5ecde !important;
+    background-color: #f0ebe3 !important;
   }
 }
 
@@ -716,7 +743,8 @@ html:not(.dark)
   0% {
     left: -10%;
   }
-  40%, 60% {
+  40%,
+  60% {
     left: 50%;
   }
   100% {
@@ -725,7 +753,8 @@ html:not(.dark)
 }
 
 @keyframes box {
-  0%, 40% {
+  0%,
+  40% {
     top: -20%;
   }
   60% {
@@ -742,13 +771,15 @@ html:not(.dark)
   0% {
     opacity: 1;
   }
-  20%, 100% {
+  20%,
+  100% {
     opacity: 0;
   }
 }
 
 @keyframes txt2 {
-  0%, 80% {
+  0%,
+  80% {
     opacity: 0;
   }
   100% {
@@ -874,7 +905,9 @@ html:not(.dark)
   background: rgba(47, 122, 111, 0.2) !important;
 }
 
-.dark .category-sort-panel .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+.dark
+  .category-sort-panel
+  .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
   color: #e6eef3 !important;
   background: rgba(47, 122, 111, 0.16) !important;
 }
@@ -943,25 +976,35 @@ html:not(.dark)
 
 @keyframes shopspherePulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
-    border-color: rgba(34, 197, 94, 0.0);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    border-color: rgba(34, 197, 94, 0);
   }
   35% {
     box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
     border-color: rgba(34, 197, 94, 0.55);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
-    border-color: rgba(34, 197, 94, 0.0);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    border-color: rgba(34, 197, 94, 0);
   }
 }
 
 @keyframes shopsphereShake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  50% { transform: translateX(3px); }
-  75% { transform: translateX(-2px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 /* ─── Fly-to-Cart ─────────────────────────────────── */
@@ -986,11 +1029,11 @@ html:not(.dark)
   background: rgba(47, 122, 111, 0.96);
   box-shadow:
     0 8px 32px rgba(47, 122, 111, 0.45),
-    0 2px 8px rgba(0,0,0,0.18);
+    0 2px 8px rgba(0, 0, 0, 0.18);
   overflow: hidden;
   transform: scale(1);
   transition: transform 0.15s ease;
-  border: 2.5px solid rgba(255,255,255,0.35);
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
 }
 
 .shopsphere-fly-img {
@@ -1006,18 +1049,34 @@ html:not(.dark)
 
 /* Keyframe: the bubble arcs through the air */
 @keyframes flyArcX {
-  from { transform: translateX(0); }
-  to   { transform: translateX(var(--fly-dx)); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--fly-dx));
+  }
 }
 @keyframes flyArcY {
-  0%   { transform: translateY(0)    scale(1); }
-  30%  { transform: translateY(var(--fly-peak)) scale(0.9); }
-  100% { transform: translateY(var(--fly-dy))   scale(0.28); }
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(var(--fly-peak)) scale(0.9);
+  }
+  100% {
+    transform: translateY(var(--fly-dy)) scale(0.28);
+  }
 }
 @keyframes flyFadeOut {
-  0%   { opacity: 1; }
-  65%  { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 /* Particle burst */
@@ -1029,7 +1088,8 @@ html:not(.dark)
   border-radius: 50%;
   pointer-events: none;
   background: var(--p-color, #2f7a6f);
-  animation: particleBurst var(--p-dur, 600ms) var(--p-ease, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+  animation: particleBurst var(--p-dur, 600ms)
+    var(--p-ease, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
 }
 
 @keyframes particleBurst {
@@ -1049,13 +1109,27 @@ html:not(.dark)
 }
 
 @keyframes cartWiggle {
-  0%   { transform: scale(1)    rotate(0deg); }
-  15%  { transform: scale(1.25) rotate(-10deg); }
-  30%  { transform: scale(1.2)  rotate(8deg); }
-  45%  { transform: scale(1.12) rotate(-6deg); }
-  60%  { transform: scale(1.06) rotate(4deg); }
-  75%  { transform: scale(1.02) rotate(-2deg); }
-  100% { transform: scale(1)    rotate(0deg); }
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  15% {
+    transform: scale(1.25) rotate(-10deg);
+  }
+  30% {
+    transform: scale(1.2) rotate(8deg);
+  }
+  45% {
+    transform: scale(1.12) rotate(-6deg);
+  }
+  60% {
+    transform: scale(1.06) rotate(4deg);
+  }
+  75% {
+    transform: scale(1.02) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 /* Success ripple on the card */
@@ -1071,8 +1145,14 @@ html:not(.dark)
 }
 
 @keyframes cardSuccessRipple {
-  0%   { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.05); }
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
 }
 
 @keyframes traceMove {

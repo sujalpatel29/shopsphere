@@ -102,13 +102,14 @@ async function seedSalesHistory() {
         COALESCE(discounted_price, price) AS effective_price
       FROM product_master
       WHERE is_deleted = 0
-        AND is_active = 1
       ORDER BY product_id ASC
       `,
     );
 
     if (!products.length) {
-      throw new Error("No active products found. Seed products before seeding sales history.");
+      throw new Error(
+        "No active products found. Seed products before seeding sales history.",
+      );
     }
 
     const [customers] = await connection.query(
@@ -131,7 +132,9 @@ async function seedSalesHistory() {
     );
 
     if (!customers.length) {
-      throw new Error("No customer users found. Seed at least one customer before running this script.");
+      throw new Error(
+        "No customer users found. Seed at least one customer before running this script.",
+      );
     }
 
     const [adminRows] = await connection.query(
@@ -177,7 +180,8 @@ async function seedSalesHistory() {
     const months = targetMonths(TARGET_MONTH_COUNT);
 
     for (const product of products) {
-      const existingMonths = monthByProduct.get(product.product_id) ?? new Set();
+      const existingMonths =
+        monthByProduct.get(product.product_id) ?? new Set();
 
       for (const monthDate of months) {
         const monthKey = formatMonthKey(monthDate);

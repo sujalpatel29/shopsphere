@@ -61,7 +61,9 @@ function tooltipFormatter(value, keyName) {
 function StatCard({ title, value, subtitle, highlight }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{title}</p>
+      <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+        {title}
+      </p>
       <p
         className={`mt-2 truncate text-2xl font-semibold ${
           highlight || "text-gray-900 dark:text-slate-100"
@@ -70,7 +72,9 @@ function StatCard({ title, value, subtitle, highlight }) {
         {value}
       </p>
       {subtitle ? (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {subtitle}
+        </p>
       ) : null}
     </div>
   );
@@ -95,8 +99,7 @@ function AdminSalesPredictionTab() {
     try {
       const result = await fetchAdminProducts({
         page: 1,
-        limit: 200,
-        isActive: true,
+        limit: 1000,
         sortField: "display_name",
         sortOrder: 1,
       });
@@ -132,7 +135,10 @@ function AdminSalesPredictionTab() {
         const predicted = await fetchSalesPrediction(product.product_id);
         let hydrated = predicted;
 
-        if (!Array.isArray(predicted?.historical) || predicted.historical.length === 0) {
+        if (
+          !Array.isArray(predicted?.historical) ||
+          predicted.historical.length === 0
+        ) {
           const history = await fetchSalesHistory(product.product_id);
           hydrated = {
             ...predicted,
@@ -191,7 +197,9 @@ function AdminSalesPredictionTab() {
       return [];
     }
 
-    const historyRows = Array.isArray(prediction.historical) ? prediction.historical : [];
+    const historyRows = Array.isArray(prediction.historical)
+      ? prediction.historical
+      : [];
     const historicalPoints = historyRows.map((row) => ({
       monthLabel: formatMonthLabel(row.month),
       actual_qty: Number(row.qty || 0),
@@ -221,7 +229,7 @@ function AdminSalesPredictionTab() {
       : confidence >= 0.7
         ? "text-emerald-600 dark:text-emerald-400"
         : confidence >= 0.4
-          ? "text-amber-600 dark:text-amber-400"
+          ? "text-[#1A9E8E] dark:text-[#26c9b4]"
           : "text-rose-600 dark:text-rose-400";
 
   const exportCsv = useCallback(() => {
@@ -278,7 +286,8 @@ function AdminSalesPredictionTab() {
             Sales Prediction
           </h2>
           <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
-            Forecast next month demand per product using historical completed sales.
+            Forecast next month demand per product using historical completed
+            sales.
           </p>
         </div>
 
@@ -287,7 +296,7 @@ function AdminSalesPredictionTab() {
             type="button"
             onClick={runBulkPrediction}
             disabled={loadingBulkPrediction}
-            className="inline-flex items-center gap-2 rounded-lg border border-amber-600 bg-amber-600 px-3 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#1A9E8E] bg-[#1A9E8E] px-3 py-2 text-sm font-medium text-white hover:bg-[#168c7e] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loadingBulkPrediction ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -334,7 +343,7 @@ function AdminSalesPredictionTab() {
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Search by name or ID"
-            className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-amber-500 dark:border-gray-700 dark:bg-[#0f1720] dark:text-slate-100"
+            className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1A9E8E] dark:border-gray-700 dark:bg-[#0f1720] dark:text-slate-100"
           />
 
           <div className="mt-3 max-h-[430px] overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
@@ -344,7 +353,8 @@ function AdminSalesPredictionTab() {
               </div>
             ) : filteredProducts.length ? (
               filteredProducts.map((product) => {
-                const isActive = selectedProduct?.product_id === product.product_id;
+                const isActive =
+                  selectedProduct?.product_id === product.product_id;
                 return (
                   <button
                     key={product.product_id}
@@ -352,11 +362,13 @@ function AdminSalesPredictionTab() {
                     onClick={() => runPrediction(product)}
                     className={`block w-full border-b border-gray-200 px-3 py-2 text-left text-sm last:border-b-0 dark:border-gray-800 ${
                       isActive
-                        ? "bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+                        ? "bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/20 dark:text-[#26c9b4]"
                         : "text-gray-700 hover:bg-gray-50 dark:text-slate-200 dark:hover:bg-[#1a2632]"
                     }`}
                   >
-                    <p className="truncate font-medium">{product.display_name}</p>
+                    <p className="truncate font-medium">
+                      {product.display_name}
+                    </p>
                     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                       #{product.product_id}
                     </p>
@@ -414,7 +426,7 @@ function AdminSalesPredictionTab() {
               </div>
 
               {prediction.error ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+                <div className="rounded-lg border border-[#1A9E8E]/30 bg-[#e6f7f5] px-3 py-2 text-sm text-[#117a6e] dark:border-[#1A9E8E]/30 dark:bg-[#1A9E8E]/20 dark:text-[#26c9b4]">
                   {prediction.error}
                 </div>
               ) : null}
@@ -422,7 +434,7 @@ function AdminSalesPredictionTab() {
               <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-slate-100">
-                    <LineChart className="h-4 w-4 text-amber-600" />
+                    <LineChart className="h-4 w-4 text-[#1A9E8E]" />
                     Historical + Forecast ({selectedProduct?.display_name})
                   </div>
                   <div className="inline-flex rounded-lg border border-gray-200 p-1 dark:border-gray-700">
@@ -431,7 +443,7 @@ function AdminSalesPredictionTab() {
                       onClick={() => setActiveMetric("qty")}
                       className={`rounded-md px-3 py-1 text-xs font-medium ${
                         activeMetric === "qty"
-                          ? "bg-amber-600 text-white"
+                          ? "bg-[#1A9E8E] text-white"
                           : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                       }`}
                     >
@@ -442,7 +454,7 @@ function AdminSalesPredictionTab() {
                       onClick={() => setActiveMetric("revenue")}
                       className={`rounded-md px-3 py-1 text-xs font-medium ${
                         activeMetric === "revenue"
-                          ? "bg-amber-600 text-white"
+                          ? "bg-[#1A9E8E] text-white"
                           : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                       }`}
                     >
@@ -454,16 +466,47 @@ function AdminSalesPredictionTab() {
                 <ResponsiveContainer width="100%" height={320}>
                   <AreaChart data={chartData}>
                     <defs>
-                      <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0d9488" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#0d9488" stopOpacity={0.05} />
+                      <linearGradient
+                        id="actualGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#0d9488"
+                          stopOpacity={0.35}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#0d9488"
+                          stopOpacity={0.05}
+                        />
                       </linearGradient>
-                      <linearGradient id="forecastGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#d97706" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#d97706" stopOpacity={0.05} />
+                      <linearGradient
+                        id="forecastGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#1A9E8E"
+                          stopOpacity={0.35}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#1A9E8E"
+                          stopOpacity={0.05}
+                        />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#22303d" : "#e5e7eb"} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={darkMode ? "#22303d" : "#e5e7eb"}
+                    />
                     <XAxis dataKey="monthLabel" tick={{ fontSize: 12 }} />
                     <YAxis
                       tick={{ fontSize: 12 }}
@@ -478,7 +521,11 @@ function AdminSalesPredictionTab() {
                     <Area
                       type="monotone"
                       dataKey={actualKey}
-                      name={activeMetric === "qty" ? "Actual Units" : "Actual Revenue"}
+                      name={
+                        activeMetric === "qty"
+                          ? "Actual Units"
+                          : "Actual Revenue"
+                      }
                       stroke="#0d9488"
                       fill="url(#actualGradient)"
                       strokeWidth={2}
@@ -488,8 +535,12 @@ function AdminSalesPredictionTab() {
                     <Area
                       type="monotone"
                       dataKey={forecastKey}
-                      name={activeMetric === "qty" ? "Forecast Units" : "Forecast Revenue"}
-                      stroke="#d97706"
+                      name={
+                        activeMetric === "qty"
+                          ? "Forecast Units"
+                          : "Forecast Revenue"
+                      }
+                      stroke="#1A9E8E"
                       fill="url(#forecastGradient)"
                       strokeDasharray="6 6"
                       strokeWidth={2}
@@ -510,7 +561,7 @@ function AdminSalesPredictionTab() {
           Cached Predictions
         </div>
         {cachedPredictions.length ? (
-          <div className="overflow-x-auto">
+          <div className="max-h-[500px] overflow-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
                 <tr>
@@ -522,7 +573,7 @@ function AdminSalesPredictionTab() {
                 </tr>
               </thead>
               <tbody>
-                {cachedPredictions.slice(0, 10).map((row) => (
+                {cachedPredictions.map((row) => (
                   <tr
                     key={`${row.product_id}-${row.predicted_month}`}
                     className="border-b border-gray-100 dark:border-gray-800"

@@ -10,6 +10,7 @@ function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
 
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -18,10 +19,49 @@ function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const validateEmail = () => {
+    if (!email.trim()) {
+      setValidationErrors({ email: "Email is required" });
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setValidationErrors({ email: "Please enter a valid email" });
+      return false;
+    }
+    setValidationErrors({});
+    return true;
+  };
+
+  const validateOtp = () => {
+    if (!otp.trim() || !/^\d{6}$/.test(otp)) {
+      setValidationErrors({ otp: "Please enter a valid 6-digit OTP" });
+      return false;
+    }
+    setValidationErrors({});
+    return true;
+  };
+
+  const validatePasswords = () => {
+    const errors = {};
+    if (!newPassword) errors.newPassword = "New password is required";
+    else if (newPassword.length < 8)
+      errors.newPassword = "Password must be at least 8 characters";
+
+    if (!confirmPassword)
+      errors.confirmPassword = "Please confirm your password";
+    else if (newPassword !== confirmPassword)
+      errors.confirmPassword = "Passwords do not match";
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const requestOtp = async (event) => {
     event.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!validateEmail()) return;
 
     try {
       setLoading(true);
@@ -42,6 +82,8 @@ function ForgotPasswordPage() {
     event.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!validateOtp()) return;
 
     try {
       setLoading(true);
@@ -66,10 +108,7 @@ function ForgotPasswordPage() {
     setError("");
     setSuccess("");
 
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (!validatePasswords()) return;
 
     try {
       setLoading(true);
@@ -88,9 +127,9 @@ function ForgotPasswordPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-white via-slate-50 to-amber-50 text-slate-900 dark:from-[#070b12] dark:via-[#0b1220] dark:to-[#0f172a] dark:text-white">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-white via-slate-50 to-[#e6f7f5]/50 text-slate-900 dark:from-[#070b12] dark:via-[#0b1220] dark:to-[#0f172a] dark:text-white">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-32 left-6 h-80 w-80 rounded-full bg-amber-300/40 blur-[120px] dark:bg-emerald-500/20" />
+        <div className="absolute -top-32 left-6 h-80 w-80 rounded-full bg-[#1A9E8E]/30 blur-[120px] dark:bg-emerald-500/20" />
         <div className="absolute bottom-[-3rem] right-[-2rem] h-96 w-96 rounded-full bg-cyan-300/40 blur-[130px] dark:bg-teal-400/15" />
         <div className="absolute left-1/2 top-6 h-28 w-[110vw] -translate-x-1/2 bg-gradient-to-r from-transparent via-slate-900/10 to-transparent opacity-60 dark:via-emerald-300/10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_55%)] dark:block hidden" />
@@ -143,7 +182,8 @@ function ForgotPasswordPage() {
           </div>
 
           <p className="mt-3 text-sm text-slate-600 dark:text-white/70">
-            {step === "request" && "Enter your email to receive a one-time code."}
+            {step === "request" &&
+              "Enter your email to receive a one-time code."}
             {step === "verify" && "Enter the OTP sent to your inbox."}
             {step === "reset" && "Choose a strong new password."}
             {step === "done" && "Your password has been updated."}
@@ -179,7 +219,8 @@ function ForgotPasswordPage() {
                 required
               />
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-white/70">
-                Code sent to: <span className="font-semibold">{email || "your email"}</span>
+                Code sent to:{" "}
+                <span className="font-semibold">{email || "your email"}</span>
               </div>
               <Button
                 type="submit"
@@ -221,9 +262,15 @@ function ForgotPasswordPage() {
             </form>
           )}
 
-          {error && <p className="mt-4 text-sm text-rose-600 dark:text-rose-300">{error}</p>}
+          {error && (
+            <p className="mt-4 text-sm text-rose-600 dark:text-rose-300">
+              {error}
+            </p>
+          )}
           {success && (
-            <p className="mt-4 text-sm text-emerald-600 dark:text-emerald-300">{success}</p>
+            <p className="mt-4 text-sm text-emerald-600 dark:text-emerald-300">
+              {success}
+            </p>
           )}
 
           <p className="mt-6 text-sm text-slate-600 dark:text-white/70">

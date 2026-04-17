@@ -37,23 +37,35 @@ function AdminUsersToolbar({
         onSearch(value);
       }, 300);
     },
-    [onSearch]
+    [onSearch],
   );
 
   return (
     <div className="admin-products-toolbar flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Total</span>
-          <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{totalAll}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            Total
+          </span>
+          <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
+            {totalAll}
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40">
-          <span className="text-xs text-amber-600 dark:text-amber-400">Blocked</span>
-          <span className="text-xs font-bold text-amber-700 dark:text-amber-300">{totalBlocked}</span>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/40">
+          <span className="text-xs text-yellow-600 dark:text-yellow-400">
+            Blocked
+          </span>
+          <span className="text-xs font-bold text-yellow-700 dark:text-yellow-300">
+            {totalBlocked}
+          </span>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800/40">
-          <span className="text-xs text-cyan-600 dark:text-cyan-400">Admins</span>
-          <span className="text-xs font-bold text-cyan-700 dark:text-cyan-300">{totalAdmins}</span>
+          <span className="text-xs text-cyan-600 dark:text-cyan-400">
+            Admins
+          </span>
+          <span className="text-xs font-bold text-cyan-700 dark:text-cyan-300">
+            {totalAdmins}
+          </span>
         </div>
       </div>
 
@@ -66,13 +78,16 @@ function AdminUsersToolbar({
           className="admin-filter-dropdown w-full sm:w-40"
           pt={{
             root: {
-              className: "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
+              className:
+                "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
             },
             input: {
               className: "px-3 text-sm",
             },
             trigger: { className: "w-8" },
-            panel: { className: "admin-dropdown-panel rounded-lg shadow-xl mt-1" },
+            panel: {
+              className: "admin-dropdown-panel rounded-lg shadow-xl mt-1",
+            },
           }}
         />
 
@@ -84,13 +99,16 @@ function AdminUsersToolbar({
           className="admin-filter-dropdown w-full sm:w-40"
           pt={{
             root: {
-              className: "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
+              className:
+                "admin-dropdown-root rounded-xl h-10 flex items-center shadow-none border border-gray-200 dark:border-gray-700",
             },
             input: {
               className: "px-3 text-sm",
             },
             trigger: { className: "w-8" },
-            panel: { className: "admin-dropdown-panel rounded-lg shadow-xl mt-1" },
+            panel: {
+              className: "admin-dropdown-panel rounded-lg shadow-xl mt-1",
+            },
           }}
         />
 

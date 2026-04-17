@@ -12,7 +12,7 @@ function DashboardHeader({ error }) {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.2),transparent_65%)]" />
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200/90">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#26c9b4]/90">
               Customer Dashboard
             </p>
             <h2 className="mt-2 font-serif text-2xl leading-tight text-white sm:text-3xl">
@@ -25,13 +25,15 @@ function DashboardHeader({ error }) {
           </div>
 
           <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/95 backdrop-blur">
-            <i className="pi pi-verified text-amber-200" />
+            <i className="pi pi-verified text-[#26c9b4]" />
             Account Center
           </div>
         </div>
       </div>
 
-      {error && <Message className="mt-4 w-full" severity="error" text={error} />}
+      {error && (
+        <Message className="mt-4 w-full" severity="error" text={error} />
+      )}
     </Card>
   );
 }

@@ -95,7 +95,9 @@ export default function OrderPaymentComponent() {
           ),
         );
       } finally {
-        savePendingCheckout({ selectedAddress: pendingCheckout?.selectedAddress });
+        savePendingCheckout({
+          selectedAddress: pendingCheckout?.selectedAddress,
+        });
         navigate("/checkout/payment", {
           replace: true,
           state: { selectedAddress: pendingCheckout?.selectedAddress },
@@ -110,7 +112,11 @@ export default function OrderPaymentComponent() {
     e.preventDefault();
 
     if (!selectedAddress) {
-      showToast("warn", "Address Required", "Please choose a delivery address.");
+      showToast(
+        "warn",
+        "Address Required",
+        "Please choose a delivery address.",
+      );
       return;
     }
 
@@ -221,8 +227,8 @@ export default function OrderPaymentComponent() {
             <div className="mb-5">
               <h3 className="order-flow-section-title">Payment Options</h3>
               <p className="order-flow-section-copy">
-                Use Stripe for secure online payment, or choose cash on
-                delivery if you prefer to pay at your doorstep.
+                Use Stripe for secure online payment, or choose cash on delivery
+                if you prefer to pay at your doorstep.
               </p>
             </div>
 
@@ -250,7 +256,7 @@ export default function OrderPaymentComponent() {
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-3">
-                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
                               <Icon className="h-5 w-5" />
                             </span>
                             <h3 className="m-0 font-semibold text-gray-900 dark:text-slate-100">

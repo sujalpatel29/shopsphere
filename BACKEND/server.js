@@ -22,7 +22,6 @@ import salesPredictionRoutes from "./routes/admin/salesPrediction.routes.js";
 import { auth, adminOnly } from "./middlewares/auth.middleware.js";
 import { adminOrVerifiedSeller } from "./middlewares/seller.middleware.js";
 
-
 // Load environment variables
 dotenv.config();
 
@@ -105,7 +104,6 @@ app.use("/api/sellers", sellerRoutes);
 //sales prediction route for admin
 app.use("/api/admin/sales", auth, adminOrVerifiedSeller, salesPredictionRoutes);
 
-
 // ============================================================================
 // ERROR HANDLING
 // ============================================================================
@@ -141,7 +139,7 @@ app.listen(port, () => {
   console.log(`  - Portion: http://localhost:${port}/api/portion`);
   console.log(`  - Review: http://localhost:${port}/api/review`);
   console.log(`  - Offer: http://localhost:${port}/api/offer`);
-  console.log(`  - Portion: http://localhost:${port}/api/products`);
+  console.log(`  - Products: http://localhost:${port}/api/products`);
   console.log(`  - Order: http://localhost:${port}/api/order`);
-  console.log(`  - Order: http://localhost:3306/api/category`);
+  console.log(`  - Category: http://localhost:${port}/api/category`);
 });

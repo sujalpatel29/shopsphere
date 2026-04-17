@@ -65,13 +65,13 @@ function AdminProductsToolbar({
         onSearch(value);
       }, 300);
     },
-    [onSearch]
+    [onSearch],
   );
 
   return (
     <div className="admin-products-toolbar mb-6 flex flex-col gap-4">
       {helperText ? (
-        <div className="rounded-3xl border border-amber-200/80 bg-gradient-to-r from-amber-50 via-stone-50 to-emerald-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-amber-500/20 dark:bg-[linear-gradient(135deg,rgba(35,47,50,0.96),rgba(24,31,34,0.94))] dark:text-stone-200">
+        <div className="rounded-3xl border border-[#1A9E8E]/20 bg-gradient-to-r from-[#e6f7f5] via-stone-50 to-emerald-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-[#1A9E8E]/20 dark:bg-[linear-gradient(135deg,rgba(35,47,50,0.96),rgba(24,31,34,0.94))] dark:text-stone-200">
           {helperText}
         </div>
       ) : null}

@@ -743,8 +743,8 @@ function ProductFormModal({
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-4">
-                <span className="text-amber-600 dark:text-amber-400 text-xl font-semibold">
+              <div className="w-12 h-12 rounded-full bg-[#e6f7f5] dark:bg-[#1A9E8E]/20 flex items-center justify-center mb-4">
+                <span className="text-[#1A9E8E] dark:text-[#26c9b4] text-xl font-semibold">
                   !
                 </span>
               </div>
@@ -769,8 +769,8 @@ function ProductFormModal({
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-4">
-                <span className="text-amber-600 dark:text-amber-400 text-xl font-semibold">
+              <div className="w-12 h-12 rounded-full bg-[#e6f7f5] dark:bg-[#1A9E8E]/20 flex items-center justify-center mb-4">
+                <span className="text-[#1A9E8E] dark:text-[#26c9b4] text-xl font-semibold">
                   !
                 </span>
               </div>
@@ -795,8 +795,8 @@ function ProductFormModal({
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-4">
-                <span className="text-amber-600 dark:text-amber-400 text-xl font-semibold">
+              <div className="w-12 h-12 rounded-full bg-[#e6f7f5] dark:bg-[#1A9E8E]/20 flex items-center justify-center mb-4">
+                <span className="text-[#1A9E8E] dark:text-[#26c9b4] text-xl font-semibold">
                   !
                 </span>
               </div>
