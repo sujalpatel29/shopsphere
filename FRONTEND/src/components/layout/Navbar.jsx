@@ -159,7 +159,8 @@ function Navbar() {
 
   useEffect(() => {
     setMenuOpen(false);
-  }, [location.pathname]);
+    setExpandedCategories({});
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -186,16 +187,16 @@ function Navbar() {
     (event) => {
       event.preventDefault();
       const query = searchText.trim();
-      navigate(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
       setMenuOpen(false);
+      navigate(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
     },
     [navigate, searchText],
   );
 
   const handleCategoryNavigate = useCallback(
     (categoryId) => {
-      navigate(`/shop?category=${categoryId}`);
       setMenuOpen(false);
+      navigate(`/shop?category=${categoryId}`);
     },
     [navigate],
   );
@@ -447,12 +448,10 @@ function Navbar() {
                         <div className="px-2 pb-2">
                           {(childMap.get(parent.category_id) || []).map(
                             (child) => (
-                              <button
+                              <Link
                                 key={child.category_id}
-                                type="button"
-                                onClick={() =>
-                                  handleCategoryNavigate(child.category_id)
-                                }
+                                to={`/shop?category=${child.category_id}`}
+                                onClick={() => setMenuOpen(false)}
                                 className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                                   darkMode
                                     ? "text-[#A8A39A] hover:bg-[#1a2e28] hover:text-[#1A9E8E]"
@@ -461,7 +460,7 @@ function Navbar() {
                               >
                                 <span>{child.category_name}</span>
                                 <ChevronRight className="h-4 w-4" />
-                              </button>
+                              </Link>
                             ),
                           )}
                         </div>

@@ -342,7 +342,9 @@ function CategoryPage() {
   useEffect(() => {
     if (!treeLoaded) return;
 
+    let active = true;
     const isFilterChanged = prevFilterSignatureRef.current !== filterSignature;
+
     if (isFilterChanged) {
       prevFilterSignatureRef.current = filterSignature;
       setProducts([]);
@@ -374,10 +376,9 @@ function CategoryPage() {
             ...priceFilterParams,
             ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
           });
+          if (!active || requestId !== productsRequestIdRef.current) return;
           items = extractProducts(productRes);
-          if (requestId === productsRequestIdRef.current) {
-            setTotalRecords(extractTotalRecords(productRes, items.length));
-          }
+          setTotalRecords(extractTotalRecords(productRes, items.length));
         } else {
           const productRes = await getProductsByCategoryFilters({
             ...(categoryIdGroups.parent.length
@@ -392,17 +393,16 @@ function CategoryPage() {
             limit: pager.rows,
             ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
           });
+          if (!active || requestId !== productsRequestIdRef.current) return;
           items = extractProducts(productRes);
-          if (requestId === productsRequestIdRef.current) {
-            setTotalRecords(extractTotalRecords(productRes, items.length));
-          }
+          setTotalRecords(extractTotalRecords(productRes, items.length));
         }
 
         if (items.length > pager.rows) {
           items = items.slice(0, pager.rows);
         }
 
-        // Client-side sort fallback (in case backend ignores sortField/sortOrder)
+        // Client-side sort fallback
         if (sortField && items.length > 1) {
           const orderFactor =
             (sortOrder || "asc").toLowerCase() === "desc" ? -1 : 1;
@@ -443,22 +443,28 @@ function CategoryPage() {
           items = [...items].sort(compare);
         }
 
-        if (requestId === productsRequestIdRef.current) {
+        if (active && requestId === productsRequestIdRef.current) {
           setProducts(items);
         }
       } catch (error) {
         console.error("Failed to load products:", error);
-        if (requestId === productsRequestIdRef.current) {
+        if (active && requestId === productsRequestIdRef.current) {
           setProducts([]);
         }
       } finally {
-        if (requestId === productsRequestIdRef.current) {
+        if (active && requestId === productsRequestIdRef.current) {
           setIsProductsLoading(false);
         }
       }
     };
 
     loadProductsBySelection();
+
+    return () => {
+      active = false;
+      // Reset loading state if effect is cleaned up during an active request
+      setIsProductsLoading(false);
+    };
   }, [treeLoaded, paginationFetchKey, filterSignature]);
 
   useEffect(() => {
