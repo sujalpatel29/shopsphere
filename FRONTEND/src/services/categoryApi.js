@@ -8,34 +8,36 @@ const API = axios.create({
   withCredentials: true,
 });
 
-export const getAllProducts = (params = undefined) =>
-  params ? API.get("/products", { params }) : API.get("/products");
+export const getAllProducts = (params = undefined, config = {}) =>
+  params
+    ? API.get("/products", { params, ...config })
+    : API.get("/products", config);
 
-export const getAllCategories = () => API.get("/category/tree");
+export const getAllCategories = (config = {}) => API.get("/category/tree", config);
 
-export const getCategoryWithChildren = (categoryId) =>
-  API.get(`/category/${categoryId}`);
+export const getCategoryWithChildren = (categoryId, config = {}) =>
+  API.get(`/category/${categoryId}`, config);
 
-export const getProductsByCategory = (categoryId, params = {}) =>
-  API.get(`/category/${categoryId}/products`, { params });
+export const getProductsByCategory = (categoryId, params = {}, config = {}) =>
+  API.get(`/category/${categoryId}/products`, { params, ...config });
 
-export const getProductsByCategories = (params = {}) =>
-  API.get("/category/bulk/products", { params });
+export const getProductsByCategories = (params = {}, config = {}) =>
+  API.get("/category/bulk/products", { params, ...config });
 
-export const getProductsByCategoryFilters = (params = {}) =>
-  API.post("/category/filter/products", params);
+export const getProductsByCategoryFilters = (params = {}, config = {}) =>
+  API.post("/category/filter/products", params, config);
 
-export const getCategoryProductsPriceRange = (params = {}) =>
-  API.post("/category/filter/products/price-range", params);
+export const getCategoryProductsPriceRange = (params = {}, config = {}) =>
+  API.post("/category/filter/products/price-range", params, config);
 
-export const searchCategoriesByName = (params = {}) =>
-  API.get("/category", { params });
+export const searchCategoriesByName = (params = {}, config = {}) =>
+  API.get("/category", { params, ...config });
 
-export const getProductRatingSummary = (productId) =>
-  API.get(`/review/product/${productId}/summary`);
+export const getProductRatingSummary = (productId, config = {}) =>
+  API.get(`/review/product/${productId}/summary`, config);
 
-export const getProductRatingSummariesBulk = (productIds = []) =>
-  API.post("/review/product/summary/bulk", { product_ids: productIds });
+export const getProductRatingSummariesBulk = (productIds = [], config = {}) =>
+  API.post("/review/product/summary/bulk", { product_ids: productIds }, config);
 
-export const getBestSellers = (limit = 8) =>
-  API.get("/products/bestsellers", { params: { limit } });
+export const getBestSellers = (limit = 8, config = {}) =>
+  API.get("/products/bestsellers", { params: { limit }, ...config });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
@@ -15,6 +15,7 @@ import {
   loadPendingCheckout,
   savePendingCheckout,
 } from "../utils/checkoutStorage";
+import useBuyNowSummary from "../hooks/useBuyNowSummary";
 import "../styles/CheckoutFlow.css";
 
 const formatPersonName = (value = "") =>
@@ -45,14 +46,23 @@ export default function OrderConfirmationCODComponent() {
   const [cartItemsLoading, setCartItemsLoading] = useState(false);
   const [cartItemsError, setCartItemsError] = useState("");
   const [cartSummary, setCartSummary] = useState(null);
-  const pendingCheckout = loadPendingCheckout();
+  const pendingCheckout = useMemo(() => loadPendingCheckout(), []);
 
   const selectedAddress =
     location.state?.selectedAddress || pendingCheckout?.selectedAddress;
+  const buyNowItem =
+    location.state?.buyNowItem || pendingCheckout?.buyNowItem || null;
   const { orderSummery, loading } = useSelector((state) => state.order || {});
+  const {
+    summary: buyNowSummary,
+    loading: buyNowSummaryLoading,
+    error: buyNowSummaryError,
+  } = useBuyNowSummary(buyNowItem);
 
   useEffect(() => {
-    dispatch(OrderSummery());
+    if (buyNowItem) {
+      return;
+    }
 
     const fetchCartItems = async () => {
       try {
@@ -72,11 +82,12 @@ export default function OrderConfirmationCODComponent() {
       }
     };
 
+    dispatch(OrderSummery());
     fetchCartItems();
-  }, [dispatch]);
+  }, [buyNowItem, dispatch]);
 
   const handlePlaceOrder = async () => {
-    if (cartItemsLoading) {
+    if (!buyNowItem && cartItemsLoading) {
       return;
     }
 
@@ -90,14 +101,18 @@ export default function OrderConfirmationCODComponent() {
       return;
     }
 
-    if (!cartItems.length) {
+    if (!buyNowItem && !cartItems.length) {
       showToast("warn", "Empty Cart", "Your cart is empty. Add items first.");
       navigate("/cart");
       return;
     }
 
     const result = await dispatch(
-      postOrders({ payment_method: "cash_on_delivery" }),
+      postOrders({
+        payment_method: "cash_on_delivery",
+        address_id: selectedAddress.address_id,
+        ...(buyNowItem ? { buy_now_item: buyNowItem } : {}),
+      }),
     );
 
     if (result.meta.requestStatus !== "fulfilled") {
@@ -109,6 +124,7 @@ export default function OrderConfirmationCODComponent() {
     const orderId = orderData?.order_id || orderData?.insertId;
     const orderTotal =
       Number(orderData?.total_amount) ||
+      Number(buyNowSummary?.final_amount) ||
       Number(cartSummary?.total) ||
       Number(orderSummery?.final_amount) ||
       0;
@@ -122,7 +138,9 @@ export default function OrderConfirmationCODComponent() {
       });
 
       clearPendingCheckout();
-      window.dispatchEvent(new CustomEvent("cart:updated"));
+      if (!buyNowItem) {
+        window.dispatchEvent(new CustomEvent("cart:updated"));
+      }
       navigate("/checkout/success", {
         state: {
           orderData: {
@@ -142,7 +160,10 @@ export default function OrderConfirmationCODComponent() {
         // no-op rollback fallback
       }
 
-      savePendingCheckout({ selectedAddress });
+      savePendingCheckout({
+        selectedAddress,
+        ...(buyNowItem ? { buyNowItem } : {}),
+      });
       showToast(
         "error",
         "Payment Setup Failed",
@@ -218,16 +239,21 @@ export default function OrderConfirmationCODComponent() {
               label="Back to Payment"
               icon="pi pi-arrow-left"
               onClick={() =>
-                navigate("/checkout/payment", { state: { selectedAddress } })
+                navigate("/checkout/payment", {
+                  state: {
+                    selectedAddress,
+                    ...(buyNowItem ? { buyNowItem } : {}),
+                  },
+                })
               }
               className="order-flow-neutral-button"
             />
             <Button
-              label={`View Items (${cartItems.length})`}
+              label={`View Items (${buyNowItem ? 1 : cartItems.length})`}
               icon="pi pi-list"
               onClick={() => setShowItemsDialog(true)}
               className="order-flow-neutral-button"
-              disabled={cartItemsLoading}
+              disabled={!buyNowItem && cartItemsLoading}
             />
           </div>
 
@@ -239,7 +265,11 @@ export default function OrderConfirmationCODComponent() {
               icon="pi pi-check"
               onClick={handlePlaceOrder}
               loading={loading}
-              disabled={loading || cartItemsLoading || !cartItems.length}
+              disabled={
+                loading ||
+                (!buyNowItem && cartItemsLoading) ||
+                (!buyNowItem && !cartItems.length)
+              }
               className="order-flow-primary-button"
             />
           </div>
@@ -247,17 +277,23 @@ export default function OrderConfirmationCODComponent() {
 
         <div className="space-y-4">
           <OrderSummaryComponent
-            title="Final Amount"
-            orderData={{
-              total_amount:
-                cartSummary?.subtotal ?? orderSummery?.total_price ?? 0,
-              tax_amount: cartSummary?.tax ?? orderSummery?.tax ?? 0,
-              discount_amount:
-                cartSummary?.discount ?? orderSummery?.discount ?? 0,
-              shipping_amount: 0,
-              final_amount:
-                cartSummary?.total ?? orderSummery?.final_amount ?? 0,
-            }}
+            title={buyNowItem ? "Buy Now Total" : "Final Amount"}
+            orderData={
+              buyNowItem
+                ? buyNowSummary
+                : {
+                    total_amount:
+                      cartSummary?.subtotal ?? orderSummery?.total_price ?? 0,
+                    tax_amount: cartSummary?.tax ?? orderSummery?.tax ?? 0,
+                    discount_amount:
+                      cartSummary?.discount ?? orderSummery?.discount ?? 0,
+                    shipping_amount: 0,
+                    final_amount:
+                      cartSummary?.total ?? orderSummery?.final_amount ?? 0,
+                  }
+            }
+            loading={buyNowItem ? buyNowSummaryLoading : false}
+            errorMessage={buyNowItem ? buyNowSummaryError : ""}
           />
         </div>
       </div>
@@ -269,19 +305,65 @@ export default function OrderConfirmationCODComponent() {
         breakpoints={{ "960px": "95vw", "640px": "100vw" }}
         onHide={() => setShowItemsDialog(false)}
       >
-        {cartItemsLoading && (
+        {buyNowItem && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#DDD8CF]/70 bg-[#F6F3EE]/40 p-4 dark:border-[#1f2933] dark:bg-[#10171b]">
+              <div className="flex min-w-0 items-center gap-4">
+                {buyNowItem.imageUrl ? (
+                  <img
+                    src={buyNowItem.imageUrl}
+                    alt={buyNowItem.productName || "Product"}
+                    className="h-16 w-16 rounded-2xl border border-[#DDD8CF]/70 object-cover dark:border-[#1f2933]"
+                  />
+                ) : (
+                  <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
+                    <ClipboardList className="h-6 w-6" />
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <div className="font-semibold text-gray-900 dark:text-slate-100">
+                    {buyNowItem.productName || "Product"}
+                  </div>
+                  <div className="mt-2 text-sm text-gray-500 dark:text-slate-400">
+                    Qty: {buyNowItem.quantity}
+                    {buyNowItem.portionValue
+                      ? ` | Portion: ${buyNowItem.portionValue}`
+                      : ""}
+                    {buyNowItem.combinationName
+                      ? ` | Variant: ${buyNowItem.combinationName}`
+                      : ""}
+                  </div>
+                </div>
+              </div>
+              <div className="shrink-0 font-semibold text-gray-900 dark:text-slate-100">
+                {toRupee(
+                  buyNowSummary?.items?.[0]?.line_total ??
+                    Number(buyNowItem.unitPrice || 0) *
+                      Number(buyNowItem.quantity || 0),
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {!buyNowItem && cartItemsLoading && (
           <div className="order-flow-empty">Loading items...</div>
         )}
-        {!cartItemsLoading && cartItemsError && (
+        {!buyNowItem && !cartItemsLoading && cartItemsError && (
           <div className="order-flow-alert border-red-300/70 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
             {cartItemsError}
           </div>
         )}
-        {!cartItemsLoading && !cartItemsError && cartItems.length === 0 && (
+        {!buyNowItem &&
+          !cartItemsLoading &&
+          !cartItemsError &&
+          cartItems.length === 0 && (
           <div className="order-flow-empty">No items found in cart.</div>
-        )}
+          )}
 
-        {!cartItemsLoading && !cartItemsError && cartItems.length > 0 && (
+        {!buyNowItem &&
+          !cartItemsLoading &&
+          !cartItemsError &&
+          cartItems.length > 0 && (
           <div className="flex flex-col gap-3">
             {cartItems.map((item) => (
               <div
@@ -321,7 +403,7 @@ export default function OrderConfirmationCODComponent() {
               </div>
             ))}
           </div>
-        )}
+          )}
       </Dialog>
     </div>
   );

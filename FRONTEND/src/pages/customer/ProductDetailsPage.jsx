@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  Heart,
   Minus,
   Plus,
   Share2,
@@ -39,6 +38,10 @@ import {
   toggleReviewHelpful,
 } from "../../../api/productDetailsApi";
 import api from "../../../api/api";
+import {
+  clearPendingCheckout,
+  savePendingCheckout,
+} from "../../utils/checkoutStorage";
 
 const EMPTY_REVIEW_DRAFT = {
   rating: 0,
@@ -175,7 +178,6 @@ function ProductDetailsPage() {
   const [quantity, setQuantity] = useState(1);
   const [addLoading, setAddLoading] = useState(false);
   const [buyLoading, setBuyLoading] = useState(false);
-  const [wishlistSaved, setWishlistSaved] = useState(false);
   const [quantityInCart, setQuantityInCart] = useState(0);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -190,11 +192,6 @@ function ProductDetailsPage() {
       life: 3000,
     });
   }, []);
-
-  const userScopedWishlistKey = useMemo(
-    () => `shopsphere_wishlist_${currentUser?.user_id || "guest"}`,
-    [currentUser?.user_id],
-  );
 
   const selectedPortion = useMemo(
     () =>
@@ -374,11 +371,6 @@ function ProductDetailsPage() {
         )
         .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
       setQuantityInCart(inCartCount);
-
-      const wishlistRaw = localStorage.getItem(userScopedWishlistKey);
-      const wishlistIds = wishlistRaw ? JSON.parse(wishlistRaw) : [];
-      setWishlistSaved(wishlistIds.includes(Number(productData.product_id)));
-
       await refreshReviewData();
 
       const recentlyRaw = localStorage.getItem("shopsphere_recently_viewed");
@@ -429,7 +421,7 @@ function ProductDetailsPage() {
     } finally {
       setLoading(false);
     }
-  }, [productId, refreshReviewData, userScopedWishlistKey]);
+  }, [productId, refreshReviewData]);
 
   useEffect(() => {
     loadAll();
@@ -565,17 +557,6 @@ function ProductDetailsPage() {
     return () => observer.disconnect();
   }, [loading]);
 
-  const handleToggleWishlist = () => {
-    const raw = localStorage.getItem(userScopedWishlistKey);
-    const ids = raw ? JSON.parse(raw) : [];
-    const id = Number(product.product_id);
-    const next = wishlistSaved
-      ? ids.filter((x) => Number(x) !== id)
-      : [...new Set([...ids, id])];
-    localStorage.setItem(userScopedWishlistKey, JSON.stringify(next));
-    setWishlistSaved(!wishlistSaved);
-  };
-
   const requiredModifierMissing = useMemo(() => {
     let missing = false;
     if (combinations.length > 0 && !selectedCombinationId) missing = true;
@@ -664,8 +645,51 @@ function ProductDetailsPage() {
   const handleBuyNow = async () => {
     setBuyLoading(true);
     try {
-      const added = await performAddToCart();
-      if (added) navigate("/checkout");
+      if (!currentUser) {
+        showToast("warn", "Login Required", "Please log in to continue.");
+        navigate("/login");
+        return;
+      }
+
+      if (!validateSelection()) {
+        return;
+      }
+
+      const modifierIds = Object.values(selectedModifiers)
+        .filter(Boolean)
+        .map((id) => Number(id));
+      const selectedModifierDetails = rawModifiers
+        .filter((modifier) => modifierIds.includes(Number(modifier.modifier_id)))
+        .map((modifier) => ({
+          modifierId: Number(modifier.modifier_id),
+          modifierName: modifier.modifier_name,
+          modifierValue: modifier.modifier_value,
+          additionalPrice: Number(modifier.additional_price || 0),
+        }));
+
+      const buyNowItem = {
+        productId: Number(product?.product_id),
+        productName: product?.display_name || product?.name || "Product",
+        quantity,
+        portionId: selectedPortion
+          ? Number(selectedPortion.product_portion_id)
+          : null,
+        portionValue: selectedPortion?.portion_value || null,
+        combinationId: selectedCombinationId
+          ? Number(selectedCombinationId)
+          : null,
+        combinationName: selectedCombination?.name || null,
+        modifierIds,
+        modifiers: selectedModifierDetails,
+        unitPrice: Number(effectivePrice || 0),
+        imageUrl: images[0]?.image_url || "",
+      };
+
+      clearPendingCheckout();
+      savePendingCheckout({ buyNowItem });
+      navigate("/checkout/address", {
+        state: { buyNowItem },
+      });
     } catch (buyError) {
       showToast(
         "error",
@@ -1621,23 +1645,6 @@ function ProductDetailsPage() {
                 label={buyLoading ? "Processing..." : "Buy Now"}
                 className="!rounded-xl !bg-[#163332] !px-5 !py-3 !text-white hover:!bg-[#102a29]"
               />
-              <button
-                type="button"
-                onClick={handleToggleWishlist}
-                className={`rounded-xl border px-4 py-3 text-sm ${
-                  wishlistSaved
-                    ? "border-red-300 bg-red-50 text-red-700"
-                    : "border-gray-200 text-gray-700 dark:border-[#1f2933] dark:text-slate-300"
-                }`}
-                aria-label={
-                  wishlistSaved ? "Remove from wishlist" : "Save to wishlist"
-                }
-              >
-                <Heart
-                  className={`mr-1 inline h-4 w-4 ${wishlistSaved ? "fill-current" : ""}`}
-                />
-                {wishlistSaved ? "Saved" : "Save"}
-              </button>
               <button
                 type="button"
                 onClick={handleShare}

@@ -1002,30 +1002,41 @@ export const getApplicableOffersForCategory = async (categoryId) =>
   getOfferByCategoryId(categoryId);
 
 /**
- * Get applicable cart-level offers (flat_discount, first_order, time_based)
+ * Get applicable cart-level offers (flat_discount, first_order, time_based).
+ * When `userId` is supplied each row includes `user_usage_count` so the caller
+ * can determine whether the user has already exhausted the per-user usage limit.
+ * @param {number|null} [userId] - Optional user id for usage-count lookup
  * @returns {Promise<Array>} Applicable cart offers
  */
-export const getApplicableCartOffers = async () => {
+export const getApplicableCartOffers = async (userId = null) => {
+  const usageSelect = userId
+    ? `, (SELECT COUNT(*) FROM offer_usage ou
+         WHERE ou.offer_id = om.offer_id AND ou.user_id = ?) AS user_usage_count`
+    : `, 0 AS user_usage_count`;
+
+  const params = userId ? [userId] : [];
+
   const [rows] = await pool.query(
-    `SELECT *
-     FROM offer_master
-     WHERE is_active = 1
-       AND is_deleted = 0
-       AND offer_type IN ('flat_discount', 'first_order', 'time_based')
-       AND CURDATE() BETWEEN start_date AND end_date
+    `SELECT om.*${usageSelect}
+     FROM offer_master om
+     WHERE om.is_active = 1
+       AND om.is_deleted = 0
+       AND om.offer_type IN ('flat_discount', 'first_order', 'time_based')
+       AND CURDATE() BETWEEN om.start_date AND om.end_date
        AND (
-         start_time IS NULL OR end_time IS NULL
+         om.start_time IS NULL OR om.end_time IS NULL
          OR (
            CASE 
-             WHEN start_time <= end_time THEN
-               CURTIME() BETWEEN start_time AND end_time
-             WHEN start_time > end_time THEN
-               CURTIME() >= start_time OR CURTIME() <= end_time
+             WHEN om.start_time <= om.end_time THEN
+               CURTIME() BETWEEN om.start_time AND om.end_time
+             WHEN om.start_time > om.end_time THEN
+               CURTIME() >= om.start_time OR CURTIME() <= om.end_time
              ELSE 0
            END
          )
        )
-     ORDER BY discount_value DESC`,
+     ORDER BY om.discount_value DESC`,
+    params,
   );
   return rows;
 };

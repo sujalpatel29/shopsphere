@@ -58,9 +58,11 @@ export const insertQuery = async (values, cart_id, order_id, modifiersMapping) =
     }
   }
 
-  await pool.query("update cart_items set is_deleted=1 where cart_id = ? ", [
-    cart_id,
-  ]);
+  if (cart_id) {
+    await pool.query("update cart_items set is_deleted=1 where cart_id = ? ", [
+      cart_id,
+    ]);
+  }
   return insert;
 };
 

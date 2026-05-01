@@ -13,6 +13,7 @@ import {
   loadPendingCheckout,
   savePendingCheckout,
 } from "../utils/checkoutStorage";
+import useBuyNowSummary from "../hooks/useBuyNowSummary";
 import "../styles/CheckoutFlow.css";
 
 const formatPersonName = (value = "") =>
@@ -35,6 +36,13 @@ export default function OrderPaymentComponent() {
   const persistedCheckout = useMemo(() => loadPendingCheckout(), []);
   const selectedAddress =
     location.state?.selectedAddress || persistedCheckout?.selectedAddress;
+  const buyNowItem =
+    location.state?.buyNowItem || persistedCheckout?.buyNowItem || null;
+  const {
+    summary: buyNowSummary,
+    loading: buyNowSummaryLoading,
+    error: buyNowSummaryError,
+  } = useBuyNowSummary(buyNowItem);
 
   const [selectPaymentMode, setSelectPaymentMode] = useState("COD");
   const [submitting, setSubmitting] = useState(false);
@@ -97,10 +105,18 @@ export default function OrderPaymentComponent() {
       } finally {
         savePendingCheckout({
           selectedAddress: pendingCheckout?.selectedAddress,
+          ...(pendingCheckout?.buyNowItem
+            ? { buyNowItem: pendingCheckout.buyNowItem }
+            : {}),
         });
         navigate("/checkout/payment", {
           replace: true,
-          state: { selectedAddress: pendingCheckout?.selectedAddress },
+          state: {
+            selectedAddress: pendingCheckout?.selectedAddress,
+            ...(pendingCheckout?.buyNowItem
+              ? { buyNowItem: pendingCheckout.buyNowItem }
+              : {}),
+          },
         });
       }
     };
@@ -121,9 +137,15 @@ export default function OrderPaymentComponent() {
     }
 
     if (selectPaymentMode === "COD") {
-      savePendingCheckout({ selectedAddress });
+      savePendingCheckout({
+        selectedAddress,
+        ...(buyNowItem ? { buyNowItem } : {}),
+      });
       navigate("/checkout/beforeorderconfirm", {
-        state: { selectedAddress },
+        state: {
+          selectedAddress,
+          ...(buyNowItem ? { buyNowItem } : {}),
+        },
       });
       return;
     }
@@ -134,7 +156,11 @@ export default function OrderPaymentComponent() {
       setSubmitting(true);
 
       const createOrderResult = await dispatch(
-        postOrders({ payment_method: "stripe" }),
+        postOrders({
+          payment_method: "stripe",
+          address_id: selectedAddress.address_id,
+          ...(buyNowItem ? { buy_now_item: buyNowItem } : {}),
+        }),
       );
 
       if (createOrderResult.meta.requestStatus !== "fulfilled") {
@@ -173,6 +199,7 @@ export default function OrderPaymentComponent() {
 
       savePendingCheckout({
         selectedAddress,
+        ...(buyNowItem ? { buyNowItem } : {}),
         orderData: {
           ...createdOrder,
           order_id: orderId,
@@ -281,7 +308,12 @@ export default function OrderPaymentComponent() {
                 icon="pi pi-arrow-left"
                 outlined
                 onClick={() =>
-                  navigate("/checkout/address", { state: { selectedAddress } })
+                  navigate("/checkout/address", {
+                    state: {
+                      selectedAddress,
+                      ...(buyNowItem ? { buyNowItem } : {}),
+                    },
+                  })
                 }
                 className="order-flow-secondary-button"
                 disabled={submitting}
@@ -304,7 +336,12 @@ export default function OrderPaymentComponent() {
         </div>
 
         <div className="space-y-4">
-          <OrderSummaryComponent title="Payable Summary" />
+          <OrderSummaryComponent
+            title={buyNowItem ? "Buy Now Summary" : "Payable Summary"}
+            orderData={buyNowItem ? buyNowSummary : undefined}
+            loading={buyNowItem ? buyNowSummaryLoading : false}
+            errorMessage={buyNowItem ? buyNowSummaryError : ""}
+          />
           {selectedAddress && (
             <div className="order-flow-card-muted">
               <p className="font-accent text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-slate-400">

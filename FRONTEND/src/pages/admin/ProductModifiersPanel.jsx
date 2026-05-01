@@ -29,7 +29,7 @@ import {
 } from "../../../api/adminModifiersApi";
 
 // ─────────────────────────────────────────────────────────────────────────────
-export default function ProductModifiersPanel({ product, onMutate }) {
+export default function ProductModifiersPanel({ product, onMutate, onCountChange }) {
   const showToast = useToast();
 
   /* product has no portions flag */
@@ -82,6 +82,11 @@ export default function ProductModifiersPanel({ product, onMutate }) {
     };
     load();
   }, [product.product_id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Report combination count to parent (used to gate the Continue button)
+  useEffect(() => {
+    onCountChange?.(combinations.length);
+  }, [combinations.length, onCountChange]);
 
   const loadCombinationsForProduct = useCallback(async () => {
     setLoadingCombos(true);

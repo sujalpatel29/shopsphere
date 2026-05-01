@@ -19,14 +19,16 @@ const toNumber = (value) => Number(value) || 0;
 export default function OrderSummaryComponent({
   orderData,
   title = "Order Summary",
+  loading = false,
+  errorMessage = "",
 }) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!orderData) {
+    if (!orderData && !loading) {
       dispatch(OrderSummery());
     }
-  }, [dispatch, orderData]);
+  }, [dispatch, loading, orderData]);
 
   const { orderSummery } = useSelector((state) => state.order || {});
 
@@ -74,46 +76,57 @@ export default function OrderSummaryComponent({
       <p className="order-flow-section-copy mt-1">
         Review the pricing breakdown before you continue.
       </p>
+      {errorMessage && (
+        <div className="order-flow-alert mt-4 border-red-300/70 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
+          {errorMessage}
+        </div>
+      )}
       <Divider />
 
-      <div className="mb-3 flex items-center justify-between text-sm">
-        <span className="text-gray-500 dark:text-slate-400">Subtotal</span>
-        <span className="font-medium text-gray-900 dark:text-slate-100">
-          {formatINR(summary.total_price || 0)}
-        </span>
-      </div>
+      {loading ? (
+        <div className="order-flow-empty">Loading summary...</div>
+      ) : (
+        <>
+          <div className="mb-3 flex items-center justify-between text-sm">
+            <span className="text-gray-500 dark:text-slate-400">Subtotal</span>
+            <span className="font-medium text-gray-900 dark:text-slate-100">
+              {formatINR(summary.total_price || 0)}
+            </span>
+          </div>
 
-      <div className="mb-3 flex items-center justify-between text-sm">
-        <span className="text-gray-500 dark:text-slate-400">Tax</span>
-        <span className="font-medium text-gray-900 dark:text-slate-100">
-          {formatINR(summary.tax || 0)}
-        </span>
-      </div>
+          <div className="mb-3 flex items-center justify-between text-sm">
+            <span className="text-gray-500 dark:text-slate-400">Tax</span>
+            <span className="font-medium text-gray-900 dark:text-slate-100">
+              {formatINR(summary.tax || 0)}
+            </span>
+          </div>
 
-      <div className="mb-3 flex items-center justify-between text-sm">
-        <span className="text-gray-500 dark:text-slate-400">Discount</span>
-        <span className="font-medium text-emerald-600 dark:text-emerald-400">
-          - {formatINR(summary.discount || 0)}
-        </span>
-      </div>
+          <div className="mb-3 flex items-center justify-between text-sm">
+            <span className="text-gray-500 dark:text-slate-400">Discount</span>
+            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+              - {formatINR(summary.discount || 0)}
+            </span>
+          </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-500 dark:text-slate-400">Shipping</span>
-        <span className="font-medium text-gray-900 dark:text-slate-100">
-          {formatINR(summary.shipping || 0)}
-        </span>
-      </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500 dark:text-slate-400">Shipping</span>
+            <span className="font-medium text-gray-900 dark:text-slate-100">
+              {formatINR(summary.shipping || 0)}
+            </span>
+          </div>
 
-      <Divider />
+          <Divider />
 
-      <div className="flex items-center justify-between rounded-2xl bg-[#e6f7f5] px-4 py-3 dark:bg-[#151e22]">
-        <span className="font-accent text-sm font-semibold uppercase tracking-[0.14em] text-gray-700 dark:text-slate-300">
-          Total
-        </span>
-        <span className="font-accent text-xl font-semibold text-gray-900 dark:text-slate-100">
-          {formatINR(summary.final_amount || 0)}
-        </span>
-      </div>
+          <div className="flex items-center justify-between rounded-2xl bg-[#e6f7f5] px-4 py-3 dark:bg-[#151e22]">
+            <span className="font-accent text-sm font-semibold uppercase tracking-[0.14em] text-gray-700 dark:text-slate-300">
+              Total
+            </span>
+            <span className="font-accent text-xl font-semibold text-gray-900 dark:text-slate-100">
+              {formatINR(summary.final_amount || 0)}
+            </span>
+          </div>
+        </>
+      )}
     </Card>
   );
 }

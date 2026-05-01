@@ -37,6 +37,16 @@ const toPositiveInt = (value) => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
+const parseCategoryParamIds = (value) => {
+  if (typeof value !== "string" || !value.trim()) {
+    return [];
+  }
+
+  return [
+    ...new Set(value.split(",").map((item) => toPositiveInt(item)).filter(Boolean)),
+  ];
+};
+
 const extractCategoryTree = (res) => {
   const data = res?.data;
   if (Array.isArray(data?.data?.items)) return data.data.items;
@@ -51,6 +61,19 @@ const getSelectedCategoryIds = (selectedKeys = {}) =>
     .filter(([, value]) => value === true || value?.checked === true)
     .map(([key]) => Number(key))
     .filter((value) => Number.isFinite(value) && value > 0);
+
+const buildSelectedKeysFromIds = (categoryIds = []) =>
+  categoryIds.reduce((acc, categoryId) => {
+    acc[String(categoryId)] = {
+      checked: true,
+      partialChecked: false,
+    };
+    return acc;
+  }, {});
+
+const areIdListsEqual = (left = [], right = []) =>
+  left.length === right.length &&
+  left.every((value, index) => Number(value) === Number(right[index]));
 
 const buildParentMap = (nodes = []) => {
   const parentMap = new Map();
@@ -96,6 +119,16 @@ const buildParentIdSet = (nodes = [], set = new Set()) => {
   return set;
 };
 
+const collectCategoryIds = (nodes = [], set = new Set()) => {
+  nodes.forEach((node) => {
+    if (node?.category_id) {
+      set.add(Number(node.category_id));
+    }
+    collectCategoryIds(node.children || [], set);
+  });
+  return set;
+};
+
 const isDescendantOfAny = (childId, ancestorSet, parentMap) => {
   let current = parentMap.get(childId);
   while (current !== undefined) {
@@ -137,18 +170,22 @@ function CategoryPage() {
   const [totalRecords, setTotalRecords] = useState(0);
   const [priceBounds, setPriceBounds] = useState({ min: 0, max: 0 });
   const [pickerProduct, setPickerProduct] = useState(null);
-  const prevFilterSignatureRef = useRef("");
   const productsRequestIdRef = useRef(0);
   const priceRangeRequestIdRef = useRef(0);
   const hasUserPriceSelectionRef = useRef(false);
   const debouncedPriceRange = useDebouncedValue(priceRange, 300);
   const urlSearch = searchParams.get("search") || "";
-  const urlCategory = searchParams.get("category");
+  const urlCategoryParam = searchParams.get("category") || "";
   const urlSortField = (searchParams.get("sortField") || "").trim();
   const urlSortOrder = (searchParams.get("sortOrder") || "").trim();
+  const searchParamsKey = searchParams.toString();
   const sortKey = urlSortField
     ? `${urlSortField}:${urlSortOrder || "asc"}`
     : "featured";
+  const urlCategoryIds = useMemo(
+    () => parseCategoryParamIds(urlCategoryParam),
+    [urlCategoryParam],
+  );
 
   const sortOptions = useMemo(
     () => [
@@ -224,30 +261,50 @@ function CategoryPage() {
     setSearchText(urlSearch);
   }, [urlSearch]);
 
+  const categoryIdSet = useMemo(
+    () => collectCategoryIds(categoryTree),
+    [categoryTree],
+  );
+
   useEffect(() => {
     if (!treeLoaded) {
       return;
     }
 
-    if (!urlCategory) {
-      setSelectedKeys({});
-      return;
+    const validCategoryIds = urlCategoryIds.filter((id) => categoryIdSet.has(id));
+
+    if (!areIdListsEqual(validCategoryIds, urlCategoryIds)) {
+      const params = new URLSearchParams(searchParams);
+      if (validCategoryIds.length > 0) {
+        params.set("category", validCategoryIds.join(","));
+      } else {
+        params.delete("category");
+      }
+
+      if (params.toString() !== searchParamsKey) {
+        setSearchParams(params, { replace: true });
+      }
     }
 
-    const categoryId = Number(urlCategory);
-    if (!Number.isInteger(categoryId) || categoryId <= 0) {
-      setSelectedKeys({});
-      return;
-    }
+    setSelectedKeys((prev) => {
+      const prevIds = getSelectedCategoryIds(prev);
+      if (areIdListsEqual(prevIds, validCategoryIds)) {
+        return prev;
+      }
 
-    setSelectedKeys({
-      [String(categoryId)]: {
-        checked: true,
-        partialChecked: false,
-      },
+      return buildSelectedKeysFromIds(validCategoryIds);
     });
-  }, [treeLoaded, urlCategory]);
+  }, [
+    treeLoaded,
+    urlCategoryIds,
+    categoryIdSet,
+    searchParamsKey,
+    setSearchParams,
+  ]);
 
+  // Visual-only selection mirror for the sidebar tree. The URL remains the
+  // single source of truth for which categories drive the products fetch
+  // (see `activeCategoryIds` below).
   const selectedCategoryIds = useMemo(
     () => getSelectedCategoryIds(selectedKeys),
     [selectedKeys],
@@ -265,9 +322,20 @@ function CategoryPage() {
     [categoryTree],
   );
 
+  // Effective category IDs driving the products query, derived straight from
+  // the URL and validated against the loaded tree. Deriving from the URL
+  // (instead of `selectedKeys`) removes the one-render lag that previously
+  // caused an initial no-filter fetch on deep-link navigation to a subcategory
+  // like `/shop?category=<fictionId>`, which in turn could leave the skeleton
+  // stuck while the cancel/restart dance played out between renders.
+  const activeCategoryIds = useMemo(
+    () => urlCategoryIds.filter((id) => categoryIdSet.has(id)),
+    [urlCategoryIds, categoryIdSet],
+  );
+
   const parentSelectionIds = useMemo(
-    () => selectedCategoryIds.filter((id) => parentIdSet.has(id)),
-    [selectedCategoryIds, parentIdSet],
+    () => activeCategoryIds.filter((id) => parentIdSet.has(id)),
+    [activeCategoryIds, parentIdSet],
   );
 
   const parentSelectionSet = useMemo(
@@ -277,12 +345,12 @@ function CategoryPage() {
 
   const childSelectionIds = useMemo(
     () =>
-      selectedCategoryIds.filter(
+      activeCategoryIds.filter(
         (id) =>
           !parentIdSet.has(id) &&
           !isDescendantOfAny(id, parentSelectionSet, parentMap),
       ),
-    [selectedCategoryIds, parentIdSet, parentSelectionSet, parentMap],
+    [activeCategoryIds, parentIdSet, parentSelectionSet, parentMap],
   );
 
   const categoryIdGroups = useMemo(
@@ -340,27 +408,15 @@ function CategoryPage() {
   }, [treeLoaded, boundsSignature]);
 
   useEffect(() => {
-    if (!treeLoaded) return;
+    if (!treeLoaded) return undefined;
 
-    let active = true;
-    const isFilterChanged = prevFilterSignatureRef.current !== filterSignature;
-
-    if (isFilterChanged) {
-      prevFilterSignatureRef.current = filterSignature;
-      setProducts([]);
-      setTotalRecords(0);
-      if (pager.first !== 0) {
-        setPager((prev) => ({ ...prev, first: 0 }));
-        return;
-      }
-    } else {
-      prevFilterSignatureRef.current = filterSignature;
-    }
+    const abortController = new AbortController();
+    const requestId = ++productsRequestIdRef.current;
+    const isLatest = () => requestId === productsRequestIdRef.current;
 
     const loadProductsBySelection = async () => {
-      const requestId = ++productsRequestIdRef.current;
+      setIsProductsLoading(true);
       try {
-        setIsProductsLoading(true);
         let items = [];
 
         const hasSearch = debouncedSearchText.length > 0;
@@ -368,42 +424,40 @@ function CategoryPage() {
           categoryIdGroups.parent.length > 0 ||
           categoryIdGroups.child.length > 0;
 
-        if (!hasCategoryFilter) {
-          const productRes = await getAllProducts({
-            page: backendPage,
-            limit: pager.rows,
-            ...(hasSearch ? { search: debouncedSearchText } : {}),
-            ...priceFilterParams,
-            ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
-          });
-          if (!active || requestId !== productsRequestIdRef.current) return;
-          items = extractProducts(productRes);
-          setTotalRecords(extractTotalRecords(productRes, items.length));
-        } else {
-          const productRes = await getProductsByCategoryFilters({
-            ...(categoryIdGroups.parent.length
-              ? { parent_ids: categoryIdGroups.parent }
-              : {}),
-            ...(categoryIdGroups.child.length
-              ? { child_ids: categoryIdGroups.child }
-              : {}),
-            ...(hasSearch ? { search: debouncedSearchText } : {}),
-            ...priceFilterParams,
-            page: backendPage,
-            limit: pager.rows,
-            ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
-          });
-          if (!active || requestId !== productsRequestIdRef.current) return;
-          items = extractProducts(productRes);
-          setTotalRecords(extractTotalRecords(productRes, items.length));
-        }
+        const commonParams = {
+          ...(hasSearch ? { search: debouncedSearchText } : {}),
+          ...priceFilterParams,
+          page: backendPage,
+          limit: pager.rows,
+          ...(sortField ? { sortField, sortOrder: sortOrder || "asc" } : {}),
+        };
 
-        if (items.length > pager.rows) {
-          items = items.slice(0, pager.rows);
+        const productRes = !hasCategoryFilter
+          ? await getAllProducts(commonParams, {
+              signal: abortController.signal,
+            })
+          : await getProductsByCategoryFilters(
+              {
+                ...(categoryIdGroups.parent.length
+                  ? { parent_ids: categoryIdGroups.parent }
+                  : {}),
+                ...(categoryIdGroups.child.length
+                  ? { child_ids: categoryIdGroups.child }
+                  : {}),
+                ...commonParams,
+              },
+              { signal: abortController.signal },
+            );
+
+        if (!isLatest()) return;
+
+        let items2 = extractProducts(productRes);
+        if (items2.length > pager.rows) {
+          items2 = items2.slice(0, pager.rows);
         }
 
         // Client-side sort fallback
-        if (sortField && items.length > 1) {
+        if (sortField && items2.length > 1) {
           const orderFactor =
             (sortOrder || "asc").toLowerCase() === "desc" ? -1 : 1;
           const safeText = (value) => String(value ?? "").toLowerCase();
@@ -440,19 +494,25 @@ function CategoryPage() {
             return 0;
           };
 
-          items = [...items].sort(compare);
+          items2 = [...items2].sort(compare);
         }
 
-        if (active && requestId === productsRequestIdRef.current) {
-          setProducts(items);
-        }
+        items = items2;
+
+        if (!isLatest()) return;
+        setProducts(items);
+        setTotalRecords(extractTotalRecords(productRes, items.length));
       } catch (error) {
+        if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") {
+          return;
+        }
         console.error("Failed to load products:", error);
-        if (active && requestId === productsRequestIdRef.current) {
+        if (isLatest()) {
           setProducts([]);
+          setTotalRecords(0);
         }
       } finally {
-        if (active && requestId === productsRequestIdRef.current) {
+        if (isLatest()) {
           setIsProductsLoading(false);
         }
       }
@@ -461,9 +521,7 @@ function CategoryPage() {
     loadProductsBySelection();
 
     return () => {
-      active = false;
-      // Reset loading state if effect is cleaned up during an active request
-      setIsProductsLoading(false);
+      abortController.abort();
     };
   }, [treeLoaded, paginationFetchKey, filterSignature]);
 
@@ -471,6 +529,7 @@ function CategoryPage() {
     if (!treeLoaded) return;
 
     let ignore = false;
+    const abortController = new AbortController();
 
     const loadPriceBounds = async () => {
       const requestId = ++priceRangeRequestIdRef.current;
@@ -485,6 +544,8 @@ function CategoryPage() {
             ? { child_ids: categoryIdGroups.child }
             : {}),
           ...(hasSearch ? { search: debouncedSearchText } : {}),
+        }, {
+          signal: abortController.signal,
         });
 
         if (ignore || requestId !== priceRangeRequestIdRef.current) return;
@@ -492,6 +553,9 @@ function CategoryPage() {
         const max = Number(priceRes?.data?.data?.max ?? 0);
         setPriceBounds({ min, max });
       } catch (error) {
+        if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") {
+          return;
+        }
         if (!ignore && requestId === priceRangeRequestIdRef.current) {
           setPriceBounds({ min: 0, max: 0 });
         }
@@ -501,6 +565,7 @@ function CategoryPage() {
     loadPriceBounds();
     return () => {
       ignore = true;
+      abortController.abort();
     };
   }, [treeLoaded, boundsSignature]);
 
@@ -539,19 +604,37 @@ function CategoryPage() {
     return `₹${priceRange[0].toLocaleString("en-IN")} - ₹${priceRange[1].toLocaleString("en-IN")}`;
   }, [priceRange, priceBounds.min, priceBounds.max]);
 
-  const handleRemoveCategoryTag = (categoryId) => {
-    setSelectedKeys((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((key) => {
-        const id = Number(key);
-        if (!Number.isFinite(id)) return;
+  const handleCategorySelectionChange = (nextSelectedKeys = {}) => {
+    setSelectedKeys(nextSelectedKeys);
 
-        const shouldRemove =
-          id === categoryId || isDescendantOf(id, categoryId, parentMap);
-        if (shouldRemove) delete next[key];
-      });
-      return next;
+    const nextCategoryIds = getSelectedCategoryIds(nextSelectedKeys).filter((id) =>
+      categoryIdSet.has(id),
+    );
+    const params = new URLSearchParams(searchParams);
+
+    if (nextCategoryIds.length > 0) {
+      params.set("category", nextCategoryIds.join(","));
+    } else {
+      params.delete("category");
+    }
+
+    if (params.toString() !== searchParamsKey) {
+      setSearchParams(params, { replace: true });
+    }
+  };
+
+  const handleRemoveCategoryTag = (categoryId) => {
+    const nextSelectedKeys = { ...selectedKeys };
+    Object.keys(nextSelectedKeys).forEach((key) => {
+      const id = Number(key);
+      if (!Number.isFinite(id)) return;
+
+      const shouldRemove =
+        id === categoryId || isDescendantOf(id, categoryId, parentMap);
+      if (shouldRemove) delete nextSelectedKeys[key];
     });
+
+    handleCategorySelectionChange(nextSelectedKeys);
   };
 
   const handleClearPrice = () => {
@@ -769,7 +852,7 @@ function CategoryPage() {
             isLoading={isTreeLoading}
             categoryTree={categoryTree}
             selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
+            onSelectionChange={handleCategorySelectionChange}
             priceRange={priceRange}
             minPrice={priceBounds.min}
             maxPrice={priceBounds.max}

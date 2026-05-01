@@ -5,7 +5,11 @@ export const savePendingCheckout = (payload) => {
     return;
   }
 
-  sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(payload));
+  const current = loadPendingCheckout() || {};
+  sessionStorage.setItem(
+    PENDING_CHECKOUT_KEY,
+    JSON.stringify({ ...current, ...payload }),
+  );
 };
 
 export const loadPendingCheckout = () => {

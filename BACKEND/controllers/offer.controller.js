@@ -183,11 +183,7 @@ export const getOfferProductCategoryMappingsByOfferIdController = async (
     }
 
     const result = await getOfferProductCategoryMappingsByOfferId(offerId);
-    if (!result || result.length === 0) {
-      return notFound(res, "No mapping found for this offer");
-    }
-
-    return ok(res, "Offer mappings fetched successfully", result);
+    return ok(res, "Offer mappings fetched successfully", result || []);
   } catch (error) {
     console.error(error);
     return serverError(res, error.message || "Internal server error");

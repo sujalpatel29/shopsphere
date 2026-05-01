@@ -458,6 +458,14 @@ function AdminOffersTab() {
         "Maximum discount amount cannot be less than discount value for fixed amount";
     }
 
+    const isEditing = Boolean(selectedOffer);
+    if (!isEditing && form.start_date && form.start_date < today) {
+      errors.start_date = "Start date cannot be in the past";
+    }
+    if (!isEditing && form.end_date && form.end_date < today) {
+      errors.end_date = "End date cannot be in the past";
+    }
+
     if (form.start_date && form.end_date) {
       const startDate = new Date(form.start_date);
       const endDate = new Date(form.end_date);
@@ -502,7 +510,7 @@ function AdminOffersTab() {
     }
 
     return errors;
-  }, [form]);
+  }, [form, selectedOffer]);
 
   const buildPayload = useCallback(() => {
     const today = getTodayDateString();

@@ -180,12 +180,12 @@ function CategoryFilterSidebar({
 
   const rangeMax = Math.max(minPrice, maxPrice);
 
-  const mapTreeForPrime = (nodes = [], depth = 0) =>
+  const mapTreeForPrime = (nodes = []) =>
     nodes.map((n) => ({
       key: String(n.category_id),
       label: n.category_name,
       data: n,
-      children: depth < 1 ? mapTreeForPrime(n.children || [], depth + 1) : [],
+      children: mapTreeForPrime(n.children || []),
     }));
 
   const treeNodes = useMemo(
@@ -255,7 +255,7 @@ function CategoryFilterSidebar({
                 selectionMode="checkbox"
                 selectionKeys={selectedKeys}
                 onSelectionChange={(e) => onSelectionChange?.(e.value)}
-                propagateSelectionDown
+                propagateSelectionDown={false}
                 propagateSelectionUp
                 metaKeySelection={false}
                 className={`category-filter-tree border-none w-full text-sm ${

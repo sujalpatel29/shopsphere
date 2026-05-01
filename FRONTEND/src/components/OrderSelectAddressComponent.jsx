@@ -1,14 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "primereact/button";
 import { RadioButton } from "primereact/radiobutton";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { fetchUserAddress } from "../redux/slices/orderSlice";
 import OrderSummaryComponent from "./OrderSummaryComponent";
-import { MapPin, Plus, X } from "lucide-react";
+import { MapPin, Plus, ShoppingBag, X } from "lucide-react";
 import api from "../../api/api";
+import {
+  loadPendingCheckout,
+  savePendingCheckout,
+} from "../utils/checkoutStorage";
+import useBuyNowSummary from "../hooks/useBuyNowSummary";
 import "../styles/CheckoutFlow.css";
 
 const INDIAN_STATES = [
@@ -65,11 +70,20 @@ const formatPersonName = (value = "") =>
 export default function OrderSelectAddressComponent() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+  const pendingCheckout = useMemo(() => loadPendingCheckout(), []);
+  const buyNowItem =
+    location.state?.buyNowItem || pendingCheckout?.buyNowItem || null;
+  const {
+    summary: buyNowSummary,
+    loading: buyNowSummaryLoading,
+    error: buyNowSummaryError,
+  } = useBuyNowSummary(buyNowItem);
 
   useEffect(() => {
     dispatch(fetchUserAddress());
@@ -104,7 +118,16 @@ export default function OrderSelectAddressComponent() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedAddress) return;
-    navigate("/checkout/payment", { state: { selectedAddress } });
+    savePendingCheckout({
+      selectedAddress,
+      ...(buyNowItem ? { buyNowItem } : {}),
+    });
+    navigate("/checkout/payment", {
+      state: {
+        selectedAddress,
+        ...(buyNowItem ? { buyNowItem } : {}),
+      },
+    });
   };
 
   const set = (field) => (e) =>
@@ -164,6 +187,28 @@ export default function OrderSelectAddressComponent() {
 
       <form onSubmit={handleSubmit} className="order-flow-grid">
         <div className="space-y-4">
+          {buyNowItem && (
+            <div className="order-flow-card-muted">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e6f7f5] text-[#117a6e] dark:bg-[#1A9E8E]/10 dark:text-[#26c9b4]">
+                  <ShoppingBag className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="order-flow-stat-label">Buy Now Selection</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-slate-100">
+                    {buyNowItem.productName}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
+                    Quantity: {buyNowItem.quantity}
+                    {buyNowItem.portionValue
+                      ? ` | Portion: ${buyNowItem.portionValue}`
+                      : ""}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Address selection card */}
           <div className="order-flow-card">
             <div className="mb-5 flex items-start justify-between gap-3 flex-wrap">
@@ -413,7 +458,12 @@ export default function OrderSelectAddressComponent() {
         </div>
 
         <div className="space-y-4">
-          <OrderSummaryComponent title="Current Cart Summary" />
+          <OrderSummaryComponent
+            title={buyNowItem ? "Buy Now Summary" : "Current Cart Summary"}
+            orderData={buyNowItem ? buyNowSummary : undefined}
+            loading={buyNowItem ? buyNowSummaryLoading : false}
+            errorMessage={buyNowItem ? buyNowSummaryError : ""}
+          />
         </div>
       </form>
     </div>

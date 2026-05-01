@@ -227,6 +227,7 @@ async function getProductPricing(productId) {
 async function getPortionPricing(productPortionId) {
   const [rows] = await pool.query(
     `SELECT pp.product_portion_id,
+            pp.product_id,
             pp.portion_id,
             pp.price,
             pp.discounted_price,
@@ -249,6 +250,7 @@ async function getPortionPricing(productPortionId) {
 
   return {
     productPortionId: portion.product_portion_id,
+    productId: portion.product_id,
 
     portionId: portion.portion_id,
 
@@ -261,6 +263,8 @@ async function getPortionPricing(productPortionId) {
 async function getCombinationPricing(combinationId) {
   const [rows] = await pool.query(
     `SELECT combination_id,
+            product_id,
+            product_portion_id,
             name,
             additional_price,
             stock,
@@ -278,6 +282,8 @@ async function getCombinationPricing(combinationId) {
 
   return {
     combinationId: combo.combination_id,
+    productId: combo.product_id,
+    productPortionId: combo.product_portion_id,
     name: combo.name,
     additionalPrice: Number(combo.additional_price) || 0,
     stock: combo.stock,

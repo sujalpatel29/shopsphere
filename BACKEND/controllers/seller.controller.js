@@ -203,7 +203,7 @@ export const getSellerOrders = async (req, res) => {
       SELECT DISTINCT 
         o.order_id,
         o.order_number,
-        o.order_status,
+        o.order_status AS status,
         o.payment_status,
         o.total_amount,
         o.created_at,
@@ -250,7 +250,7 @@ export const getSellerOrderDetail = async (req, res) => {
         SELECT DISTINCT
           o.order_id,
           o.order_number,
-          o.order_status,
+          o.order_status AS status,
           o.payment_status,
           o.total_amount,
           o.discount_amount,

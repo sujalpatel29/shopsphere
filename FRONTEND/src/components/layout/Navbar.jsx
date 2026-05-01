@@ -204,7 +204,7 @@ function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-40 border-b bg-white shadow-[0_2px_6px_rgba(0,0,0,0.05)] backdrop-blur ${
+        className={`sticky top-0 z-40 border-b shadow-[0_2px_6px_rgba(0,0,0,0.05)] backdrop-blur ${
           darkMode
             ? "border-[#2a3f38] bg-[#132420]/95"
             : "border-[#E8E3DA] bg-white/95"

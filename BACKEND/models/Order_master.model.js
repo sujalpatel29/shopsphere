@@ -92,11 +92,18 @@ export const getCompareProductCategory = async (productIds) => {
 };
 
 // Retrieve user's default address ID
-export const getUserAddress = async (user_id) => {
-  const [rows] = await pool.query(
-    "select address_id  from user_addresses  where user_id= ?",
-    [user_id],
-  );
+export const getUserAddress = async (user_id, addressId = null) => {
+  const params = [user_id];
+  let query = "select address_id from user_addresses where user_id = ?";
+
+  if (addressId) {
+    query += " and address_id = ?";
+    params.push(addressId);
+  }
+
+  query += " order by is_default desc, address_id asc";
+
+  const [rows] = await pool.query(query, params);
   return rows[0]?.address_id || null;
 };
 

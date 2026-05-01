@@ -891,6 +891,7 @@ async function removeCartItemOffer(req, res) {
 async function getApplicableOffers(req, res) {
   try {
     const cartId = req.cart.cart_id;
+    const userId = getAuthenticatedUserId(req);
 
     // Get cart items to find products
 
@@ -912,9 +913,10 @@ async function getApplicableOffers(req, res) {
       type: "product",
     }));
 
-    // Get applicable cart-level offers
-
-    const cartOffersRaw = await getApplicableCartOffers();
+    // Get applicable cart-level offers (with per-user usage count so the
+    // frontend can surface exhausted-quota offers clearly instead of
+    // silently failing when the user clicks Apply).
+    const cartOffersRaw = await getApplicableCartOffers(userId);
     // Add type field to cart offers for frontend identification
     const cartOffers = cartOffersRaw.map((offer) => ({
       ...offer,

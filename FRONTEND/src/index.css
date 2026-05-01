@@ -1238,3 +1238,24 @@ html:not(.dark)
   background: #ffffff;
   border: 0 none;
 }
+
+/* ================================================= */
+/*   Dark-mode defaults for PrimeReact Card          */
+/*   (fixes stat cards rendering white in admin /    */
+/*    seller tabs when dark mode is active)          */
+/* ================================================= */
+.dark .p-card {
+  background: #151e22;
+  color: #e2e8f0;
+  border: 1px solid #1f2933;
+}
+
+.dark .p-card .p-card-body,
+.dark .p-card .p-card-content {
+  background: transparent;
+  color: inherit;
+}
+
+.dark .p-card .text-muted {
+  color: #94a3b8;
+}

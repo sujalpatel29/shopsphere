@@ -6,7 +6,6 @@ import { Paginator } from "primereact/paginator";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { getProductRatingSummariesBulk } from "../../services/categoryApi";
-import api from "../../../api/api";
 
 function ProductGrid({
   isLoading,
@@ -22,8 +21,6 @@ function ProductGrid({
   const { darkMode } = useTheme();
   const [ratingMap, setRatingMap] = useState({});
   const fetchedRatingsRef = useRef(new Set());
-  const [effectivePriceMap, setEffectivePriceMap] = useState({});
-  const fetchedPricingRef = useRef(new Set());
   const productIds = useMemo(
     () =>
       products
@@ -32,97 +29,12 @@ function ProductGrid({
     [products],
   );
 
-  const extractList = (res) => {
-    const data = res?.data;
-    if (Array.isArray(data?.data)) return data.data;
-    if (Array.isArray(data?.data?.items)) return data.data.items;
-    if (Array.isArray(data)) return data;
-    return [];
-  };
-
   const computeDiscount = (original, discounted) => {
     const o = Number(original ?? 0);
     const d = Number(discounted ?? o);
     if (!o || d >= o) return null;
     const percent = Math.round(((o - d) / o) * 100);
     return { original: o, discounted: d, percent };
-  };
-
-  const getBasePriceForProduct = (product) => {
-    const original = Number(product.price ?? 0);
-    const discounted = Number(product.discounted_price ?? original);
-    return { original, discounted };
-  };
-
-  const resolveEffectivePricing = async (product) => {
-    const productId = product.product_id || product.id;
-    if (!productId) return null;
-
-    // 1) Portion: if exactly 1, its price becomes base
-    let portion = null;
-    try {
-      const portRes = await api.get(`/portion/getProductPortions/${productId}`);
-      const portions = extractList(portRes).filter((p) => p && !p.is_deleted);
-      if (portions.length === 1) {
-        portion = portions[0];
-      }
-    } catch {
-      portion = null;
-    }
-
-    const baseOriginal = portion
-      ? Number(portion.price ?? 0)
-      : getBasePriceForProduct(product).original;
-    const baseDiscounted = portion
-      ? Number(portion.discounted_price ?? baseOriginal)
-      : getBasePriceForProduct(product).discounted;
-
-    // 2) Modifier: if exactly 1, add additional_price to base
-    let modifierAdd = 0;
-    try {
-      if (portion?.product_portion_id) {
-        const comboRes = await api.get(
-          `/modifiers/combinations/by-portion/${portion.product_portion_id}`,
-        );
-        const combos = extractList(comboRes).filter((c) => c && !c.is_deleted);
-        if (combos.length === 1) {
-          modifierAdd = Number(combos[0].additional_price ?? 0);
-        } else {
-          const modRes = await api.get(
-            `/modifiers/by-portion/${portion.product_portion_id}`,
-          );
-          const mods = extractList(modRes).filter((m) => m && !m.is_deleted);
-          if (mods.length === 1) {
-            modifierAdd = Number(mods[0].additional_price ?? 0);
-          }
-        }
-      } else {
-        const comboRes = await api.get(
-          `/modifiers/combinations/by-product/${productId}`,
-        );
-        const combos = extractList(comboRes).filter((c) => c && !c.is_deleted);
-        if (combos.length === 1) {
-          modifierAdd = Number(combos[0].additional_price ?? 0);
-        } else {
-          const modRes = await api.get(`/modifiers/by-product/${productId}`);
-          const mods = extractList(modRes).filter((m) => m && !m.is_deleted);
-          if (mods.length === 1) {
-            modifierAdd = Number(mods[0].additional_price ?? 0);
-          }
-        }
-      }
-    } catch {
-      modifierAdd = 0;
-    }
-
-    const effectiveOriginal = baseOriginal + modifierAdd;
-    const effectiveDiscounted = baseDiscounted + modifierAdd;
-
-    return {
-      original: effectiveOriginal,
-      discounted: effectiveDiscounted,
-      discount: computeDiscount(effectiveOriginal, effectiveDiscounted),
-    };
   };
 
   // NEW FUNCTION (added without modifying existing logic)
@@ -186,53 +98,6 @@ function ProductGrid({
       isActive = false;
     };
   }, [productIds, isLoading]);
-
-  useEffect(() => {
-    if (isLoading) return;
-    if (!products.length) return;
-
-    let active = true;
-
-    const fetchPricing = async () => {
-      const pending = products.filter((p) => {
-        const id = p.product_id || p.id;
-        return id && !fetchedPricingRef.current.has(id);
-      });
-      if (!pending.length) return;
-
-      pending.forEach((p) => {
-        const id = p.product_id || p.id;
-        if (id) fetchedPricingRef.current.add(id);
-      });
-
-      const results = await Promise.allSettled(
-        pending.map(async (p) => {
-          const id = p.product_id || p.id;
-          const pricing = await resolveEffectivePricing(p);
-          return { id, pricing };
-        }),
-      );
-
-      if (!active) return;
-
-      setEffectivePriceMap((prev) => {
-        const next = { ...prev };
-        results.forEach((r) => {
-          if (r.status !== "fulfilled") return;
-          const { id, pricing } = r.value || {};
-          if (!id || !pricing) return;
-          next[id] = pricing;
-        });
-        return next;
-      });
-    };
-
-    fetchPricing();
-
-    return () => {
-      active = false;
-    };
-  }, [products, isLoading]);
 
   if (isLoading) {
     return (
@@ -299,8 +164,7 @@ function ProductGrid({
           const isError = Boolean(
             addErrorProductId && id === addErrorProductId,
           );
-          const effective = id ? effectivePriceMap[id] : null;
-          const discount = effective?.discount ?? getDiscountDetails(product);
+          const discount = getDiscountDetails(product);
 
           return (
             <div
@@ -403,13 +267,9 @@ function ProductGrid({
                     {/* UPDATED PRICE SECTION (old logic preserved) */}
                     <div className="mt-1 min-h-[32px]">
                       {(() => {
-                        const effectiveOriginal = Number(
-                          effective?.original ?? product.price ?? 0,
-                        );
+                        const effectiveOriginal = Number(product.price ?? 0);
                         const effectiveDiscounted = Number(
-                          effective?.discounted ??
-                            product.discounted_price ??
-                            effectiveOriginal,
+                          product.discounted_price ?? effectiveOriginal,
                         );
 
                         if (!discount) {

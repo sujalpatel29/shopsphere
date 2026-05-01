@@ -34,6 +34,20 @@ function OfferFormModal({
 }) {
   const showError = (field) => touched[field] && errors[field];
 
+  const todayStr = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  })();
+  const startMin = isEditing ? undefined : todayStr;
+  const endMin = isEditing
+    ? undefined
+    : form.start_date && form.start_date > todayStr
+      ? form.start_date
+      : todayStr;
+
   return (
     <Dialog
       header={isEditing ? "Edit Offer" : "Create Offer"}
@@ -286,6 +300,7 @@ function OfferFormModal({
           <InputText
             id="start_date"
             type="date"
+            min={startMin}
             value={form.start_date}
             onChange={(e) => onChange("start_date", e.target.value)}
             onBlur={() => onBlurField("start_date")}
@@ -303,6 +318,7 @@ function OfferFormModal({
           <InputText
             id="end_date"
             type="date"
+            min={endMin}
             value={form.end_date}
             onChange={(e) => onChange("end_date", e.target.value)}
             onBlur={() => onBlurField("end_date")}

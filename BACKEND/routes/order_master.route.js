@@ -14,6 +14,7 @@ import {
   getOrderDetailByAdmin,
   getAllItemsByCountAdmin,
   getOrderSummery,
+  previewOrderSummary,
   getCancelRequestsByAdmin,
   reviewCancelRequestByAdmin,
 } from "../controllers/Order_master.controller.js";
@@ -22,6 +23,7 @@ import { auth, adminOnly } from "../middlewares/auth.middleware.js";
 orderRouter.post("/make-order", auth, Order_master);
 orderRouter.get("/user-allorder", auth, AllOrder);
 orderRouter.get("/order-summery", auth, getOrderSummery);
+orderRouter.post("/order-summary-preview", auth, previewOrderSummary);
 orderRouter.patch(
   "/changestatus/:id",
   auth,

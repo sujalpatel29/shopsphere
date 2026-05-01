@@ -1,4 +1,11 @@
 import {
+  getCombinationPricing,
+  getFirstAvailablePortion,
+  getMultipleModifierPricing,
+  getPortionPricing,
+  getProductPricing,
+} from "../models/cart.model.js";
+import {
   getCart,
   getCompareProductCategory,
   getUserAddress,
@@ -46,6 +53,44 @@ const DEFAULT_ORDER_LIMIT = 5;
 const MAX_ORDER_LIMIT = 50;
 const DEFAULT_ORDER_SORT_FIELD = "created_at";
 const DEFAULT_ORDER_SORT_ORDER = "DESC";
+const BUY_NOW_ITEM_KEY = "buy_now_item";
+
+const toMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
+function parsePositiveInt(value) {
+  const num = Number.parseInt(value, 10);
+  if (Number.isNaN(num) || num <= 0) {
+    return null;
+  }
+  return num;
+}
+
+const createOrderError = (status, message) => {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+};
+
+const getBuyNowItemPayload = (body = {}) =>
+  body?.[BUY_NOW_ITEM_KEY] || body?.buyNowItem || null;
+
+const normalizeModifierIds = (modifierIds = []) =>
+  [
+    ...new Set(
+      (Array.isArray(modifierIds) ? modifierIds : [])
+        .map((id) => parsePositiveInt(id))
+        .filter(Boolean),
+    ),
+  ];
+
+const buildSummaryResponse = (summary) => ({
+  total_price: summary.totalPrice,
+  tax: summary.totalTax,
+  discount: summary.totalDisCount,
+  shipping: summary.shipping_amount,
+  final_amount: summary.finalAmount + summary.shipping_amount,
+  items: summary.previewItems || [],
+});
 
 // Create a new order from user's cart with tax, discounts, and shipping calculations
 export const Order_master = async (req, res) => {
@@ -59,9 +104,15 @@ export const Order_master = async (req, res) => {
       return badRequest(res, "Please choose a valid payment method.");
     }
 
-    let summary = await calculateOrderValues(user_id);
+    const buyNowItem = getBuyNowItemPayload(req.body);
+    const requestedAddressId = parsePositiveInt(req.body?.address_id);
+    const summary = await calculateOrderValues(user_id, buyNowItem);
 
-    const address_id = await getUserAddress(user_id);
+    const address_id = await getUserAddress(user_id, requestedAddressId);
+    if (!address_id) {
+      return badRequest(res, "Please select a valid delivery address.");
+    }
+
     const totalAmount = summary.finalAmount + summary.shipping_amount;
 
     const values = [
@@ -103,6 +154,36 @@ export const Order_master = async (req, res) => {
       payment_method: paymentMethod,
     });
   } catch (err) {
+    if (err?.status === 400) {
+      return badRequest(res, err.message);
+    }
+    if (err?.status === 404) {
+      return notFound(res, err.message);
+    }
+    console.error(err);
+    return serverError(res);
+  }
+};
+
+export const previewOrderSummary = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const buyNowItem = getBuyNowItemPayload(req.body);
+
+    if (!buyNowItem) {
+      return badRequest(res, "A buy-now item is required to preview checkout.");
+    }
+
+    const summary = await calculateOrderValues(user_id, buyNowItem);
+    return ok(res, "Order summary", buildSummaryResponse(summary));
+  } catch (err) {
+    if (err?.status === 400) {
+      return badRequest(res, err.message);
+    }
+    if (err?.status === 404) {
+      return notFound(res, err.message);
+    }
+
     console.error(err);
     return serverError(res);
   }
@@ -112,13 +193,7 @@ export const getOrderSummery = async (req, res) => {
     const user_id = req.user.id;
 
     const summary = await calculateOrderValues(user_id);
-    return ok(res, "Order summary", {
-      total_price: summary.totalPrice,
-      tax: summary.totalTax,
-      discount: summary.totalDisCount,
-      shipping: summary.shipping_amount,
-      final_amount: summary.finalAmount + summary.shipping_amount,
-    });
+    return ok(res, "Order summary", buildSummaryResponse(summary));
   } catch (err) {
     if (err?.message === "Cart is empty") {
       return ok(res, "Cart is empty", {
@@ -134,7 +209,147 @@ export const getOrderSummery = async (req, res) => {
     return serverError(res);
   }
 };
-const calculateOrderValues = async (user_id) => {
+const calculateBuyNowOrderValues = async (buyNowItem) => {
+  const parsedProductId = parsePositiveInt(
+    buyNowItem?.productId ?? buyNowItem?.product_id,
+  );
+  const parsedQuantity = parsePositiveInt(buyNowItem?.quantity);
+  const parsedPortionId = buyNowItem?.portionId
+    ? parsePositiveInt(buyNowItem.portionId)
+    : buyNowItem?.product_portion_id
+      ? parsePositiveInt(buyNowItem.product_portion_id)
+      : null;
+  const parsedCombinationId = buyNowItem?.combinationId
+    ? parsePositiveInt(buyNowItem.combinationId)
+    : buyNowItem?.combination_id
+      ? parsePositiveInt(buyNowItem.combination_id)
+      : null;
+  const modifierIds = normalizeModifierIds(
+    buyNowItem?.modifierIds ?? buyNowItem?.modifier_ids,
+  );
+
+  if (!parsedProductId || !parsedQuantity) {
+    throw createOrderError(
+      400,
+      "A valid product and quantity are required for Buy Now checkout.",
+    );
+  }
+
+  const productPricing = await getProductPricing(parsedProductId);
+  if (!productPricing) {
+    throw createOrderError(404, "Product not found or unavailable.");
+  }
+
+  const [product] = await getProducts([parsedProductId]);
+  if (!product) {
+    throw createOrderError(404, "Product not found or unavailable.");
+  }
+
+  let finalPortionId = null;
+  let portionValue = null;
+  let price = Number(productPricing.price || 0);
+
+  if (parsedPortionId) {
+    const portionPricing = await getPortionPricing(parsedPortionId);
+    if (!portionPricing || Number(portionPricing.productId) !== parsedProductId) {
+      throw createOrderError(400, "Selected portion is unavailable.");
+    }
+    finalPortionId = portionPricing.productPortionId;
+    portionValue = portionPricing.portionValue;
+    price = Number(portionPricing.price || 0);
+  } else {
+    const defaultPortion = await getFirstAvailablePortion(parsedProductId);
+    if (defaultPortion) {
+      finalPortionId = defaultPortion.productPortionId;
+      portionValue = defaultPortion.portionValue;
+      price = Number(defaultPortion.price || 0);
+    }
+  }
+
+  let combinationName = null;
+  if (parsedCombinationId) {
+    const combinationPricing = await getCombinationPricing(parsedCombinationId);
+    if (!combinationPricing) {
+      throw createOrderError(400, "Selected combination is unavailable.");
+    }
+    if (Number(combinationPricing.productId) !== parsedProductId) {
+      throw createOrderError(400, "Selected combination does not belong to this product.");
+    }
+    if (
+      finalPortionId &&
+      combinationPricing.productPortionId &&
+      Number(combinationPricing.productPortionId) !== Number(finalPortionId)
+    ) {
+      throw createOrderError(400, "Selected combination does not match the chosen portion.");
+    }
+    combinationName = combinationPricing.name || null;
+    price = toMoney(price + Number(combinationPricing.additionalPrice || 0));
+  }
+
+  let modifierDetails = [];
+  if (modifierIds.length > 0) {
+    modifierDetails = await getMultipleModifierPricing(modifierIds);
+    if (modifierDetails.length !== modifierIds.length) {
+      throw createOrderError(400, "One or more selected modifiers are unavailable.");
+    }
+    const modifierTotal = modifierDetails.reduce(
+      (sum, modifier) => sum + Number(modifier.additional_price || 0),
+      0,
+    );
+    price = toMoney(price + modifierTotal);
+  }
+
+  const taxPercent = await getTaxPercentByCategory(product.category_id);
+  const taxPerUnit = toMoney((price * taxPercent) / 100);
+  const totalPrice = toMoney(price * parsedQuantity);
+  const totalTax = toMoney(taxPerUnit * parsedQuantity);
+  const totalDisCount = 0;
+  const finalAmount = toMoney(totalPrice + totalTax - totalDisCount);
+  const shipping_amount = finalAmount > 500 ? 0 : 50;
+
+  return {
+    cart: [
+      {
+        cart_id: null,
+        product_id: parsedProductId,
+        product_portion_id: finalPortionId,
+        modifier_ids: modifierIds,
+        quantity: parsedQuantity,
+      },
+    ],
+    price: [price],
+    taxAmountArray: [taxPerUnit],
+    totalPrice,
+    totalTax,
+    totalDisCount,
+    finalAmount,
+    shipping_amount,
+    previewItems: [
+      {
+        product_id: parsedProductId,
+        product_name: productPricing.name || product.name || "Product",
+        quantity: parsedQuantity,
+        portion_value: portionValue,
+        combination_name: combinationName,
+        modifiers: modifierDetails.map((modifier) => ({
+          modifier_id: modifier.modifier_id,
+          modifier_name: modifier.modifier_name,
+          modifier_value: modifier.modifier_value,
+          additional_price: Number(modifier.additional_price || 0),
+        })),
+        unit_price: price,
+        line_total: totalPrice,
+        tax_amount: totalTax,
+      },
+    ],
+  };
+};
+
+const calculateOrderValues = async (user_id, buyNowItem = null) => {
+  if (buyNowItem) {
+    return calculateBuyNowOrderValues(buyNowItem);
+  }
+
   const cart = await getCart(user_id);
   if (cart.length === 0) {
     throw new Error("Cart is empty");

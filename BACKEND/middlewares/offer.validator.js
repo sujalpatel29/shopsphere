@@ -161,12 +161,20 @@ const offerUpdateBaseSchema = z.object({
 
 const normalizeDateOnly = (value) => {
   if (!value) return null;
-  const parsed = new Date(value);
+
+  // Preserve the calendar date literally when input is already YYYY-MM-DD
+  // (or YYYY-MM-DD HH:MM:SS). Avoids timezone drift between server/client.
+  if (typeof value === "string") {
+    const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
+
+  const parsed = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
 
-  const year = parsed.getUTCFullYear();
-  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getUTCDate()).padStart(2, "0");
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 

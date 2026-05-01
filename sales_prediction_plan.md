@@ -1,3 +1,56 @@
+Based on the seeded data, here are the login credentials:
+
+## Admin Account
+- **Email:** `admin@shopsphere.test`
+- **Password:** `Admin@123`
+
+## Seller Accounts (6)
+| Email | Business |
+|-------|----------|
+| `seller.techkart@shopsphere.test` | TechKart India (Electronics) |
+| `seller.homeharvest@shopsphere.test` | HomeHarvest Living (Home & Kitchen) |
+| `seller.fittrail@shopsphere.test` | FitTrail Sports (Sports & Fitness) |
+| `seller.vastra@shopsphere.test` | Vastra Couture (Clothing) |
+| `seller.kitab@shopsphere.test` | Kitab Kendra (Books) |
+| `seller.glowup@shopsphere.test` | GlowUp Beauty (Beauty) |
+
+**Password for all sellers:** `Seller@123`
+
+## Customer Accounts (15)
+All customers use password: `Customer@123`
+
+- `milan.bhimani@shopsphere.test`
+- `karan.malhotra@shopsphere.test`
+- `ananya.sen@shopsphere.test`
+- `rohan.verma@shopsphere.test`
+- `sneha.gupta@shopsphere.test`
+- `aditya.nair@shopsphere.test`
+- `pooja.reddy@shopsphere.test`
+- `vikram.singh@shopsphere.test`
+- `divya.krishnan@shopsphere.test`
+- `arjun.deshpande@shopsphere.test`
+- `meera.joshi@shopsphere.test`
+- `rahul.pillai@shopsphere.test`
+- `tanvi.shah@shopsphere.test`
+- `nikhil.rao@shopsphere.test`
+- `isha.chatterjee@shopsphere.test`
+
+---
+
+If you're not seeing data in your database, try:
+1. Check you're connected to the correct database (the [.env](cci:7://file:///d:/dev/Internships/Accrete/Projects/Major%20Projects/ecommerce-project/prediction_service/.env:0:0-0:0) shows `DB_NAME=temp4`)
+2. Run the seeder again: `node database/seed-comprehensive.js`
+3. Check if your frontend is hitting the correct backend API
+
+Want me to verify the database state or troubleshoot the connection?
+
+
+
+
+
+
+
+
 # Sales Prediction System — Complete Implementation Plan
 
 **Project:** ShopSphere E-Commerce Admin Panel  
